@@ -21,6 +21,10 @@ import lombok.NoArgsConstructor;
 @Table(name="queue_entries")
 public class QueueEntry extends BaseEntity {
 
+	// @Id
+	// @GeneratedValue(strategy = GenerationType.SEQUENCE)
+	// private Long id;
+
 	@Column(nullable = false)
 	private int queueRank;
 
