@@ -17,41 +17,37 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 	// 커스텀 예외 처리
 	@ExceptionHandler(ErrorException.class)
-	protected ResponseEntity<ApiResponse<?>> handleCustomException(ErrorException e) {
-		log.error("ErrorException: {} - {}", e.getErrorCode().name(), e.getMessage(), e);
+	protected ResponseEntity<ApiResponse<?>> handleCustomException(ErrorException exception) {
+		log.error("ErrorException: {} - {}", exception.getErrorCode().name(), exception.getMessage(), exception);
 		return new ResponseEntity<>(
-			ApiResponse.fail(e)
-			, e.getErrorCode().getHttpStatus());
+			ApiResponse.fail(exception), exception.getErrorCode().getHttpStatus());
 	}
 
 	// @Valid 유효성 검사 실패 시 발생하는 예외 처리
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<ApiResponse<?>> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+	public ResponseEntity<ApiResponse<?>> handleMethodArgumentNotValid(MethodArgumentNotValidException exception) {
 
-		String message = e.getBindingResult().getFieldError().getDefaultMessage();
+		String message = exception.getBindingResult().getFieldError().getDefaultMessage();
 
-		log.warn("MethodArgumentNotValidException {}", e.getMessage());
+		log.warn("MethodArgumentNotValidException {}", exception.getMessage());
 		return new ResponseEntity<>(
-			ApiResponse.fail(HttpStatus.BAD_REQUEST,message)
-			, HttpStatus.BAD_REQUEST);
+			ApiResponse.fail(HttpStatus.BAD_REQUEST, message), HttpStatus.BAD_REQUEST);
 	}
 
 	// JSON 직렬화/역직렬화 예외
 	@ExceptionHandler(JsonProcessingException.class)
-	public ResponseEntity<ApiResponse<?>> handleJsonProcessing(JsonProcessingException e) {
-		log.error("JSON 파싱 실패: {}", e.getMessage());
+	public ResponseEntity<ApiResponse<?>> handleJsonProcessing(JsonProcessingException exception) {
+		log.error("JSON 파싱 실패: {}", exception.getMessage());
 		return new ResponseEntity<>(
-			ApiResponse.fail(HttpStatus.BAD_REQUEST,e.getMessage())
-			, HttpStatus.BAD_REQUEST);
+			ApiResponse.fail(HttpStatus.BAD_REQUEST, exception.getMessage()), HttpStatus.BAD_REQUEST);
 	}
-
 
 	// 그 외 모든 예외 처리
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ApiResponse<?>> handleAllException(final Exception e) {
-		log.error("handleAllException {}", e.getMessage(), e);
+	public ResponseEntity<ApiResponse<?>> handleAllException(final Exception exception) {
+		log.error("handleAllException {}", exception.getMessage(), exception);
 		return new ResponseEntity<>(
-			ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()),
+			ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage()),
 			HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 }

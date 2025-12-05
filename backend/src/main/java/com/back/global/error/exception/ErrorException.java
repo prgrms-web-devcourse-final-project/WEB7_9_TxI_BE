@@ -5,7 +5,7 @@ import com.back.global.error.code.ErrorCode;
 import lombok.Getter;
 
 @Getter
-public class ErrorException extends RuntimeException{
+public class ErrorException extends RuntimeException {
 	private final ErrorCode errorCode;
 
 	public ErrorException(ErrorCode errorCode) {
