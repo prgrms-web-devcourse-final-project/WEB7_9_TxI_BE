@@ -35,4 +35,25 @@ public class QueueEntry extends BaseEntity {
 	private LocalDateTime expiredAt;
 
 	//TODO 유저, 이벤트 연관관계 추가 필요
+
+	public void enterQueue(){
+
+		this.queueEntryStatus = QueueEntryStatus.ENTERED;
+		this.enteredAt = LocalDateTime.now();
+		this.expiredAt = this.enteredAt.plusMinutes(15); //시간 수정할 수도 있음
+
+	}
+
+	public void expire(){
+		this.queueEntryStatus = QueueEntryStatus.EXPIRED;
+	}
+
+	//15분 초과 여부
+	public boolean isExpired() {
+		if(expiredAt == null) {
+			return false;
+		}
+		return LocalDateTime.now().isAfter(this.expiredAt);
+	}
+
 }
