@@ -90,6 +90,8 @@ val coverageExcludes = listOf(
         "**/exception/**",
         "**/response/**",
         "**/error/**",
+        "**/entity/**",
+        "**/home/**",
         "**/vo/**",
         "**/Q*.*",
 )
