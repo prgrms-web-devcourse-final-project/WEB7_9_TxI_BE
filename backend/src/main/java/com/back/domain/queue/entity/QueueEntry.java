@@ -38,7 +38,13 @@ public class QueueEntry extends BaseEntity {
 	@Column(nullable = true)
 	private LocalDateTime expiredAt;
 
-	//TODO 유저, 이벤트 연관관계 추가 필요
+	//TODO 실제 유저, 이벤트 연관관계 추가 필요
+
+	@Column(name = "user_id", nullable = false)
+	private Long userId;
+
+	@Column(name = "event_id", nullable = false)
+	private Long eventId;
 
 	public void enterQueue() {
 
