@@ -14,11 +14,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Version;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Seat extends BaseEntity {
 	@Id
@@ -63,5 +65,27 @@ public class Seat extends BaseEntity {
 			throw new IllegalStateException("Seat already taken");
 		}
 		this.seatStatus = SeatStatus.RESERVED;
+	}
+
+	// ===== 정적 팩토리 메서드 =====
+
+	@Builder
+	public static Seat createSeat(MockEvent event, String seatCode, SeatGrade grade, int price) {
+		Seat seat = new Seat();
+		seat.event = event;
+		seat.seatCode = seatCode;
+		seat.grade = grade;
+		seat.price = price;
+		seat.seatStatus = SeatStatus.AVAILABLE;
+		return seat;
+	}
+
+	// ===== 비즈니스 로직 메서드 =====
+
+	public void update(String seatCode, SeatGrade grade, int price, SeatStatus seatStatus) {
+		this.seatCode = seatCode;
+		this.grade = grade;
+		this.price = price;
+		this.seatStatus = seatStatus;
 	}
 }

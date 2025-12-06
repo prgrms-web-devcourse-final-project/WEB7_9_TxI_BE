@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MockEvent {
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY, generator = "event_seq")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@Column(nullable = false)
