@@ -7,7 +7,6 @@ spring:
     ansi:
       enabled: always
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
         format_sql: true
