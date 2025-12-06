@@ -8,6 +8,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -21,9 +25,13 @@ import lombok.NoArgsConstructor;
 @Table(name = "queue_entries")
 public class QueueEntry extends BaseEntity {
 
-	// @Id
-	// @GeneratedValue(strategy = GenerationType.SEQUENCE)
-	// private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "queue_entry_seq")
+	@SequenceGenerator(
+		name = "queue_entry_seq",
+		sequenceName = "queue_entry_seq",
+		allocationSize = 100)
+	private Long id;
 
 	@Column(name="queue_rank", nullable = false)
 	private int queueRank;
