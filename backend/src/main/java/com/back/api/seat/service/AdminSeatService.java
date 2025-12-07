@@ -1,10 +1,12 @@
 package com.back.api.seat.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.seat.dto.request.AutoCreateSeatsRequest;
 import com.back.api.seat.dto.request.SeatCreateRequest;
 import com.back.api.seat.dto.request.SeatUpdateRequest;
 import com.back.domain.event.entity.Event;
@@ -55,13 +57,40 @@ public class AdminSeatService {
 	}
 
 	/**
+	 * 좌석 자동 생성 (행-열 기반)
+	 * POST /api/admin/events/{eventId}/seats/auto
+	 */
+	@Transactional
+	public List<Seat> autoCreateSeats(Long eventId, AutoCreateSeatsRequest request) {
+		Event event = eventRepository.findById(eventId)
+			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_EVENT));
+
+		List<Seat> seats = new ArrayList<>();
+
+		// A, B, C... 형식으로 행 생성
+		for (int row = 0; row < request.rows(); row++) {
+			char rowChar = (char)('A' + row);
+			String rowName = String.valueOf(rowChar);
+
+			// 1, 2, 3... 형식으로 열 생성
+			for (int col = 1; col <= request.cols(); col++) {
+				String seatCode = rowName + col;
+				Seat seat = Seat.createSeat(event, seatCode, request.defaultGrade(), request.defaultPrice());
+				seats.add(seat);
+			}
+		}
+
+		return seatRepository.saveAll(seats);
+	}
+
+	/**
 	 * 좌석 수정
 	 * PUT /api/admin/seats/{seatId}
 	 */
 	@Transactional
 	public Seat updateSeat(Long seatId, SeatUpdateRequest request) {
 		Seat seat = seatRepository.findById(seatId)
-			.orElseThrow(() -> new IllegalArgumentException("Seat not found: " + seatId));
+			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
 		seat.update(request.seatCode(), request.grade(), request.price(), request.seatStatus());
 
@@ -75,7 +104,7 @@ public class AdminSeatService {
 	@Transactional
 	public void deleteSeat(Long seatId) {
 		if (!seatRepository.existsById(seatId)) {
-			throw new IllegalArgumentException("Seat not found: " + seatId);
+			throw new ErrorException(SeatErrorCode.NOT_FOUND_SEAT);
 		}
 		seatRepository.deleteById(seatId);
 	}
