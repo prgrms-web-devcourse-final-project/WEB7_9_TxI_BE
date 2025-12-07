@@ -2,15 +2,20 @@ package com.back.domain.queue.entity;
 
 import java.time.LocalDateTime;
 
+import com.back.domain.event.entity.Event;
+import com.back.domain.user.entity.User;
 import com.back.global.entity.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -46,13 +51,13 @@ public class QueueEntry extends BaseEntity {
 	@Column(name = "expired_at", nullable = true)
 	private LocalDateTime expiredAt;
 
-	//TODO 실제 유저, 이벤트 연관관계 추가 필요
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id", nullable = false)
+	private User user;
 
-	@Column(name = "user_id", nullable = false)
-	private Long userId;
-
-	@Column(name = "event_id", nullable = false)
-	private Long eventId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "event_id", nullable = false)
+	private Event event;
 
 	public void enterQueue() {
 
