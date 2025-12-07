@@ -28,6 +28,8 @@ public class SecurityConfig {
 			)
 			.csrf(csrf -> csrf
 				.ignoringRequestMatchers("/h2-console/**")  // H2 콘솔은 CSRF 제외
+				.ignoringRequestMatchers("/swagger-ui/**") // Swagger UI는 CSRF 제외
+				.ignoringRequestMatchers("/api/v1/**")  // 임시 csrf 제외
 			)
 			.headers(headers -> headers
 				.frameOptions(frameOptions -> frameOptions.sameOrigin())  // H2 콘솔 iframe 허용

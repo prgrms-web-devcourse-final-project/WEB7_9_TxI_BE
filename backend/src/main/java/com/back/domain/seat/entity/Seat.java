@@ -1,5 +1,6 @@
 package com.back.domain.seat.entity;
 
+import com.back.domain.event.entity.Event;
 import com.back.global.entity.BaseEntity;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.exception.ErrorException;
@@ -36,7 +37,7 @@ public class Seat extends BaseEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "event_id", nullable = false)
-	private MockEvent event;    // TODO: 실제 Event 엔티티로 변경 필요
+	private Event event;    // TODO: 실제 Event 엔티티로 변경 필요
 
 	@Column(nullable = false, name = "seat_code")
 	private String seatCode;  // 예시) "A1", "B2"
@@ -70,7 +71,7 @@ public class Seat extends BaseEntity {
 	}
 
 	@Builder
-	public static Seat createSeat(MockEvent event, String seatCode, SeatGrade grade, int price) {
+	public static Seat createSeat(Event event, String seatCode, SeatGrade grade, int price) {
 		Seat seat = new Seat();
 		seat.event = event;
 		seat.seatCode = seatCode;

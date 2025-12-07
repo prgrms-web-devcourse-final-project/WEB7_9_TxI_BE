@@ -16,7 +16,6 @@ import com.back.api.seat.dto.request.SeatCreateRequest;
 import com.back.api.seat.dto.request.SeatUpdateRequest;
 import com.back.api.seat.dto.response.SeatResponse;
 import com.back.api.seat.service.AdminSeatService;
-import com.back.api.seat.service.SeatService;
 import com.back.domain.seat.entity.Seat;
 import com.back.global.response.ApiResponse;
 
@@ -27,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AdminSeatController {
 
-	private final SeatService seatService;
 	private final AdminSeatService adminSeatService;
 
 	/**

@@ -7,9 +7,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.seat.dto.request.SeatCreateRequest;
 import com.back.api.seat.dto.request.SeatUpdateRequest;
-import com.back.domain.seat.entity.MockEvent;
+import com.back.domain.event.entity.Event;
+import com.back.domain.event.repository.EventRepository;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.repository.SeatRepository;
+import com.back.global.error.code.SeatErrorCode;
+import com.back.global.error.exception.ErrorException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminSeatService {
 
 	private final SeatRepository seatRepository;
+	private final EventRepository eventRepository;
 	// ===== 관리자용 API =====
 
 	/**
@@ -26,8 +30,8 @@ public class AdminSeatService {
 	 */
 	@Transactional
 	public List<Seat> bulkCreateSeats(Long eventId, List<SeatCreateRequest> requests) {
-		// TODO: Event 엔티티로 변경 필요
-		MockEvent event = new MockEvent(eventId, "temp", "temp");
+		Event event = eventRepository.findById(eventId)
+			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_EVENT));
 
 		List<Seat> seats = requests.stream()
 			.map(req -> createSeatEntity(event, req))
@@ -42,8 +46,8 @@ public class AdminSeatService {
 	 */
 	@Transactional
 	public Seat createSingleSeat(Long eventId, SeatCreateRequest request) {
-		// TODO: Event 엔티티로 변경 필요
-		MockEvent event = new MockEvent(eventId, "temp", "temp");
+		Event event = eventRepository.findById(eventId)
+			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_EVENT));
 
 		Seat seat = createSeatEntity(event, request);
 
@@ -87,7 +91,7 @@ public class AdminSeatService {
 
 	// ===== Private Helper Methods =====
 
-	private Seat createSeatEntity(MockEvent event, SeatCreateRequest request) {
+	private Seat createSeatEntity(Event event, SeatCreateRequest request) {
 		return Seat.createSeat(event, request.seatCode(), request.grade(), request.price());
 	}
 }
