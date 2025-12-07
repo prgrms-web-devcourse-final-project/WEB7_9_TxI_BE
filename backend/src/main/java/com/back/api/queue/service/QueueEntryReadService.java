@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
  * 대기열 조회 로직
  * Redis 우선 조회 -> DB 조회
  * 트랜잭션 읽기 / 쓰기 분리 고려
-
  */
 @Service
 @RequiredArgsConstructor
