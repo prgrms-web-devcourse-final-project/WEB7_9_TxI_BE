@@ -1,6 +1,8 @@
 package com.back.domain.seat.entity;
 
 import com.back.global.entity.BaseEntity;
+import com.back.global.error.code.SeatErrorCode;
+import com.back.global.error.exception.ErrorException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -55,19 +57,17 @@ public class Seat extends BaseEntity {
 
 	public void markAsSold() {
 		if (seatStatus != SeatStatus.AVAILABLE) {
-			throw new IllegalStateException("Seat already taken");
+			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_RESERVED);
 		}
 		this.seatStatus = SeatStatus.SOLD;
 	}
 
 	public void markAsReserved() {
 		if (seatStatus != SeatStatus.AVAILABLE) {
-			throw new IllegalStateException("Seat already taken");
+			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
 		}
 		this.seatStatus = SeatStatus.RESERVED;
 	}
-
-	// ===== 정적 팩토리 메서드 =====
 
 	@Builder
 	public static Seat createSeat(MockEvent event, String seatCode, SeatGrade grade, int price) {
@@ -79,8 +79,6 @@ public class Seat extends BaseEntity {
 		seat.seatStatus = SeatStatus.AVAILABLE;
 		return seat;
 	}
-
-	// ===== 비즈니스 로직 메서드 =====
 
 	public void update(String seatCode, SeatGrade grade, int price, SeatStatus seatStatus) {
 		this.seatCode = seatCode;
