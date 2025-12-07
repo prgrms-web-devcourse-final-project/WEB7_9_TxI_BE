@@ -67,7 +67,7 @@ public class QueueShuffleService {
 		}
 
 		// 대기열 중복 확인
-		long registeredCount = queueEntryRepository.countByEventId(eventId);
+		long registeredCount = queueEntryRepository.countByEvent_Id(eventId);
 		if(registeredCount > 0){
 			throw new ErrorException(QueueEntryErrorCode.QUEUE_ALREADY_EXISTS);
 		}

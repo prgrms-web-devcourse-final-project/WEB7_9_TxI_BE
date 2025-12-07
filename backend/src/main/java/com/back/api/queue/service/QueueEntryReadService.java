@@ -30,7 +30,7 @@ public class QueueEntryReadService {
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 
 	public QueueEntryStatusResponse getMyQueueStatus(Long eventId, Long userId){
-		QueueEntry entry = queueEntryRepository.findByEventIdAndUserId(eventId, userId)
+		QueueEntry entry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
 			.orElseThrow(()-> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
 
 		return switch(entry.getQueueEntryStatus()){
@@ -71,8 +71,8 @@ public class QueueEntryReadService {
 
 	//DB 기반
 	private WaitingQueueResponse buildWaitingQueueResponseFromDB(Long eventId, QueueEntry entry){
-		long waitingAheadCount = queueEntryRepository.countWaitingAhead(eventId, entry.getQueueRank());
-		long totalWaitingCount = queueEntryRepository.countByEventIdAndQueueEntryStatus(
+		long waitingAheadCount = queueEntryRepository.countByEvent_IdAndQueueRankLessThan(eventId, entry.getQueueRank());
+		long totalWaitingCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
 			eventId, QueueEntryStatus.WAITING
 		);
 
@@ -109,7 +109,7 @@ public class QueueEntryReadService {
 	}
 
 	public boolean existsInWaitingQueue(Long eventId, Long userId) {
-		return queueEntryRepository.existsByEventIdAndUserId(eventId, userId);
+		return queueEntryRepository.existsByEvent_IdAndUser_Id(eventId, userId);
 	}
 
 	//TODO 관리자용 로직 추가

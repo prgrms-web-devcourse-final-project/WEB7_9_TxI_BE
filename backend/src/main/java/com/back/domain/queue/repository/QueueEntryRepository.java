@@ -9,13 +9,14 @@ import com.back.domain.queue.entity.QueueEntryStatus;
 
 public interface QueueEntryRepository extends JpaRepository<QueueEntry, Long> {
 
-	long countByEventId(Long eventId);
-	long countByEventIdAndQueueEntryStatus(Long eventId, QueueEntryStatus status);
-	Optional<QueueEntry> findByEventIdAndUserId(Long eventId, Long userId);
+	long countByEvent_Id(Long eventId);
+	long countByEvent_IdAndQueueEntryStatus(Long eventId, QueueEntryStatus status);
+	Optional<QueueEntry> findByEvent_IdAndUser_Id(Long eventId, Long userId);
 
-	long countWaitingAhead(Long eventId, Integer queueRank);
+	long countByEvent_IdAndQueueRankLessThan(Long eventId, Integer queueRank);
 
-	boolean existsByEventIdAndUserId(Long eventId, Long userId);
+
+	boolean existsByEvent_IdAndUser_Id(Long eventId, Long userId);
 
 
 }
