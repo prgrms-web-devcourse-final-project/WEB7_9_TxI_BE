@@ -19,12 +19,15 @@ import com.back.api.seat.service.AdminSeatService;
 import com.back.domain.seat.entity.Seat;
 import com.back.global.response.ApiResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
+@Tag(name = "Admin Seat API", description = "관리자용 좌석관리 API")
 public class AdminSeatController {
 
 	private final AdminSeatService adminSeatService;
@@ -34,6 +37,7 @@ public class AdminSeatController {
 	 * POST /api/v1/admin/events/{eventId}/seats/bulk
 	 */
 	@PostMapping("/events/{eventId}/seats/bulk")
+	@Operation(summary = "좌석 대량 커스텀 생성", description = "JSON형태로 지정한 좌석들을 한 번에 생성합니다.")
 	public ApiResponse<List<SeatResponse>> bulkCreateSeats(
 		@PathVariable Long eventId,
 		@Valid @RequestBody BulkCreateSeatsRequest request
@@ -54,6 +58,7 @@ public class AdminSeatController {
 	 * POST /api/v1/admin/events/{eventId}/seats/auto
 	 */
 	@PostMapping("/events/{eventId}/seats/auto")
+	@Operation(summary = "좌석 대량 자동 생성", description = "지정한 행-열 수에 따라 좌석들을 한 번에 생성합니다.")
 	public ApiResponse<List<SeatResponse>> autoCreateSeats(
 		@PathVariable Long eventId,
 		@Valid @RequestBody AutoCreateSeatsRequest request
@@ -75,6 +80,7 @@ public class AdminSeatController {
 	 * POST /api/v1/admin/events/{eventId}/seats/single
 	 */
 	@PostMapping("/events/{eventId}/seats/single")
+	@Operation(summary = "좌석 단일 생성", description = "단일 좌석을 생성합니다.")
 	public ApiResponse<SeatResponse> createSingleSeat(
 		@PathVariable Long eventId,
 		@RequestBody SeatCreateRequest request
@@ -89,6 +95,7 @@ public class AdminSeatController {
 	 * PUT /api/v1/admin/seats/{seatId}
 	 */
 	@PutMapping("/seats/{seatId}")
+	@Operation(summary = "좌석 수정", description = "단일 좌석을 수정합니다.")
 	public ApiResponse<SeatResponse> updateSeat(
 		@PathVariable Long seatId,
 		@RequestBody SeatUpdateRequest request
@@ -103,6 +110,7 @@ public class AdminSeatController {
 	 * DELETE /api/v1/admin/seats/{seatId}
 	 */
 	@DeleteMapping("/seats/{seatId}")
+	@Operation(summary = "좌석 단일 삭제", description = "단일 좌석을 삭제합니다.")
 	public ApiResponse<Void> deleteSeat(
 		@PathVariable Long seatId
 	) {
@@ -116,6 +124,7 @@ public class AdminSeatController {
 	 * DELETE /api/v1/admin/events/{eventId}/seats
 	 */
 	@DeleteMapping("/events/{eventId}/seats")
+	@Operation(summary = "좌석 전량 삭제", description = "이벤트의 모든 좌석을 삭제합니다.")
 	public ApiResponse<Void> deleteAllEventSeats(
 		@PathVariable Long eventId
 	) {
