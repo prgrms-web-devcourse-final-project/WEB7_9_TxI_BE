@@ -42,8 +42,9 @@ public class JwtUtil {
 	public static Map<String, Object> payloadOrNull(String jwt, String secret) {
 		SecretKey secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret.trim()));
 
-		if (!isValid(jwt, secret))
+		if (!isValid(jwt, secret)) {
 			return null;
+		}
 
 		Claims claims = Jwts.parser()
 			.verifyWith(secretKey)
