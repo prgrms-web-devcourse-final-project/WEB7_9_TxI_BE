@@ -22,11 +22,7 @@ public enum QueueEntryErrorCode implements ErrorCode {
 	ALREADY_EXPIRED(HttpStatus.BAD_REQUEST, "이미 만료되었습니다."),
 	NOT_WAITING_STATUS(HttpStatus.BAD_REQUEST, "대기중 상태가 아닙니다."),
 
-
-	REDIS_CONNECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Redis 연결에 실패했습니다.")
-
-
-	;
+	REDIS_CONNECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Redis 연결에 실패했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;

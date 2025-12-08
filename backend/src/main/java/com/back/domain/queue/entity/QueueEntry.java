@@ -40,7 +40,7 @@ public class QueueEntry extends BaseEntity {
 		allocationSize = 100)
 	private Long id;
 
-	@Column(name="queue_rank", nullable = false)
+	@Column(name = "queue_rank", nullable = false)
 	private int queueRank;
 
 	@Enumerated(EnumType.STRING)
@@ -81,7 +81,7 @@ public class QueueEntry extends BaseEntity {
 
 	//15분 초과 여부
 	public boolean isExpired() {
-		if(expiredAt == null) {
+		if (expiredAt == null) {
 			return false;
 		}
 		return LocalDateTime.now().isAfter(this.expiredAt);

@@ -12,5 +12,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 )
 public interface QueueEntryStatusResponse {
 	Long userId();
+
 	Long eventId();
 }

@@ -41,12 +41,12 @@ public class QueueEntryScheduler {
 				List.of(EventStatus.OPEN, EventStatus.QUEUE_READY)
 			);
 
-			if(openEvents.isEmpty()) {
+			if (openEvents.isEmpty()) {
 				log.debug("No open events found for queue entry processing");
 				return;
 			}
 
-			for(Event event : openEvents) {
+			for (Event event : openEvents) {
 				processEventQueueEntries(event);
 			}
 		} catch (Exception e) {
@@ -60,7 +60,7 @@ public class QueueEntryScheduler {
 
 		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
 
-		if(totalWaitingCount == 0) {
+		if (totalWaitingCount == 0) {
 			log.debug("No waiting users for eventId: {}", eventId);
 			return;
 		}
@@ -68,14 +68,14 @@ public class QueueEntryScheduler {
 		int batchSize = Math.min(BATCH_SIZE, totalWaitingCount.intValue());
 		Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, batchSize);
 
-		if(topWaitingUsers.isEmpty()) {
+		if (topWaitingUsers.isEmpty()) {
 			log.debug("No top waiting users found for eventId: {}", eventId);
 			return;
 		}
 
 		List<Long> userIds = new ArrayList<>();
 
-		for(Object userId : topWaitingUsers) {
+		for (Object userId : topWaitingUsers) {
 			userIds.add(Long.parseLong(userId.toString()));
 		}
 

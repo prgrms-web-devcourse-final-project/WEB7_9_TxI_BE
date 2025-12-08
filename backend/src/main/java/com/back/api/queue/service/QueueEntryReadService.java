@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.api.queue.dto.response.EnteredQueueResponse;
 import com.back.api.queue.dto.response.ExpiredQueueResponse;
 import com.back.api.queue.dto.response.QueueEntryStatusResponse;
+import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.WaitingQueueResponse;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
  * 대기열 조회 로직
  * Redis 우선 조회 -> DB 조회
  * 트랜잭션 읽기 / 쓰기 분리 고려
+ * TODO 사용자 / 관리자 권한 분리
  */
 @Service
 @RequiredArgsConstructor
@@ -113,7 +115,40 @@ public class QueueEntryReadService {
 		return queueEntryRepository.existsByEvent_IdAndUser_Id(eventId, userId);
 	}
 
-	//TODO 관리자용 로직 추가
+
+
+	public QueueStatisticsResponse getQueueStatistics(Long eventId) {
+		long totalWaitingCount = queueEntryRepository.countByEvent_Id(eventId);
+
+		if (totalWaitingCount == 0) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY);
+		}
+
+
+		long waitingCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+			eventId,
+			QueueEntryStatus.WAITING
+		);
+
+		long enteredCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+			eventId,
+			QueueEntryStatus.ENTERED
+		);
+
+		long expiredCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+			eventId,
+			QueueEntryStatus.EXPIRED
+		);
+
+		return QueueStatisticsResponse.from(
+			eventId,
+			totalWaitingCount,
+			waitingCount,
+			enteredCount,
+			expiredCount
+		);
+
+	}
 
 
 }

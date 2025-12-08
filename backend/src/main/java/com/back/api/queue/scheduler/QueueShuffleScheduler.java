@@ -66,7 +66,7 @@ public class QueueShuffleScheduler {
 
 		long existingCount = queueEntryRepository.countByEvent_Id(eventId);
 
-		if(existingCount > 0) {
+		if (existingCount > 0) {
 			log.info("Queue already shuffled for eventId: {}", eventId);
 			return;
 		}
@@ -77,7 +77,7 @@ public class QueueShuffleScheduler {
 		//임시 목 데이터
 		List<Long> preRegisteredUserIds = getMockPreRegisteredUser(eventId);
 
-		if(preRegisteredUserIds.isEmpty()) {
+		if (preRegisteredUserIds.isEmpty()) {
 			log.info("No pre-registered users for eventId: {}", eventId);
 			return;
 		}

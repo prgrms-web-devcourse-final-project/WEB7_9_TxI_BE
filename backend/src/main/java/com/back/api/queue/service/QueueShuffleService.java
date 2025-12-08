@@ -79,10 +79,10 @@ public class QueueShuffleService {
 		SecureRandom secureRandom = new SecureRandom();
 
 		for (int i = shuffledList.size() - 1; i > 0; i--) {
-			int j = secureRandom.nextInt(i + 1); //0~i 사이 랜덤 인덱스
+			int inx = secureRandom.nextInt(i + 1); //0~i 사이 랜덤 인덱스
 			Long tmp = shuffledList.get(i);
-			shuffledList.set(i, shuffledList.get(j));
-			shuffledList.set(j, tmp);
+			shuffledList.set(i, shuffledList.get(inx));
+			shuffledList.set(inx, tmp);
 		}
 
 		return shuffledList;
