@@ -2,7 +2,6 @@ package com.back.api.seat.controller;
 
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,36 +26,36 @@ public class SeatController {
 
 	/**
 	 * 이벤트의 좌석 목록 조회
-	 * GET /api/events/{eventId}/seats
+	 * GET /api/v1/events/{eventId}/seats
 	 */
 	@GetMapping("/events/{eventId}/seats")
-	public ResponseEntity<ApiResponse<List<SeatResponse>>> getSeatsByEvent(
+	public ApiResponse<List<SeatResponse>> getSeatsByEvent(
 		@PathVariable Long eventId
 	) {
 		List<Seat> seats = seatService.getSeatsByEvent(eventId);
-		List<SeatResponse> responses = seats.stream()
-			.map(SeatResponse::from)
-			.toList();
 
-		return ResponseEntity.ok(
-			ApiResponse.ok("좌석 목록을 조회했습니다.", responses)
+		return ApiResponse.ok(
+			"좌석 목록을 조회했습니다.",
+			seats.stream().map(SeatResponse::from).toList()
 		);
 	}
 
 	/**
 	 * 좌석 선택 (예약/구매)
-	 * POST /api/seats/{seatId}/select
+	 * POST /api/v1/events/{eventId}/seats/{seatId}/select
 	 */
-	@PostMapping("/seats/{seatId}/select")
-	public ResponseEntity<ApiResponse<SeatResponse>> selectSeat(
+	@PostMapping("/events/{eventId}/seats/{seatId}/select")
+	public ApiResponse<SeatResponse> selectSeat(
+		@PathVariable Long eventId,
 		@PathVariable Long seatId,
 		@RequestBody SelectSeatRequest request
 	) {
 		// TODO: 실제 인증된 사용자 ID로 교체 필요 (Security Context에서 가져오기)
-		Seat seat = seatService.selectSeat(seatId, request.userId());
+		Seat seat = seatService.selectSeat(eventId, seatId, request.userId());
 
-		return ResponseEntity.ok(
-			ApiResponse.ok("좌석을 선택했습니다.", SeatResponse.from(seat))
+		return ApiResponse.ok(
+			"좌석을 선택했습니다.",
+			SeatResponse.from(seat)
 		);
 	}
 }
