@@ -6,12 +6,14 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.seat.dto.response.SeatStatusMessage;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.repository.SeatRepository;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.global.event.EventPublisher;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +24,7 @@ public class SeatService {
 	private final SeatRepository seatRepository;
 	private final EventRepository eventRepository;
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
+	private final EventPublisher eventPublisher;
 
 	/**
 	 * 이벤트의 좌석 목록 조회
@@ -58,6 +61,14 @@ public class SeatService {
 
 			seat.markAsReserved();
 
+			eventPublisher.publishEvent(new SeatStatusMessage(
+				eventId,
+				seatId,
+				"RESERVED",
+				seat.getPrice(),
+				seat.getGrade().name()
+			));
+
 			return seatRepository.save(seat);
 		} catch (ObjectOptimisticLockingFailureException ex) {
 			throw new ErrorException(SeatErrorCode.SEAT_CONCURRENCY_FAILURE);
@@ -65,6 +76,7 @@ public class SeatService {
 
 	}
 
+	@Transactional
 	public Seat confirmPurchase(Long eventId, Long seatId, Long userId) {
 		Seat seat = seatRepository.findByEventIdAndId(eventId, seatId)
 			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
@@ -72,6 +84,17 @@ public class SeatService {
 		// 좌석을 SOLD 상태로 변경
 		seat.markAsSold();
 
-		return seatRepository.save(seat);
+		Seat savedSeat = seatRepository.save(seat);
+
+		// 웹소켓으로 좌석 상태 변경 알림
+		eventPublisher.publishEvent(new SeatStatusMessage(
+			eventId,
+			seatId,
+			"SOLD",
+			seat.getPrice(),
+			seat.getGrade().name()
+		));
+
+		return savedSeat;
 	}
 }

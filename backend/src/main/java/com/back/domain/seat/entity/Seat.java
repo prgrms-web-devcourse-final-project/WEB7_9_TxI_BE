@@ -69,7 +69,7 @@ public class Seat extends BaseEntity {
 
 	public void markAsSold() {
 		if (seatStatus != SeatStatus.RESERVED) {
-			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
+			throw new ErrorException(SeatErrorCode.SEAT_STATUS_TRANSITION);
 		}
 		this.seatStatus = SeatStatus.SOLD;
 	}
