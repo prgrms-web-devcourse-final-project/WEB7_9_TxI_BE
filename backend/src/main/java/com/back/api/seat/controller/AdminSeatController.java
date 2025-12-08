@@ -92,11 +92,12 @@ public class AdminSeatController {
 
 	/**
 	 * 좌석 수정
-	 * PUT /api/v1/admin/seats/{seatId}
+	 * PUT /api/v1/admin/events/{eventId}/seats/{seatId}
 	 */
-	@PutMapping("/seats/{seatId}")
+	@PutMapping("/events/{eventId}/seats/{seatId}")
 	@Operation(summary = "좌석 수정", description = "단일 좌석을 수정합니다.")
 	public ApiResponse<SeatResponse> updateSeat(
+		@PathVariable Long eventId,
 		@PathVariable Long seatId,
 		@RequestBody SeatUpdateRequest request
 	) {
@@ -107,11 +108,12 @@ public class AdminSeatController {
 
 	/**
 	 * 단일 좌석 삭제
-	 * DELETE /api/v1/admin/seats/{seatId}
+	 * DELETE /api/v1/admin/events/{eventId}/seats/{seatId}
 	 */
-	@DeleteMapping("/seats/{seatId}")
+	@DeleteMapping("/events/{eventId}/seats/{seatId}")
 	@Operation(summary = "좌석 단일 삭제", description = "단일 좌석을 삭제합니다.")
 	public ApiResponse<Void> deleteSeat(
+		@PathVariable Long eventId,
 		@PathVariable Long seatId
 	) {
 		adminSeatService.deleteSeat(seatId);
