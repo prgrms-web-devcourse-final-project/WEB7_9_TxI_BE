@@ -1,6 +1,7 @@
 package com.back.domain.seat.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,6 +14,8 @@ import com.back.domain.seat.entity.SeatGrade;
 public interface SeatRepository extends JpaRepository<Seat, Long> {
 
 	List<Seat> findByEventId(Long eventId);
+
+	Optional<Seat> findByEventIdAndId(Long eventId, Long seatId);
 
 	@Modifying
 	@Query("DELETE FROM Seat s WHERE s.event.id = :eventId")

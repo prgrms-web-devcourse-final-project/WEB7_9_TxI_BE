@@ -16,6 +16,8 @@ public enum SeatErrorCode implements ErrorCode {
 	SEAT_ALREADY_SOLD(HttpStatus.BAD_REQUEST, "이미 판매된 좌석입니다."),
 	SEAT_SELECTION_FAILED(HttpStatus.BAD_REQUEST, "좌석 선택에 실패했습니다."),
 
+	SEAT_CONCURRENCY_FAILURE(HttpStatus.CONFLICT, "다른 사용자가 해당 좌석을 선택하는 중입니다. 다시 시도해주세요."),
+
 	// 관리자 예외
 	DUPLICATE_SEAT_CODE(HttpStatus.BAD_REQUEST, "이미 존재하는 좌석 코드가 포함되어 있습니다.");
 

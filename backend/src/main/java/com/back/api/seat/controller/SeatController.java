@@ -32,7 +32,9 @@ public class SeatController {
 	public ApiResponse<List<SeatResponse>> getSeatsByEvent(
 		@PathVariable Long eventId
 	) {
-		List<Seat> seats = seatService.getSeatsByEvent(eventId);
+		Long mockUserId = 1L; // TODO: 실제 인증된 사용자 ID로 교체 필요 (Security Context에서 가져오기)
+
+		List<Seat> seats = seatService.getSeatsByEvent(eventId, mockUserId);
 
 		return ApiResponse.ok(
 			"좌석 목록을 조회했습니다.",
@@ -50,8 +52,8 @@ public class SeatController {
 		@PathVariable Long seatId,
 		@RequestBody SelectSeatRequest request
 	) {
-		// TODO: 실제 인증된 사용자 ID로 교체 필요 (Security Context에서 가져오기)
-		Seat seat = seatService.selectSeat(eventId, seatId, request.userId());
+		Long mockUserId = 1L; // TODO: 실제 인증된 사용자 ID로 교체 필요 (Security Context에서 가져오기)
+		Seat seat = seatService.selectSeat(eventId, seatId, mockUserId);
 
 		return ApiResponse.ok(
 			"좌석을 선택했습니다.",

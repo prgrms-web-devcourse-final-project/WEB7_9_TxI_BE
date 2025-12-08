@@ -68,14 +68,17 @@ public class Seat extends BaseEntity {
 	private int version;
 
 	public void markAsSold() {
-		if (seatStatus != SeatStatus.AVAILABLE) {
-			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_RESERVED);
+		if (seatStatus != SeatStatus.RESERVED) {
+			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
 		}
 		this.seatStatus = SeatStatus.SOLD;
 	}
 
 	public void markAsReserved() {
-		if (seatStatus != SeatStatus.AVAILABLE) {
+		if (seatStatus == SeatStatus.RESERVED) {
+			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_RESERVED);
+		}
+		if (seatStatus == SeatStatus.SOLD) {
 			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
 		}
 		this.seatStatus = SeatStatus.RESERVED;
