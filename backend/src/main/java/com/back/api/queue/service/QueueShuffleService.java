@@ -24,8 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /*
  * 대기열 랜덤 큐 생성 로직
- * 사전 등록 완료 후 관리자가 대기열 섞기 기능을 통해 랜덤 큐를 생성
- * 자동으로 섞기 기능을 하게 할지 , 관리자가 수동으로 섞기 기능을 하게 할지 논의 필요
+ * 사전 등록 완료 후 대기열 섞기 기능을 통해 랜덤 큐를 생성
+ * 자동으로 섞기 + 관리자 전용 수동 섞기
  * 공정한 대기열 생성 로직 논의 필요 -> 현재는 SecureRandom 이용한 랜덤 섞기 로직으로 구현
  */
 @Service
@@ -96,6 +96,7 @@ public class QueueShuffleService {
 				int rank = i+1;
 				queueEntryRedisRepository.addToWaitingQueue(eventId, userId, rank);
 			}
+			log.debug("Success to save eventId {} to Redis", eventId);
 		}catch (Exception e){
 			log.error("Failed to save eventId {} to Redis", eventId);
 			throw new ErrorException(QueueEntryErrorCode.REDIS_CONNECTION_FAILED);

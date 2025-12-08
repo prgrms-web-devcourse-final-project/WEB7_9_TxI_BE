@@ -18,6 +18,11 @@ public enum QueueEntryErrorCode implements ErrorCode {
 	QUEUE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 대기열이 존재합니다."),
 	INVALID_PREREGISTER_LIST(HttpStatus.BAD_REQUEST, "유효하지 않은 사전 등록 사용자 목록입니다."),
 
+	ALREADY_ENTERED(HttpStatus.BAD_REQUEST, "이미 입장하였습니다."),
+	ALREADY_EXPIRED(HttpStatus.BAD_REQUEST, "이미 만료되었습니다."),
+	NOT_WAITING_STATUS(HttpStatus.BAD_REQUEST, "대기중 상태가 아닙니다."),
+
+
 	REDIS_CONNECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Redis 연결에 실패했습니다.")
 
 
