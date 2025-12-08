@@ -16,6 +16,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -23,6 +25,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(
+	name = "seats",
+	uniqueConstraints = {
+		@UniqueConstraint( // 등급별 좌석 코드 중복 방지,  VIP석 A1, R석 A1 중복 가능
+			name = "uk_event_grade_seatcode",
+			columnNames = {"event_id", "grade", "seat_code"}
+		)
+	}
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Seat extends BaseEntity {
