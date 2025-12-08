@@ -4,6 +4,7 @@ import com.back.domain.user.entity.UserRole;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "사용자 인증 정보 응답 DTO")
 public record UserResponse(
 	@Schema(
 		description = "사용자 아이디 정보",

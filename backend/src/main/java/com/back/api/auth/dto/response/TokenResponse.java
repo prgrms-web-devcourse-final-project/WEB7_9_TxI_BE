@@ -2,6 +2,7 @@ package com.back.api.auth.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "사용자 토큰 정보 응답 DTO")
 public record TokenResponse(
 	@Schema(description = "사용자 토큰 종류", example = "Bearer")
 	String tokenType,
