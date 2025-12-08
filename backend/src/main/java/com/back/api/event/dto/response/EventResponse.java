@@ -51,13 +51,7 @@ public record EventResponse(
 
 	@Schema(description = "이벤트 상태 (READY: 준비중, PRE_OPEN: 사전등록중, QUEUE_READY: 대기열 준비, OPEN: 티켓팅 진행중, CLOSED: 마감)",
 		example = "PRE_OPEN")
-	EventStatus status,
-
-	@Schema(description = "생성일시", example = "2024-12-01T10:00:00")
-	LocalDateTime createdAt,
-
-	@Schema(description = "수정일시", example = "2024-12-05T15:30:00")
-	LocalDateTime modifiedAt
+	EventStatus status
 ) {
 	public static EventResponse from(Event event) {
 		return new EventResponse(
@@ -74,9 +68,7 @@ public record EventResponse(
 			event.getTicketOpenAt(),
 			event.getTicketCloseAt(),
 			event.getMaxTicketAmount(),
-			event.getStatus(),
-			event.getCreateAt(),
-			event.getModifiedAt()
+			event.getStatus()
 		);
 	}
 }

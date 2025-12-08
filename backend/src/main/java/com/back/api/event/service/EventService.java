@@ -31,6 +31,7 @@ public class EventService {
 	public EventResponse createEvent(EventCreateRequest request) {
 		validateEventDates(request.preOpenAt(), request.preCloseAt(),
 			request.ticketOpenAt(), request.ticketCloseAt());
+		validateDuplicateEvent(request.title(), request.place(), request.ticketOpenAt());
 
 		Event event = request.toEntity();
 		Event savedEvent = eventRepository.save(event);
@@ -44,6 +45,7 @@ public class EventService {
 
 		validateEventDates(request.preOpenAt(), request.preCloseAt(),
 			request.ticketOpenAt(), request.ticketCloseAt());
+		validateDuplicateEventForUpdate(eventId, request.title(), request.place(), request.ticketOpenAt());
 
 		event.changeBasicInfo(
 			request.title(),
@@ -91,6 +93,9 @@ public class EventService {
 
 	private void validateEventDates(LocalDateTime preOpenAt, LocalDateTime preCloseAt,
 		LocalDateTime ticketOpenAt, LocalDateTime ticketCloseAt) {
+		if (preOpenAt.isBefore(LocalDateTime.now())) {
+			throw new ErrorException(EventErrorCode.INVALID_EVENT_DATE);
+		}
 		if (preOpenAt.isAfter(preCloseAt)) {
 			throw new ErrorException(EventErrorCode.INVALID_EVENT_DATE);
 		}
@@ -100,5 +105,21 @@ public class EventService {
 		if (preCloseAt.isAfter(ticketOpenAt)) {
 			throw new ErrorException(EventErrorCode.INVALID_EVENT_DATE);
 		}
+	}
+
+	private void validateDuplicateEvent(String title, String place, LocalDateTime ticketOpenAt) {
+		if (eventRepository.existsByTitleAndPlaceAndTicketOpenAt(title, place, ticketOpenAt)) {
+			throw new ErrorException(EventErrorCode.DUPLICATE_EVENT);
+		}
+	}
+
+	private void validateDuplicateEventForUpdate(Long eventId, String title, String place,
+		LocalDateTime ticketOpenAt) {
+		eventRepository.findByTitleAndPlaceAndTicketOpenAt(title, place, ticketOpenAt)
+			.ifPresent(existingEvent -> {
+				if (!existingEvent.getId().equals(eventId)) {
+					throw new ErrorException(EventErrorCode.DUPLICATE_EVENT);
+				}
+			});
 	}
 }
