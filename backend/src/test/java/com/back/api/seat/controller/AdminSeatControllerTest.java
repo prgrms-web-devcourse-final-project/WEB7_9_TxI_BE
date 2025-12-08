@@ -359,7 +359,7 @@ class AdminSeatControllerTest {
 	}
 
 	@Nested
-	@DisplayName("좌석 수정 (PUT /api/v1/admin/seats/{seatId})")
+	@DisplayName("좌석 수정 (PUT /api/v1/admin/events/{eventId}/seats/{seatId})")
 	class UpdateSeatTests {
 
 		@Test
@@ -376,7 +376,7 @@ class AdminSeatControllerTest {
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -401,7 +401,7 @@ class AdminSeatControllerTest {
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -425,7 +425,7 @@ class AdminSeatControllerTest {
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat2.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat2.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -445,7 +445,7 @@ class AdminSeatControllerTest {
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", 999999L)
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), 999999L)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -454,7 +454,7 @@ class AdminSeatControllerTest {
 	}
 
 	@Nested
-	@DisplayName("단일 좌석 삭제 (DELETE /api/v1/admin/seats/{seatId})")
+	@DisplayName("단일 좌석 삭제 (DELETE /api/v1/admin/events/{eventId}/seats/{seatId})")
 	class DeleteSeatTests {
 
 		@Test
@@ -462,7 +462,8 @@ class AdminSeatControllerTest {
 		void deleteSeat_Success() throws Exception {
 			var savedSeat = seatHelper.createSeat(testEvent, "A1", SeatGrade.R, 100000);
 
-			mockMvc.perform(delete("/api/v1/admin/seats/{seatId}", savedSeat.getId()))
+			mockMvc.perform(
+					delete("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId()))
 				.andDo(print())
 				.andExpect(status().isNoContent())
 				.andExpect(jsonPath("$.message").value("좌석을 삭제했습니다."));
@@ -471,7 +472,7 @@ class AdminSeatControllerTest {
 		@Test
 		@DisplayName("실패: 존재하지 않는 좌석 삭제")
 		void deleteSeat_NotFound() throws Exception {
-			mockMvc.perform(delete("/api/v1/admin/seats/{seatId}", 999999L))
+			mockMvc.perform(delete("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), 999999L))
 				.andDo(print())
 				.andExpect(status().isBadRequest());
 		}
@@ -545,7 +546,7 @@ class AdminSeatControllerTest {
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat1.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat1.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -654,7 +655,7 @@ class AdminSeatControllerTest {
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -676,7 +677,7 @@ class AdminSeatControllerTest {
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
