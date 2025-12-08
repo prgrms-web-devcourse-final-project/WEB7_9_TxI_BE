@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +18,6 @@ import com.back.global.properties.QueueSchedulerProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-
 /*
  * 대기열 입장 처리 스케줄러
  * 대기열 상위 100명씩 자동 입장
@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Profile("!local") //TODO 임시데이터 테스트 위해 잠시 비활성화
 public class QueueEntryScheduler {
 
 	private final QueueEntryRedisRepository queueEntryRedisRepository;

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.back.domain.event.entity.Event;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 @Profile("local")
+@Order(2)
 public class EventDataInit implements ApplicationRunner {
 
 	private final EventRepository eventRepository;
