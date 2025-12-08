@@ -9,3 +9,9 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
+
+custom:
+  jwt:
+    secret: i14Yy9GnDi28ac/ZtWIjiavJqz8iI0TGwOLzzKPvAq8KdzS2ABNfgv5yBNQYFPDohgxgMR+s/W5aTK7svlfYoQ==
+    access-token-duration: 3600000
+    refresh-token-duration: 1209600000

@@ -1,5 +1,6 @@
 package com.back.domain.user.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.back.global.entity.BaseEntity;
@@ -14,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -41,7 +43,7 @@ public class User extends BaseEntity {
 	private String password;
 
 	@Column(name = "birth_date")
-	private LocalDateTime birthDate;
+	private LocalDate birthDate;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
@@ -53,4 +55,20 @@ public class User extends BaseEntity {
 
 	@Column(name = "deleted_at")
 	private LocalDateTime deleteDate;
+
+	@Builder
+	public User(String email, String nickname, String password,
+		LocalDate birthDate, UserRole role, UserActiveStatus activeStatus) {
+		this.email = email;
+		this.nickname = nickname;
+		this.password = password;
+		this.birthDate = birthDate;
+		this.role = role;
+		this.activeStatus = activeStatus;
+	}
+
+	public User(Long id, String nickname) {
+		this.id = id;
+		this.nickname = nickname;
+	}
 }

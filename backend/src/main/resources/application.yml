@@ -38,3 +38,34 @@ springdoc:
     operations-sorter: method
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
+
+custom:
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:8080
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+    allowed-headers:
+      - "*"
+  
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-duration: ${JWT_ACCESS_TOKEN_DURATION:3600}
+    refresh-token-duration: ${JWT_REFRESH_TOKEN_DURATION:1209600}
+
+  dev:
+    domain: localhost
+    back-url: "http://${custom.dev.domain}:${server.port}"
+    front-url: "http://${custom.dev.domain}:3000"
+  prod:
+    domain: ${API_BASE_URL}
+    back-url: "https://api.${custom.prod.domain}"
+    front-url: "https://www.${custom.prod.domain}"
+  site:
+    domain: "${custom.dev.domain}"
+    back-url: "${custom.dev.backUrl}"
+    front-url: "${custom.dev.frontUrl}"
