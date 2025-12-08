@@ -14,7 +14,7 @@ public record ExpiredQueueResponse(
 
 	@Schema(description = "대기열 상태", example = "EXPIRED")
 	QueueEntryStatus status
-) {
+) implements QueueEntryStatusResponse {
 	public static ExpiredQueueResponse from(
 		Long userId,
 		Long eventId

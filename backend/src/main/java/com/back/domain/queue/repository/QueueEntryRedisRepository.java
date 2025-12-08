@@ -58,7 +58,7 @@ public class QueueEntryRedisRepository {
 	
 	public Set<Object> getTopWaitingUsers(Long eventId, int count) {
 		String key = String.format(WAITING_KEY, eventId);
-		return redisTemplate.opsForZSet().range(key, 0, count-1);
+		return redisTemplate.opsForZSet().range(key, 0, count - 1);
 	}
 
 	public boolean isInWaitingQueue(Long eventId, Long userId) {

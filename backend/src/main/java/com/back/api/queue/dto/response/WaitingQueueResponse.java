@@ -28,7 +28,7 @@ public record WaitingQueueResponse(
 
 	@Schema(description = "대기열 진행률(%)", example = "30", minimum = "0", maximum = "100")
 	Integer progress //진행률 백/프론트 중 고민
-) {
+) implements QueueEntryStatusResponse {
 
 	public static WaitingQueueResponse from(
 		Long userId,
