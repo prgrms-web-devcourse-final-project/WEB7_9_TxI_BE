@@ -62,7 +62,7 @@ custom:
     back-url: "http://${custom.dev.domain}:${server.port}"
     front-url: "http://${custom.dev.domain}:3000"
   prod:
-    domain: api.mmm3.click
+    domain: ${API_BASE_URL}
     back-url: "https://api.${custom.prod.domain}"
     front-url: "https://www.${custom.prod.domain}"
   site:
