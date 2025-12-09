@@ -19,14 +19,14 @@ import org.springframework.test.context.ActiveProfiles;
 import com.back.api.seat.service.SeatService;
 import com.back.config.TestRedisConfig;
 import com.back.domain.event.entity.Event;
-import com.back.domain.event.entity.EventCategory;
-import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
 import com.back.global.error.exception.ErrorException;
+import com.back.support.factory.EventFactory;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -43,31 +43,16 @@ public class SeatServiceIntegrationTest {
 	private SeatRepository seatRepository;
 
 	@Autowired
-	private com.back.domain.queue.repository.QueueEntryRedisRepository queueEntryRedisRepository;
+	private QueueEntryRedisRepository queueEntryRedisRepository;
 
 	private Event event;
 
 	@BeforeEach
 	void setUp() {
-		event = Event.builder()
-			.title("Concert")
-			.category(EventCategory.CONCERT)
-			.description("Desc")
-			.place("Seoul")
-			.imageUrl("image")
-			.minPrice(50000)
-			.maxPrice(150000)
-			.preOpenAt(java.time.LocalDateTime.now())
-			.preCloseAt(java.time.LocalDateTime.now().plusDays(1))
-			.ticketOpenAt(java.time.LocalDateTime.now().plusDays(2))
-			.ticketCloseAt(java.time.LocalDateTime.now().plusDays(3))
-			.maxTicketAmount(100)
-			.status(EventStatus.OPEN)
-			.build();
-
+		event = EventFactory.fakeEvent("테스트 콘서트");
 		eventRepository.save(event);
 
-		// Redis 큐 데이터 초기화
+		// Redis 초기화
 		queueEntryRedisRepository.clearAll(event.getId());
 	}
 
