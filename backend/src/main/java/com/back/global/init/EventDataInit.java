@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile("local")
+@Profile("dev")
 public class EventDataInit implements ApplicationRunner {
 
 	private final EventRepository eventRepository;

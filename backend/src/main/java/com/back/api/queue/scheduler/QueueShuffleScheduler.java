@@ -3,6 +3,7 @@ package com.back.api.queue.scheduler;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Profile("!dev") //임시 스케줄러 차단
 public class QueueShuffleScheduler {
 
 	private final QueueEntryRepository queueEntryRepository;
