@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile("local")
+@Profile("dev")
 @Order(1)
 public class UserDataInit implements ApplicationRunner {
 

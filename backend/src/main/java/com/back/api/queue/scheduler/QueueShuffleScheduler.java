@@ -5,12 +5,12 @@ import java.util.List;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.queue.service.QueueShuffleService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
 import com.back.global.properties.QueueSchedulerProperties;
 
@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /*
  * 대기열 셔플 스케줄러
- * ticketOpenAt 1시간 전 대기열 셔플 자동 실행
+ * ticketOpenAt 1시간 전 대기열 셔플 자동 실행 -> 이벤트 상태 PREOPEN에서 READY로 변경
  * 스케줄러 동작 주기 : 10분
  */
 @Component
@@ -31,8 +31,8 @@ public class QueueShuffleScheduler {
 	private final EventRepository eventRepository; //TODO service로 변경 필요
 	private final QueueShuffleService queueShuffleService;
 	private final QueueSchedulerProperties properties;
+	private final PreRegisterRepository preRegisterRepository;
 
-	@Transactional
 	@Scheduled(cron = "${queue.scheduler.shuffle.cron}",  zone = "Asia/Seoul") //10분마다 실행
 	public void autoShuffleQueue() {
 		try {
@@ -78,10 +78,7 @@ public class QueueShuffleScheduler {
 		}
 
 		//TODO PreRegisterService로 변경 필요
-		//List<Long> preRegisteredUserIds = preRegisterService.getPreRegisteredUserIds(eventId);
-
-		//임시 목 데이터
-		List<Long> preRegisteredUserIds = getMockPreRegisteredUser(eventId);
+		List<Long> preRegisteredUserIds = preRegisterRepository.findRegisteredUserIdsByEventId(eventId);
 
 		if (preRegisteredUserIds.isEmpty()) {
 			log.info("No pre-registered users for eventId: {}", eventId);
@@ -90,10 +87,5 @@ public class QueueShuffleScheduler {
 
 		queueShuffleService.shuffleQueue(eventId, preRegisteredUserIds);
 
-	}
-
-	//TODO 임시 목 데이터 삭제. 이후 PreRegisterService에서 조회
-	private List<Long> getMockPreRegisteredUser(Long eventId) {
-		return List.of(1L, 2L, 3L, 4L, 5L);
 	}
 }

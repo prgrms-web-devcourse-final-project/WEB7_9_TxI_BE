@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.back.domain.event.entity.Event;
+import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
@@ -56,6 +57,8 @@ public class QueueShuffleService {
 
 		saveToRedis(eventId, shuffledUserIds);
 		saveToDatabase(event, users, shuffledUserIds);
+
+		event.changeStatus(EventStatus.QUEUE_READY);
 
 		//TODO 알림 로직 추가 필요
 

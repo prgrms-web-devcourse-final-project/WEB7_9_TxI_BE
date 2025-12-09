@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.domain.event.entity.Event;
@@ -27,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-//@Profile("!local") //TODO 임시데이터 테스트 위해 잠시 비활성화
 public class QueueEntryScheduler {
 
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
@@ -36,12 +34,11 @@ public class QueueEntryScheduler {
 	private final QueueSchedulerProperties properties;
 
 	//대기열 자동 입장 처리
-	@Transactional
 	@Scheduled(cron = "${queue.scheduler.entry.cron}", zone = "Asia/Seoul") //10초마다 실행
 	public void autoQueueEntries() {
 		try {
 			List<Event> openEvents = eventRepository.findByStatusIn(
-				List.of(EventStatus.OPEN, EventStatus.QUEUE_READY)
+				List.of(EventStatus.OPEN)
 			);
 
 			if (openEvents.isEmpty()) {

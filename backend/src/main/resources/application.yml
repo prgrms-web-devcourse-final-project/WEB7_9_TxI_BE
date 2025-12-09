@@ -2,7 +2,7 @@ spring:
   config:
     import: optional:file:.env.properties
   profiles:
-    active: local
+    active: dev
   output:
     ansi:
       enabled: always
@@ -80,7 +80,8 @@ queue:
 
     #셔플 처리 스케줄러
     shuffle:
-      cron: "0 */10 * * * *" # 10분마다 실행
+      cron: "*/30 * * * * *" # 테스트를 위해 30초마다 실행
+      #cron: "0 */10 * * * *" # 10분마다 실행
       time-range-minutes: 10 # 시간 범위
 
 

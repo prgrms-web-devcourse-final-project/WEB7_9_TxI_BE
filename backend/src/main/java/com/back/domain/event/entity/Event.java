@@ -11,7 +11,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -35,7 +34,7 @@ public class Event extends BaseEntity {
 	@Column(nullable = false)
 	private EventCategory category;
 
-	@Lob
+	//@Lob
 	@Column(columnDefinition = "TEXT")
 	private String description;
 
