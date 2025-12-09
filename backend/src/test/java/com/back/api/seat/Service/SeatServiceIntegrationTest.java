@@ -12,11 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.seat.service.SeatService;
+import com.back.config.TestRedisConfig;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
@@ -29,6 +30,7 @@ import com.back.global.error.exception.ErrorException;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestRedisConfig.class)
 public class SeatServiceIntegrationTest {
 
 	@Autowired
@@ -39,6 +41,9 @@ public class SeatServiceIntegrationTest {
 
 	@Autowired
 	private SeatRepository seatRepository;
+
+	@Autowired
+	private com.back.domain.queue.repository.QueueEntryRedisRepository queueEntryRedisRepository;
 
 	private Event event;
 
@@ -62,11 +67,12 @@ public class SeatServiceIntegrationTest {
 
 		eventRepository.save(event);
 
+		// Redis 큐 데이터 초기화
+		queueEntryRedisRepository.clearAll(event.getId());
 	}
 
 	@Test
 	@DisplayName("AVAILABLE → RESERVED 상태 전이 성공하고 version 증가 확인")
-	@Transactional
 	void selectSeat_StatusTransition_Success() {
 
 		Seat seat = Seat.createSeat(event, "A1", SeatGrade.VIP, 150000);
@@ -75,6 +81,9 @@ public class SeatServiceIntegrationTest {
 		Long eventId = event.getId();
 		Long seatId = seat.getId();
 		Long userId = 1L;
+
+		// 큐 입장 처리
+		queueEntryRedisRepository.moveToEnteredQueue(eventId, userId);
 
 		Seat selected = seatService.selectSeat(eventId, seatId, userId);
 
@@ -93,6 +102,12 @@ public class SeatServiceIntegrationTest {
 		Long seatId = seat.getId();
 
 		int threadCount = 10;
+
+		// 모든 사용자를 큐에 입장시킴
+		for (int i = 0; i < threadCount; i++) {
+			queueEntryRedisRepository.moveToEnteredQueue(eventId, (long)(i + 1));
+		}
+
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 		CountDownLatch latch = new CountDownLatch(threadCount);
 
@@ -122,22 +137,25 @@ public class SeatServiceIntegrationTest {
 
 	@Test
 	@DisplayName("RESERVED → SOLD 상태 전이 성공")
-	@Transactional
 	void confirmPurchase_StatusTransition_Success() {
 
+		// AVAILABLE 상태로 먼저 저장 (version = 0)
 		Seat seat = Seat.createSeat(event, "A1", SeatGrade.VIP, 150000);
+		seatRepository.save(seat);
+
+		// RESERVED로 변경 후 저장 (version = 1)
 		seat.markAsReserved();
 		seatRepository.save(seat);
 
+		// SOLD로 변경 (version = 2)
 		Seat sold = seatService.confirmPurchase(event.getId(), seat.getId(), 1L);
 
 		assertThat(sold.getSeatStatus()).isEqualTo(SeatStatus.SOLD);
-		assertThat(sold.getVersion()).isEqualTo(2);  // RESERVED(1) → SOLD(2)
+		assertThat(sold.getVersion()).isEqualTo(2);  // AVAILABLE(0) → RESERVED(1) → SOLD(2)
 	}
 
 	@Test
 	@DisplayName("AVAILABLE 상태에서 confirmPurchase 하면 실패한다")
-	@Transactional
 	void confirmPurchase_InvalidTransition() {
 
 		Seat seat = Seat.createSeat(event, "A1", SeatGrade.VIP, 150000);

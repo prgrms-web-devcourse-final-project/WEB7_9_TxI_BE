@@ -110,5 +110,17 @@ public class QueueEntryRedisRepository {
 		return count != null ? (Long) count : 0L;
 	}
 
+	/**
+	 * 테스트용: 특정 이벤트의 모든 큐 데이터 삭제
+	 */
+	public void clearAll(Long eventId) {
+		String waitingKey = String.format(WAITING_KEY, eventId);
+		String enteredKey = String.format(ENTERED_KEY, eventId);
+		String countKey = String.format(ENTERED_COUNT_KEY, eventId);
+
+		redisTemplate.delete(waitingKey);
+		redisTemplate.delete(enteredKey);
+		redisTemplate.delete(countKey);
+	}
 
 }

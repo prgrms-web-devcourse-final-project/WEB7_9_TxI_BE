@@ -47,6 +47,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("net.datafaker:datafaker:2.3.1")
+    testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
 
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")

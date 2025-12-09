@@ -10,6 +10,11 @@ spring:
     hibernate:
       ddl-auto: create-drop
 
+  data:
+    redis:
+      host: localhost
+      port: 0 #포트 랜덤 설정
+
 custom:
   jwt:
     secret: i14Yy9GnDi28ac/ZtWIjiavJqz8iI0TGwOLzzKPvAq8KdzS2ABNfgv5yBNQYFPDohgxgMR+s/W5aTK7svlfYoQ==
