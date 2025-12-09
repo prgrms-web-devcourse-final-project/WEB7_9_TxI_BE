@@ -125,6 +125,17 @@ public class GlobalExceptionHandler {
 			.body(ApiResponse.fail(code));
 	}
 
+	// 비즈니스 로직 검증 실패 (IllegalArgumentException)
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<ApiResponse<?>> handleIllegalArgument(IllegalArgumentException ex) {
+		ErrorCode code = CommonErrorCode.INVALID_INPUT_VALUE;
+		log.error("Illegal argument: {}", ex.getMessage(), ex);
+
+		return ResponseEntity
+			.status(code.getHttpStatus())
+			.body(ApiResponse.fail(code.getHttpStatus(), ex.getMessage()));
+	}
+
 	// 그 외 모든 예외 처리
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiResponse<?>> handleAllException(final Exception ex) {

@@ -35,7 +35,7 @@ public record EnteredQueueResponse(
 	)
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	LocalDateTime expiredAt
-) {
+) implements QueueEntryStatusResponse {
 	public static EnteredQueueResponse from(
 		Long userId,
 		Long eventId,

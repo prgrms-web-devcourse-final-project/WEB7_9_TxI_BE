@@ -1,6 +1,10 @@
 package com.back.domain.user.entity;
 
 public enum UserRole {
-	USER,
-	ADMIN
+	NORMAL,
+	ADMIN;
+
+	public String toAuthority() {
+		return "ROLE_" + this.name();
+	}
 }
