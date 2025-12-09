@@ -69,6 +69,9 @@ public class Event extends BaseEntity {
 	@Column(nullable = false)
 	private EventStatus status;
 
+	@Column(nullable = false)
+	private boolean deleted = false;
+
 	@Builder
 	public Event(String title, EventCategory category, String description, String place,
 		String imageUrl, Integer minPrice, Integer maxPrice,
@@ -89,6 +92,7 @@ public class Event extends BaseEntity {
 		this.ticketCloseAt = ticketCloseAt;
 		this.maxTicketAmount = maxTicketAmount;
 		this.status = status != null ? status : EventStatus.READY;
+		this.deleted = false;
 	}
 
 	public void changeBasicInfo(String title, EventCategory category, String description, String place,
@@ -117,6 +121,14 @@ public class Event extends BaseEntity {
 
 	public void changeStatus(EventStatus status) {
 		this.status = status != null ? status : this.status;
+	}
+
+	public void delete() {
+		this.deleted = true;
+	}
+
+	public boolean isDeleted() {
+		return this.deleted;
 	}
 
 	private void validatePrice(Integer minPrice, Integer maxPrice) {

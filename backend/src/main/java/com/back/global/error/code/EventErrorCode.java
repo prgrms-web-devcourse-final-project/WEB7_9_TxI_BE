@@ -15,6 +15,7 @@ public enum EventErrorCode implements ErrorCode {
 	// ===== 이벤트 유효성 검증 실패 =====
 	INVALID_EVENT_DATE(HttpStatus.BAD_REQUEST, "이벤트 날짜가 유효하지 않습니다."),
 	EVENT_ALREADY_CLOSED(HttpStatus.BAD_REQUEST, "이미 마감된 이벤트입니다."),
+	DUPLICATE_EVENT(HttpStatus.BAD_REQUEST, "이미 동일한 이벤트가 존재합니다."),
 
 	// ===== 사전등록 기간 관련 =====
 	PRE_REGISTER_NOT_OPEN(HttpStatus.BAD_REQUEST, "사전등록 기간이 아닙니다.");
