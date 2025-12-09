@@ -15,11 +15,14 @@ import com.back.api.seat.service.SeatService;
 import com.back.domain.seat.entity.Seat;
 import com.back.global.response.ApiResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@Tag(name = "Seat API", description = "사용자용 좌석 API")
 public class SeatController {
 
 	private final SeatService seatService;
@@ -29,6 +32,7 @@ public class SeatController {
 	 * GET /api/v1/events/{eventId}/seats
 	 */
 	@GetMapping("/events/{eventId}/seats")
+	@Operation(summary = "좌석 목록 조회", description = "특정 이벤트의 모든 좌석 목록을 조회합니다. 큐에 입장한 사용자만 조회 가능합니다.")
 	public ApiResponse<List<SeatResponse>> getSeatsByEvent(
 		@PathVariable Long eventId
 	) {
@@ -47,6 +51,7 @@ public class SeatController {
 	 * POST /api/v1/events/{eventId}/seats/{seatId}/select
 	 */
 	@PostMapping("/events/{eventId}/seats/{seatId}/select")
+	@Operation(summary = "좌석 선택", description = "특정 좌석을 RESERVED 상태로 변경합니다. 결제 단계가 종료되면 SOLD 상태로 변경됩니다.")
 	public ApiResponse<SeatResponse> selectSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId,
