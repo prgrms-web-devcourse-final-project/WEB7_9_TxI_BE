@@ -29,6 +29,14 @@ public class EventHelper {
 		return eventRepository.save(EventFactory.fakeEvent(category, status));
 	}
 
+	public Event createPreOpenEvent() {
+		return eventRepository.save(EventFactory.fakePreOpenEvent());
+	}
+
+	public Event createReadyEvent() {
+		return eventRepository.save(EventFactory.fakeReadyEvent());
+	}
+
 	public void clearEvent() {
 		eventRepository.deleteAll();
 	}

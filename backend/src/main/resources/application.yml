@@ -67,8 +67,8 @@ custom:
     front-url: "https://www.${custom.prod.domain}"
   site:
     domain: "${custom.dev.domain}"
-    back-url: "${custom.dev.backUrl}"
-    front-url: "${custom.dev.frontUrl}"
+    back-url: "${custom.dev.back-url}"
+    front-url: "${custom.dev.front-url}"
 
 queue:
   scheduler:
@@ -82,3 +82,6 @@ queue:
     shuffle:
       cron: "0 */10 * * * *" # 10분마다 실행
       time-range-minutes: 10 # 시간 범위
+
+
+
