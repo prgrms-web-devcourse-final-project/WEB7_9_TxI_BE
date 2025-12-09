@@ -31,7 +31,7 @@ public class QueueShuffleScheduler {
 	private final EventRepository eventRepository; //TODO service로 변경 필요
 	private final QueueShuffleService queueShuffleService;
 	private final QueueSchedulerProperties properties;
-	private final PreRegisterRepository preRegisterRepository;
+	private final PreRegisterRepository preRegisterRepository; //TODO service로 변경 필요
 
 	@Scheduled(cron = "${queue.scheduler.shuffle.cron}",  zone = "Asia/Seoul") //10분마다 실행
 	public void autoShuffleQueue() {

@@ -10,9 +10,9 @@ import com.back.domain.preregister.entity.PreRegister;
 
 public interface PreRegisterRepository extends JpaRepository<PreRegister, Long> {
 
-	@Query("SELECT pr.user.id FROM PreRegister pr " +
-		"WHERE pr.event.id = :eventId " +
-		"AND pr.preRegisterStatus = 'REGISTERED'")
+	@Query("SELECT pr.user.id FROM PreRegister pr "
+		+ "WHERE pr.event.id = :eventId "
+		+ "AND pr.preRegisterStatus = 'REGISTERED'")
 	List<Long> findRegisteredUserIdsByEventId(@Param("eventId") Long eventId);
 
 	long countByEvent_Id(Long eventId);

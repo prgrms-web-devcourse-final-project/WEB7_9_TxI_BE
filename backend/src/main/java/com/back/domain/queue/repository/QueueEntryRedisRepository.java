@@ -55,7 +55,7 @@ public class QueueEntryRedisRepository {
 		Long size = redisTemplate.opsForZSet().size(key);
 		return size != null ? size : 0L;
 	}
-	
+
 	public Set<Object> getTopWaitingUsers(Long eventId, int count) {
 		String key = String.format(WAITING_KEY, eventId);
 		return redisTemplate.opsForZSet().range(key, 0, count - 1);

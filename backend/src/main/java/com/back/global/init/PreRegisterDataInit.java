@@ -65,7 +65,7 @@ public class PreRegisterDataInit implements ApplicationRunner {
 
 	}
 
-	public List<PreRegister> createTestPreRegisters(Event event, List<User> users, int count){
+	public List<PreRegister> createTestPreRegisters(Event event, List<User> users, int count) {
 		List<PreRegister> preRegisters = new ArrayList<>();
 
 		int registerCount = Math.min(count, users.size());

@@ -1,5 +1,6 @@
 package com.back.global.init;
 
+// 해당 클래스 임시 보류 -> preRegister를 통해 생성되는 방식으로 테스트 중
 // @Component
 // @RequiredArgsConstructor
 // @Slf4j
@@ -90,7 +91,7 @@ package com.back.global.init;
 // 		// }
 //
 // 		queueEntryRepository.saveAll(entries);
-// 		log.info("✅ QueueEntry DB 저장 완료: {}개", entries.size());
+// 		log.info("QueueEntry DB 저장 완료: {}개", entries.size());
 // 	}
 //
 // 	/**
@@ -113,7 +114,7 @@ package com.back.global.init;
 // 			// 		i + 1
 // 			// 	);
 // 			// }
-// 			// log.info("✅ Redis WAITING 큐 저장: 50명");
+// 			// log.info("Redis WAITING 큐 저장: 50명");
 // 			//
 // 			// // 2. ENTERED 큐에 30명 추가 (51~80번) - 직접 추가 메서드 사용
 // 			// for (int i = 50; i < 80; i++) {
@@ -122,15 +123,15 @@ package com.back.global.init;
 // 			// 		users.get(i).getId()
 // 			// 	);
 // 			// }
-// 			// log.info("✅ Redis ENTERED 큐 저장: 30명 (TTL: 15분)");
+// 			// log.info("Redis ENTERED 큐 저장: 30명 (TTL: 15분)");
 //
 // 			// 3. ENTERED 카운트 설정
 // 			queueEntryRedisRepository.setEnteredCount(eventId, 30);
-// 			log.info("✅ Redis ENTERED 카운트 저장: 30");
+// 			log.info("Redis ENTERED 카운트 저장: 30");
 //
-// 			log.info("✅ Redis 데이터 생성 완료 - eventId: {}", eventId);
+// 			log.info("Redis 데이터 생성 완료 - eventId: {}", eventId);
 // 		} catch (Exception e) {
-// 			log.error("❌ Redis 데이터 생성 실패: {}", e.getMessage(), e);
+// 			log.error("Redis 데이터 생성 실패: {}", e.getMessage(), e);
 // 		}
 // 	}
 // }

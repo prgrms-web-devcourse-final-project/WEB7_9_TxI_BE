@@ -33,12 +33,10 @@ public class TicketOpenScheduler {
 				return;
 			}
 
-			int openedCount = 0;
-
 			for (Event event : events) {
 				// ticketOpenAt이 현재 시간보다 이전이거나 같으면 오픈
-				if (event.getTicketOpenAt().isBefore(now) ||
-					event.getTicketOpenAt().isEqual(now)) {
+				if (event.getTicketOpenAt().isBefore(now)
+					|| event.getTicketOpenAt().isEqual(now)) {
 
 
 					// QUEUE_READY → OPEN 상태 변경
@@ -46,7 +44,6 @@ public class TicketOpenScheduler {
 					eventRepository.save(event);
 
 					log.info("이벤트 상태 변경: QUEUE_READY → OPEN");
-					openedCount++;
 				}
 			}
 
