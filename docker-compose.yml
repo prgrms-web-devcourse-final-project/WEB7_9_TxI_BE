@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  waitfair-postgres:
+    image: postgres:18
+    container_name: waitfair-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-waitfair}
+      POSTGRES_USER: ${POSTGRES_USER:-waitfair}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-waitfair}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  waitfair-redis:
+    image: redis:7-alpine
+    container_name: waitfair-redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - ./redis-data:/data
+
+  waitfair-backend:
+    image: ${BACKEND_IMAGE:-min7712/waitfair-backend}:latest
+    container_name: waitfair-backend
+    restart: unless-stopped
+    depends_on:
+      - waitfair-postgres
+      - waitfair-redis
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://waitfair-postgres:5432/${POSTGRES_DB:-waitfair}}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-${POSTGRES_USER:-waitfair}}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-${POSTGRES_PASSWORD:-waitfair}}
+
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST:-waitfair-redis}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT:-6379}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD:-}
+
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
