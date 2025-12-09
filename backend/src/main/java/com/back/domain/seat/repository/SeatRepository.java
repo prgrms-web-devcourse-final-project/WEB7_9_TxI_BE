@@ -13,7 +13,13 @@ import com.back.domain.seat.entity.SeatGrade;
 
 public interface SeatRepository extends JpaRepository<Seat, Long> {
 
-	List<Seat> findByEventId(Long eventId);
+	@Query("""
+			SELECT s
+			FROM Seat s
+			WHERE s.event.id = :eventId
+			ORDER BY s.grade ASC, s.seatCode ASC
+		""")
+	List<Seat> findSortedSeatListByEventId(Long eventId);
 
 	Optional<Seat> findByEventIdAndId(Long eventId, Long seatId);
 

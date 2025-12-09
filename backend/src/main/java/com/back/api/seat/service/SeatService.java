@@ -41,7 +41,7 @@ public class SeatService {
 			throw new ErrorException(SeatErrorCode.NOT_FOUND_EVENT);
 		}
 
-		return seatRepository.findByEventId(eventId);
+		return seatRepository.findSortedSeatListByEventId(eventId);
 	}
 
 	/**
@@ -61,15 +61,11 @@ public class SeatService {
 
 			seat.markAsReserved();
 
-			eventPublisher.publishEvent(new SeatStatusMessage(
-				eventId,
-				seatId,
-				"RESERVED",
-				seat.getPrice(),
-				seat.getGrade().name()
-			));
+			Seat saved = seatRepository.save(seat);
 
-			return seatRepository.save(seat);
+			eventPublisher.publishEvent(SeatStatusMessage.from(saved));
+
+			return saved;
 		} catch (ObjectOptimisticLockingFailureException ex) {
 			throw new ErrorException(SeatErrorCode.SEAT_CONCURRENCY_FAILURE);
 		}
@@ -78,23 +74,21 @@ public class SeatService {
 
 	@Transactional
 	public Seat confirmPurchase(Long eventId, Long seatId, Long userId) {
-		Seat seat = seatRepository.findByEventIdAndId(eventId, seatId)
-			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+		try {
+			Seat seat = seatRepository.findByEventIdAndId(eventId, seatId)
+				.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
-		// 좌석을 SOLD 상태로 변경
-		seat.markAsSold();
+			// 좌석을 SOLD 상태로 변경
+			seat.markAsSold();
 
-		Seat savedSeat = seatRepository.save(seat);
+			Seat saved = seatRepository.save(seat);
 
-		// 웹소켓으로 좌석 상태 변경 알림
-		eventPublisher.publishEvent(new SeatStatusMessage(
-			eventId,
-			seatId,
-			"SOLD",
-			seat.getPrice(),
-			seat.getGrade().name()
-		));
+			// 웹소켓으로 좌석 상태 변경 알림
+			eventPublisher.publishEvent(SeatStatusMessage.from(saved));
 
-		return savedSeat;
+			return saved;
+		} catch (ObjectOptimisticLockingFailureException ex) {
+			throw new ErrorException(SeatErrorCode.SEAT_CONCURRENCY_FAILURE);
+		}
 	}
 }
