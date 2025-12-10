@@ -18,29 +18,24 @@ import com.back.api.queue.service.QueueShuffleService;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.global.response.ApiResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "QueueEntry Admin API", description = "관리자 대기열 API")
+
 @RestController
 @RequestMapping("/api/v1/admin/queues")
 @RequiredArgsConstructor
-public class AdminQueueEntryController {
+public class AdminQueueEntryController implements AdminQueueEntryApi {
 
 	private final QueueShuffleService queueShuffleService;
 	private final QueueEntryReadService queueEntryReadService;
 	private final QueueEntryProcessService queueEntryProcessService;
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 
+	@Override
 	@PostMapping("/{eventId}/shuffle")
-	@Operation(summary = "대기열 셔플", description = "이벤트의 대기열을 랜덤 큐로 셔플합니다.(수동)")
 	public ApiResponse<ShuffleQueueResponse> shuffleQueue(
-		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
-
 		@RequestBody @Valid ShuffleQueueRequest request
 	) {
 		queueShuffleService.shuffleQueue(eventId, request.preRegisteredUserIds());
@@ -52,11 +47,9 @@ public class AdminQueueEntryController {
 		return ApiResponse.created("랜덤 큐가 생성되었습니다.", response);
 	}
 
-
+	@Override
 	@GetMapping("/{eventId}/statistics")
-	@Operation(summary = "대기열 통계 조회", description = "이벤트의 대기열 통계를 조회합니다.")
 	public ApiResponse<QueueStatisticsResponse> getQueueStatistics(
-		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId
 	) {
 		QueueStatisticsResponse response = queueEntryReadService.getQueueStatistics(eventId);
@@ -64,16 +57,12 @@ public class AdminQueueEntryController {
 	}
 
 	//테스트용
+	@Override
 	@PostMapping("/{eventId}/users/{userId}/complete")
-	@Operation(summary = "결제 완료 처리", description = "특정 사용자의 결제를 완료 처리합니다.")
 	public ApiResponse<CompletedQueueResponse> completePayment(
-		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
-
-		@Parameter(description = "사용자 ID", example = "1")
 		@PathVariable Long userId
 	) {
-
 		queueEntryProcessService.completePayment(eventId, userId);
 
 		CompletedQueueResponse response = CompletedQueueResponse.from(userId, eventId);
@@ -81,10 +70,9 @@ public class AdminQueueEntryController {
 
 	}
 
+	@Override
 	@DeleteMapping("/{eventId}/reset")
-	@Operation(summary = "[테스트용] 대기열 초기화", description = "특정 이벤트의 대기열(REDIS)을 완전히 초기화합니다.")
 	public ApiResponse<Void> resetQueue(
-		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId
 	) {
 		queueEntryRedisRepository.clearAll(eventId);
