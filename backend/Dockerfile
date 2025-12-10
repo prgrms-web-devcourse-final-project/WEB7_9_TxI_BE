@@ -15,7 +15,6 @@ WORKDIR /app
 
 # 빌드 결과 JAR 복사 (libs 안에 하나만 있다고 가정)
 COPY --from=builder /app/build/libs/*.jar app.jar
-COPY .env.properties .env.properties
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

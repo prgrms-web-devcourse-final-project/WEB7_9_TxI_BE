@@ -2,7 +2,10 @@ package com.back.api.seat.controller;
 
 import java.util.List;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +30,7 @@ public class AdminSeatController implements AdminSeatApi {
 	private final AdminSeatService adminSeatService;
 
 	@Override
+	@PostMapping("/events/{eventId}/seats/bulk")
 	public ApiResponse<List<SeatResponse>> bulkCreateSeats(
 		@PathVariable Long eventId,
 		@Valid @RequestBody BulkCreateSeatsRequest request
@@ -43,6 +47,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
+	@PostMapping("/events/{eventId}/seats/auto")
 	public ApiResponse<List<SeatResponse>> autoCreateSeats(
 		@PathVariable Long eventId,
 		@Valid @RequestBody AutoCreateSeatsRequest request
@@ -60,6 +65,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
+	@PostMapping("/events/{eventId}/seats/single")
 	public ApiResponse<SeatResponse> createSingleSeat(
 		@PathVariable Long eventId,
 		@Valid @RequestBody SeatCreateRequest request
@@ -70,6 +76,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
+	@PutMapping("/events/{eventId}/seats/{seatId}")
 	public ApiResponse<SeatResponse> updateSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId,
@@ -81,6 +88,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
+	@DeleteMapping("/events/{eventId}/seats/{seatId}")
 	public ApiResponse<Void> deleteSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId
@@ -91,6 +99,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
+	@DeleteMapping("/events/{eventId}/seats")
 	public ApiResponse<Void> deleteAllEventSeats(
 		@PathVariable Long eventId
 	) {

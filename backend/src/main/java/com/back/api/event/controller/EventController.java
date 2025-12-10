@@ -22,7 +22,6 @@ import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.global.response.ApiResponse;
 
-import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +32,7 @@ public class EventController implements EventApi {
 
 	private final EventService eventService;
 
+	@Override
 	@PostMapping
 	public ApiResponse<EventResponse> createEvent(
 		@Valid @RequestBody EventCreateRequest request) {
@@ -40,38 +40,37 @@ public class EventController implements EventApi {
 		return ApiResponse.created("이벤트가 생성되었습니다.", response);
 	}
 
+	@Override
 	@PutMapping("/{eventId}")
 	public ApiResponse<EventResponse> updateEvent(
-		@Parameter(description = "수정할 이벤트 ID", example = "1", required = true)
 		@PathVariable Long eventId,
 		@Valid @RequestBody EventUpdateRequest request) {
 		EventResponse response = eventService.updateEvent(eventId, request);
 		return ApiResponse.ok("이벤트가 수정되었습니다.", response);
 	}
 
+	@Override
 	@DeleteMapping("/{eventId}")
 	public ApiResponse<Void> deleteEvent(
-		@Parameter(description = "삭제할 이벤트 ID", example = "1", required = true)
 		@PathVariable Long eventId) {
 		eventService.deleteEvent(eventId);
 		return ApiResponse.noContent("이벤트가 삭제되었습니다.");
 	}
 
+	@Override
 	@GetMapping("/{eventId}")
 	public ApiResponse<EventResponse> getEvent(
-		@Parameter(description = "조회할 이벤트 ID", example = "1", required = true)
 		@PathVariable Long eventId) {
 		EventResponse response = eventService.getEvent(eventId);
 		return ApiResponse.ok("이벤트를 조회했습니다.", response);
 	}
 
+	@Override
 	@GetMapping
 	public ApiResponse<Page<EventListResponse>> getEvents(
-		@Parameter @RequestParam(required = false) EventStatus status,
-
-		@Parameter @RequestParam(required = false) EventCategory category,
-
-		@Parameter @PageableDefault Pageable pageable) {
+		@RequestParam(required = false) EventStatus status,
+		@RequestParam(required = false) EventCategory category,
+		@PageableDefault Pageable pageable) {
 		Page<EventListResponse> response = eventService.getEvents(status, category, pageable);
 		return ApiResponse.ok("이벤트 목록을 조회했습니다.", response);
 	}

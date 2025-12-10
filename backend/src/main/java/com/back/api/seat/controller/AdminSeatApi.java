@@ -2,10 +2,7 @@ package com.back.api.seat.controller;
 
 import java.util.List;
 
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.back.api.seat.dto.request.AutoCreateSeatsRequest;
@@ -32,7 +29,6 @@ public interface AdminSeatApi {
 		"NOT_FOUND_EVENT",
 		"DUPLICATE_SEAT_CODE"
 	})
-	@PostMapping("/events/{eventId}/seats/bulk")
 	ApiResponse<List<SeatResponse>> bulkCreateSeats(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
@@ -47,7 +43,6 @@ public interface AdminSeatApi {
 		"NOT_FOUND_EVENT",
 		"DUPLICATE_SEAT_CODE"
 	})
-	@PostMapping("/events/{eventId}/seats/auto")
 	ApiResponse<List<SeatResponse>> autoCreateSeats(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
@@ -62,7 +57,6 @@ public interface AdminSeatApi {
 		"NOT_FOUND_EVENT",
 		"DUPLICATE_SEAT_CODE"
 	})
-	@PostMapping("/events/{eventId}/seats/single")
 	ApiResponse<SeatResponse> createSingleSeat(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
@@ -77,7 +71,6 @@ public interface AdminSeatApi {
 		"NOT_FOUND_SEAT",
 		"DUPLICATE_SEAT_CODE"
 	})
-	@PutMapping("/events/{eventId}/seats/{seatId}")
 	ApiResponse<SeatResponse> updateSeat(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
@@ -91,7 +84,6 @@ public interface AdminSeatApi {
 		description = "단일 좌석을 삭제합니다."
 	)
 	@ApiErrorCode("NOT_FOUND_SEAT")
-	@DeleteMapping("/events/{eventId}/seats/{seatId}")
 	ApiResponse<Void> deleteSeat(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
@@ -103,7 +95,6 @@ public interface AdminSeatApi {
 		summary = "좌석 전량 삭제",
 		description = "이벤트의 모든 좌석을 삭제합니다."
 	)
-	@DeleteMapping("/events/{eventId}/seats")
 	ApiResponse<Void> deleteAllEventSeats(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId
