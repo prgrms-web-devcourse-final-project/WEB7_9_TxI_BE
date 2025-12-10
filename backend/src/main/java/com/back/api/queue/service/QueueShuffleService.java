@@ -9,9 +9,9 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.event.service.EventService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
-import com.back.domain.event.repository.EventRepository;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
@@ -38,13 +38,12 @@ public class QueueShuffleService {
 	private final QueueEntryRepository queueEntryRepository;
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 	private final UserRepository userRepository;
-	private final EventRepository eventRepository;
+	private final EventService eventService;
 
 	@Transactional
 	public void shuffleQueue(Long eventId, List<Long> preRegisteredUserIds) {
 
-		Event event = eventRepository.findById(eventId)
-				.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.EVENT_NOT_FOUND));
+		Event event = eventService.getEventEntity(eventId);
 
 		validateShuffleRequest(eventId, preRegisteredUserIds);
 

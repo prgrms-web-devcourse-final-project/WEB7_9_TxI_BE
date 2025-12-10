@@ -6,10 +6,10 @@ import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.back.api.event.service.EventService;
 import com.back.api.queue.service.QueueShuffleService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
-import com.back.domain.event.repository.EventRepository;
 import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
 import com.back.global.properties.QueueSchedulerProperties;
@@ -29,7 +29,7 @@ public class QueueShuffleScheduler {
 
 	private final QueueEntryRepository queueEntryRepository;
 	private final QueueShuffleService queueShuffleService;
-	private final EventRepository eventRepository; //TODO service로 변경 필요
+	private final EventService eventService;
 	private final PreRegisterRepository preRegisterRepository; //TODO service로 변경 필요
 	private final QueueSchedulerProperties properties;
 
@@ -45,7 +45,7 @@ public class QueueShuffleScheduler {
 			LocalDateTime rangeStart = targetTime.minusMinutes(timeRangeMinutes);
 			LocalDateTime rangeEnd = targetTime.plusMinutes(timeRangeMinutes);
 
-			List<Event> eventList = eventRepository.findByTicketOpenAtBetweenAndStatus(
+			List<Event> eventList = eventService.findEventsByTicketOpenAtBetweenAndStatus(
 				rangeStart,
 				rangeEnd,
 				EventStatus.PRE_OPEN

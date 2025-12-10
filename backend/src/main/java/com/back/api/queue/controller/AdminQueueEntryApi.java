@@ -69,9 +69,6 @@ public interface AdminQueueEntryApi {
 		summary = "[테스트용] 대기열 초기화",
 		description = "특정 이벤트의 대기열(REDIS)을 완전히 초기화합니다."
 	)
-	@ApiErrorCode({
-
-	})
 	ApiResponse<Void> resetQueue(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId

@@ -7,10 +7,10 @@ import java.util.Set;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.back.api.event.service.EventService;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
-import com.back.domain.event.repository.EventRepository;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.global.properties.QueueSchedulerProperties;
 
@@ -29,16 +29,14 @@ public class QueueEntryScheduler {
 
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 	private final QueueEntryProcessService queueEntryProcessService;
-	private final EventRepository eventRepository; //TODO service로 변경 필요
+	private final EventService eventService;
 	private final QueueSchedulerProperties properties;
 
 	//대기열 자동 입장 처리
 	@Scheduled(cron = "${queue.scheduler.entry.cron}", zone = "Asia/Seoul") //10초마다 실행
 	public void autoQueueEntries() {
 		try {
-			List<Event> openEvents = eventRepository.findByStatusIn(
-				List.of(EventStatus.OPEN)
-			);
+			List<Event> openEvents = eventService.findEventsByStatus((EventStatus.OPEN));
 
 			if (openEvents.isEmpty()) {
 				return;
