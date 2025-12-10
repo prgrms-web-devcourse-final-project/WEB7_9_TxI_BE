@@ -18,13 +18,13 @@ public interface AuthApi {
 	@Operation(summary = "사용자 회원가입", description = "이메일, 닉네임, 비밀번호, 생년월일로 회원가입")
 	@ApiErrorCode({
 		"ALREADY_EXIST_EMAIL",
-		"ALREADY_EXIST_NICKNAME"
+		"ALREADY_EXIST_NICKNAME",
 	})
 	ApiResponse<AuthResponse> signup(@Valid @RequestBody SignupRequest request);
 
 	@Operation(summary = "사용자 로그인", description = "이메일, 비밀번호로 로그인")
 	@ApiErrorCode({
-		""
+		"LOGIN_FAILED",
 	})
 	ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request);
 }
