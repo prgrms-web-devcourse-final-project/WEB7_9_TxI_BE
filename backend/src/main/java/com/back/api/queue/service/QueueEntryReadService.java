@@ -125,7 +125,6 @@ public class QueueEntryReadService {
 	}
 
 
-
 	public QueueStatisticsResponse getQueueStatistics(Long eventId) {
 		long totalWaitingCount = queueEntryRepository.countByEvent_Id(eventId);
 
@@ -158,6 +157,7 @@ public class QueueEntryReadService {
 		);
 
 	}
+
 
 
 }
