@@ -3,6 +3,7 @@ package com.back.api.event.scheduler;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,9 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Profile("!dev") //임시 스케줄러 차단
 public class EventOpenScheduler {
 
-	private final EventRepository eventRepository; //TODO 서비스로 변경
+	private final EventRepository eventRepository;
 
 	@Scheduled(cron = "${event.scheduler.open.cron}", zone = "Asia/Seoul") // 매 분 실행
 	public void openTicketing() {
