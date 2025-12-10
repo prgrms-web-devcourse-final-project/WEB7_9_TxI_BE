@@ -12,7 +12,7 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
-import com.back.global.properties.SchedulerProperties;
+import com.back.global.properties.QueueSchedulerProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +32,10 @@ public class QueueEntryScheduler {
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 	private final QueueEntryProcessService queueEntryProcessService;
 	private final EventRepository eventRepository; //TODO service로 변경 필요
-	private final SchedulerProperties properties;
+	private final QueueSchedulerProperties properties;
 
 	//대기열 자동 입장 처리
-	@Scheduled(cron = "${scheduler.queue-entry.cron}", zone = "Asia/Seoul") //10초마다 실행
+	@Scheduled(cron = "${queue.scheduler.entry.cron}", zone = "Asia/Seoul") //10초마다 실행
 	public void autoQueueEntries() {
 		try {
 			List<Event> openEvents = eventRepository.findByStatusIn(
@@ -73,16 +73,26 @@ public class QueueEntryScheduler {
 		//입장 가능한 인원 확인
 		int availableEnteredCount = maxEnteredLimit - currentEnteredCount.intValue();
 
-		if (availableEnteredCount < 0) {
+		if (availableEnteredCount <= 0) {
+			log.info("[EventId: {}] 최대 수용 인원 도달 - 현재: {}명, 최대: {}명",
+				eventId, currentEnteredCount, maxEnteredLimit);
 			return;
 		}
 
-		//한번에 입장시킬 인원. 현재는 100명
+		//한번에 입장시킬 인원
 		int batchSize = properties.getEntry().getBatchSize();
+		log.info("배치사이즈 : {}", batchSize);
 
-		// 입장 인원 선정 -> batchSize와 빈 자리 중 작은 값으로 설정
+		// 입장 인원 선정
 		// 빈 자리 순차적으로 들어갈 수 있도록 함
-		int entryCount = Math.min(Math.min(batchSize, availableEnteredCount), totalWaitingCount.intValue());
+		int entryCount = Math.min(
+			batchSize,
+			Math.min(availableEnteredCount, totalWaitingCount.intValue())  // 빈 자리와 대기 인원 중 작은 값
+		);
+
+		log.info("입장 처리 - eventId: {}, 대기: {}명, 입장완료: {}명, 빈자리: {}명, 배치사이즈: {}명, 입장시킬인원: {}명",
+			eventId, totalWaitingCount, currentEnteredCount, availableEnteredCount, batchSize, entryCount);
+
 
 		//상위 N명 추출
 		Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, entryCount);

@@ -9,12 +9,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @Component
-@ConfigurationProperties(prefix = "scheduler")
-public class SchedulerProperties {
+@ConfigurationProperties(prefix = "queue.scheduler")
+public class QueueSchedulerProperties {
 
 	private Entry entry = new Entry();
 	private Shuffle shuffle = new Shuffle();
-	private EventOpen eventOpen = new EventOpen();
 
 	@Getter
 	@Setter
@@ -31,9 +30,4 @@ public class SchedulerProperties {
 		private int timeRangeMinutes;
 	}
 
-	@Getter
-	@Setter
-	public static class EventOpen {
-		private String cron;
-	}
 }

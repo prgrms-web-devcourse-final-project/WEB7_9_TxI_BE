@@ -1,5 +1,6 @@
 package com.back.api.queue.controller;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -8,11 +9,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.queue.dto.request.ShuffleQueueRequest;
+import com.back.api.queue.dto.response.CompletedQueueResponse;
 import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.ShuffleQueueResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.queue.service.QueueEntryReadService;
 import com.back.api.queue.service.QueueShuffleService;
+import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.global.response.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +33,7 @@ public class AdminQueueEntryController {
 	private final QueueShuffleService queueShuffleService;
 	private final QueueEntryReadService queueEntryReadService;
 	private final QueueEntryProcessService queueEntryProcessService;
+	private final QueueEntryRedisRepository queueEntryRedisRepository;
 
 	@PostMapping("/{eventId}/shuffle")
 	@Operation(summary = "대기열 셔플", description = "이벤트의 대기열을 랜덤 큐로 셔플합니다.(수동)")
@@ -62,7 +66,7 @@ public class AdminQueueEntryController {
 	//테스트용
 	@PostMapping("/{eventId}/users/{userId}/complete")
 	@Operation(summary = "결제 완료 처리", description = "특정 사용자의 결제를 완료 처리합니다.")
-	public ApiResponse<Void> completePayment(
+	public ApiResponse<CompletedQueueResponse> completePayment(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
 
@@ -71,7 +75,19 @@ public class AdminQueueEntryController {
 	) {
 
 		queueEntryProcessService.completePayment(eventId, userId);
-		return ApiResponse.noContent("결제 완료 처리되었습니다.");
 
+		CompletedQueueResponse response = CompletedQueueResponse.from(userId, eventId);
+		return ApiResponse.ok("결제 완료 처리되었습니다.", response);
+
+	}
+
+	@DeleteMapping("/{eventId}/reset")
+	@Operation(summary = "[테스트용] 대기열 초기화", description = "특정 이벤트의 대기열(REDIS)을 완전히 초기화합니다.")
+	public ApiResponse<Void> resetQueue(
+		@Parameter(description = "이벤트 ID", example = "1")
+		@PathVariable Long eventId
+	) {
+		queueEntryRedisRepository.clearAll(eventId);
+		return ApiResponse.ok("대기열이 초기화되었습니다.", null);
 	}
 }

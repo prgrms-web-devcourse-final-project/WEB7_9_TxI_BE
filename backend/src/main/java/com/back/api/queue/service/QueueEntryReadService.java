@@ -3,6 +3,7 @@ package com.back.api.queue.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.queue.dto.response.CompletedQueueResponse;
 import com.back.api.queue.dto.response.EnteredQueueResponse;
 import com.back.api.queue.dto.response.ExpiredQueueResponse;
 import com.back.api.queue.dto.response.QueueEntryStatusResponse;
@@ -39,6 +40,7 @@ public class QueueEntryReadService {
 			case WAITING -> buildWaitingQueueResponse(eventId, entry);
 			case ENTERED  -> buildEnteredQueueResponse(entry);
 			case EXPIRED  -> buildExpiredQueueResponse(entry);
+			case COMPLETED -> buildCompletedQueueResponse(entry);
 		};
 	}
 
@@ -106,6 +108,13 @@ public class QueueEntryReadService {
 
 	private ExpiredQueueResponse buildExpiredQueueResponse(QueueEntry entry) {
 		return ExpiredQueueResponse.from(
+			entry.getUserId(),
+			entry.getEventId()
+		);
+	}
+
+	private CompletedQueueResponse buildCompletedQueueResponse(QueueEntry entry) {
+		return CompletedQueueResponse.from(
 			entry.getUserId(),
 			entry.getEventId()
 		);

@@ -100,9 +100,9 @@ public class QueueShuffleService {
 				int rank = i + 1;
 				queueEntryRedisRepository.addToWaitingQueue(eventId, userId, rank);
 			}
-			log.debug("Success to save eventId {} to Redis", eventId);
+			log.debug("eventId {} - Redis 저장 성공", eventId);
 		} catch (Exception e) {
-			log.error("Failed to save eventId {} to Redis", eventId);
+			log.error("eventId {} - Redis 저장 실패", eventId);
 			throw new ErrorException(QueueEntryErrorCode.REDIS_CONNECTION_FAILED);
 		}
 	}

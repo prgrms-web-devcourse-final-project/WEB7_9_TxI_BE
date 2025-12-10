@@ -20,7 +20,7 @@ public class EventOpenScheduler {
 
 	private final EventRepository eventRepository; //TODO 서비스로 변경
 
-	@Scheduled(cron = "${scheduler.event-open.cron}", zone = "Asia/Seoul") // 매 분 실행
+	@Scheduled(cron = "${event.scheduler.open.cron}", zone = "Asia/Seoul") // 매 분 실행
 	public void openTicketing() {
 		try {
 			LocalDateTime now = LocalDateTime.now();
@@ -45,7 +45,6 @@ public class EventOpenScheduler {
 					log.info("이벤트 상태 변경: QUEUE_READY → OPEN");
 				}
 			}
-
 
 		} catch (Exception e) {
 			log.error("티켓팅 오픈 스케줄러 실행 실패", e);

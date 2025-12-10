@@ -55,7 +55,7 @@ public class QueueEntryProcessService {
 				processEntry(eventId, userId);
 				successCount++;
 			} catch (ErrorException e) {
-				log.error("Failed to process entry for eventId {} and userId {}: {}", eventId, userId, e.getMessage());
+				log.error("eventId {} / userId {} 처리 중 오류 발생: {}", eventId, userId, e.getMessage());
 				failCount++;
 			}
 		}
@@ -84,10 +84,10 @@ public class QueueEntryProcessService {
 		try {
 			queueEntryRedisRepository.moveToEnteredQueue(eventId, userId);
 			queueEntryRedisRepository.incrementEnteredCount(eventId);
-			log.debug("Success to update eventId {} to Redis", eventId);
+			log.debug("eventId {} - Redis 업데이트 성공", eventId);
 
 		} catch (Exception e) {
-			log.error("Failed to update eventId {} to Redis", eventId);
+			log.error("eventId {} - Redis 업데이트 실패", eventId);
 		}
 	}
 
@@ -116,9 +116,9 @@ public class QueueEntryProcessService {
 
 		try {
 			queueEntryRedisRepository.removeFromEnteredQueue(eventId, userId);
-			log.debug("Success to Expire eventId {} to Redis", eventId);
+			log.debug("eventId {} - Redis 만료 처리 성공", eventId);
 		} catch (Exception e) {
-			log.error("Failed to Expire eventId {} to Redis", eventId);
+			log.error("eventId {} - Redis 만료 처리 실패", eventId);
 		}
 
 		//TODO 알림 로직 구현 필요
@@ -133,8 +133,7 @@ public class QueueEntryProcessService {
 			expireEntry(entry.getEventId(), entry.getUserId());
 			successCount++;
 		}
-
-		log.info("Success to Expire {} queue entries in batch.", successCount);
+		log.info("총 {}개 대기열 항목 만료 처리 완료", successCount);
 	}
 
 	//TODO 결제 도메인에서 사용 필요
@@ -154,7 +153,7 @@ public class QueueEntryProcessService {
 		try {
 			queueEntryRedisRepository.removeFromEnteredQueue(eventId, userId);
 		} catch (Exception e) {
-			log.error("결제 완료 사용자 큐에서 제거 실패", e);
+			log.error("결제 완료 사용자 대기열 제거 실패");
 		}
 
 	}
