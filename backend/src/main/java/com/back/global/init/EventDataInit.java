@@ -95,7 +95,7 @@ public class EventDataInit implements ApplicationRunner {
 			.maxPrice(250000)
 			.preOpenAt(now.minusDays(10))
 			.preCloseAt(now.minusDays(8))
-			.ticketOpenAt(now.plusHours(1).plusMinutes(13))
+			.ticketOpenAt(now.plusHours(1).plusMinutes(5))
 			.ticketCloseAt(now.plusDays(14))
 			.maxTicketAmount(3000)
 			.status(EventStatus.PRE_OPEN)

@@ -74,6 +74,11 @@ public class QueueEntryProcessService {
 			throw new ErrorException(QueueEntryErrorCode.ALREADY_EXPIRED);
 		}
 
+		//이미 결제된 경우
+		if (status == QueueEntryStatus.COMPLETED) {
+			throw new ErrorException(QueueEntryErrorCode.ALREADY_COMPLETED);
+		}
+
 		//대기중 상태가 아닌 경우
 		if (status != QueueEntryStatus.WAITING) {
 			throw new ErrorException(QueueEntryErrorCode.NOT_WAITING_STATUS);
@@ -143,9 +148,7 @@ public class QueueEntryProcessService {
 		QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
 			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
 
-		if (queueEntry.getQueueEntryStatus() != QueueEntryStatus.ENTERED) {
-			return;
-		}
+		validatePaymentCompletion(queueEntry);
 
 		queueEntry.completePayment();
 		queueEntryRepository.save(queueEntry);
@@ -156,6 +159,30 @@ public class QueueEntryProcessService {
 			log.error("결제 완료 사용자 대기열 제거 실패");
 		}
 
+	}
+
+	private void validatePaymentCompletion(QueueEntry queueEntry) {
+		QueueEntryStatus status = queueEntry.getQueueEntryStatus();
+
+		// 이미 결제 완료된 경우
+		if (status == QueueEntryStatus.COMPLETED) {
+			throw new ErrorException(QueueEntryErrorCode.ALREADY_COMPLETED);
+		}
+
+		// 만료된 경우
+		if (status == QueueEntryStatus.EXPIRED) {
+			throw new ErrorException(QueueEntryErrorCode.ALREADY_EXPIRED);
+		}
+
+		// 대기 중인 경우 (입장도 안 했는데 결제 시도)
+		if (status == QueueEntryStatus.WAITING) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_ENTERED_STATUS);
+		}
+
+		// ENTERED 상태가 아닌 경우
+		if (status != QueueEntryStatus.ENTERED) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_ENTERED_STATUS);
+		}
 	}
 
 }
