@@ -1,4 +1,4 @@
-package com.back.api.queue.scheduler;
+package com.back.api.event.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class TicketOpenScheduler {
+public class EventOpenScheduler {
 
 	private final EventRepository eventRepository;
 

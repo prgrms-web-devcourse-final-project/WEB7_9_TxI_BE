@@ -84,5 +84,9 @@ queue:
       #cron: "0 */10 * * * *" # 10분마다 실행
       time-range-minutes: 10 # 시간 범위
 
+event:
+  scheduler:
+    open:
+      cron: "0 * * * * *"
 
 

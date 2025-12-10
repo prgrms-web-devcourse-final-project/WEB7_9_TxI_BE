@@ -79,7 +79,9 @@ public class QueueEntry extends BaseEntity {
 		this.queueEntryStatus = QueueEntryStatus.EXPIRED;
 	}
 
-	public void completePayment() { this.queueEntryStatus = QueueEntryStatus.COMPLETED; }
+	public void completePayment() {
+		this.queueEntryStatus = QueueEntryStatus.COMPLETED;
+	}
 
 	//15분 초과 여부
 	public boolean isExpired() {

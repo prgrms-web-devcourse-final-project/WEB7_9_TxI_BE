@@ -73,7 +73,7 @@ public class QueueEntryScheduler {
 		//입장 가능한 인원 확인
 		int availableEnteredCount = maxEnteredLimit - currentEnteredCount.intValue();
 
-		if(availableEnteredCount < 0) {
+		if (availableEnteredCount < 0) {
 			return;
 		}
 
@@ -92,7 +92,7 @@ public class QueueEntryScheduler {
 		}
 
 		List<Long> userIds = new ArrayList<>();
-		for(Object userId : topWaitingUsers) {
+		for (Object userId : topWaitingUsers) {
 			userIds.add(Long.parseLong(userId.toString()));
 		}
 

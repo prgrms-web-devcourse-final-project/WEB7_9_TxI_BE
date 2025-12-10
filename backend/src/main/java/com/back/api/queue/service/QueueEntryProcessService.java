@@ -144,14 +144,14 @@ public class QueueEntryProcessService {
 		QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
 			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
 
-		if(queueEntry.getQueueEntryStatus() != QueueEntryStatus.ENTERED){
+		if (queueEntry.getQueueEntryStatus() != QueueEntryStatus.ENTERED) {
 			return;
 		}
 
 		queueEntry.completePayment();
 		queueEntryRepository.save(queueEntry);
 
-		try{
+		try {
 			queueEntryRedisRepository.removeFromEnteredQueue(eventId, userId);
 		} catch (Exception e) {
 			log.error("결제 완료 사용자 큐에서 제거 실패", e);
