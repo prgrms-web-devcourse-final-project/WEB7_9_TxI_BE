@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.seat.service.SeatService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.seat.entity.Seat;
@@ -22,6 +23,9 @@ import com.back.global.error.exception.ErrorException;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 티켓 상태 변경 담당 서비스
+ */
 @Service
 @RequiredArgsConstructor
 public class TicketService {
@@ -30,6 +34,7 @@ public class TicketService {
 	private final UserRepository userRepository;
 	private final EventRepository eventRepository;
 	private final SeatRepository seatRepository;
+	private final SeatService seatService;
 
 	/**
 	 * Draft Ticket 생성 (좌석 선택 직후)
@@ -76,10 +81,10 @@ public class TicketService {
 
 		Seat seat = ticket.getSeat();
 
-		seat.markAsSold(); // 좌석 SOLD 처리
-		ticket.markPaid(); // 결제 성공
+		seatService.markSeatAsSold(seat); // 좌석 SOLD 처리
 
-		// 여기서 실제 ISSUED 시점은 옵션
+		// 티켓 결제 확정 처리
+		ticket.markPaid(); // 결제 성공
 		ticket.issue();
 
 		return ticket;
@@ -96,7 +101,7 @@ public class TicketService {
 		Seat seat = ticket.getSeat();
 
 		// 좌석 잠금 해제
-		seat.markAsAvailable();
+		seatService.markSeatAsSold(seat);
 
 		// 티켓 실패 처리
 		ticket.fail();

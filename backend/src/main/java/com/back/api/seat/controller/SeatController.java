@@ -58,7 +58,7 @@ public class SeatController {
 		@RequestBody SelectSeatRequest request
 	) {
 		Long mockUserId = 1L; // TODO: 실제 인증된 사용자 ID로 교체 필요 (Security Context에서 가져오기)
-		Seat seat = seatService.selectSeat(eventId, seatId, mockUserId);
+		Seat seat = seatService.reserveSeat(eventId, seatId, mockUserId);
 
 		return ApiResponse.ok(
 			"좌석을 선택했습니다.",
