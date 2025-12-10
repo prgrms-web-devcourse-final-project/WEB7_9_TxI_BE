@@ -12,7 +12,7 @@ import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
-import com.back.global.properties.QueueSchedulerProperties;
+import com.back.global.properties.SchedulerProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,9 +32,9 @@ public class QueueShuffleScheduler {
 	private final QueueShuffleService queueShuffleService;
 	private final EventRepository eventRepository; //TODO service로 변경 필요
 	private final PreRegisterRepository preRegisterRepository; //TODO service로 변경 필요
-	private final QueueSchedulerProperties properties;
+	private final SchedulerProperties properties;
 
-	@Scheduled(cron = "${queue.scheduler.shuffle.cron}",  zone = "Asia/Seoul")
+	@Scheduled(cron = "${scheduler.queue-shuffle.cron}",  zone = "Asia/Seoul")
 	public void autoShuffleQueue() {
 		try {
 			LocalDateTime now = LocalDateTime.now();

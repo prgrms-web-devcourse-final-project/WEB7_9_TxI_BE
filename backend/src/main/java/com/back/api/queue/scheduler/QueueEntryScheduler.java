@@ -12,7 +12,7 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
-import com.back.global.properties.QueueSchedulerProperties;
+import com.back.global.properties.SchedulerProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +32,10 @@ public class QueueEntryScheduler {
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 	private final QueueEntryProcessService queueEntryProcessService;
 	private final EventRepository eventRepository; //TODO service로 변경 필요
-	private final QueueSchedulerProperties properties;
+	private final SchedulerProperties properties;
 
 	//대기열 자동 입장 처리
-	@Scheduled(cron = "${queue.scheduler.entry.cron}", zone = "Asia/Seoul") //10초마다 실행
+	@Scheduled(cron = "${scheduler.queue-entry.cron}", zone = "Asia/Seoul") //10초마다 실행
 	public void autoQueueEntries() {
 		try {
 			List<Event> openEvents = eventRepository.findByStatusIn(

@@ -70,23 +70,20 @@ custom:
     back-url: "${custom.dev.back-url}"
     front-url: "${custom.dev.front-url}"
 
-queue:
-  scheduler:
-    #입장 처리 스케줄러
-    entry:
-      cron: "*/10 * * * * *" # 10초마다 실행
-      batch-size: 100 # 한 번에 입장시킬 인원
-      max_entered_limit: 100  # 최대 수용 인원
 
-    #셔플 처리 스케줄러
-    shuffle:
-      cron: "*/30 * * * * *" # 테스트를 위해 30초마다 실행
-      #cron: "0 */10 * * * *" # 10분마다 실행
-      time-range-minutes: 10 # 시간 범위
+scheduler:
+  #입장 처리 스케줄러
+  queue-entry:
+    cron: "*/10 * * * * *" # 10초마다 실행
+    batch-size: 100 # 한 번에 입장시킬 인원
+    max_entered_limit: 100  # 최대 수용 인원
 
-event:
-  scheduler:
-    open:
-      cron: "0 * * * * *"
+  #셔플 처리 스케줄러
+  queue-shuffle:
+    cron: "*/30 * * * * *" # 테스트를 위해 30초마다 실행
+    #cron: "0 */10 * * * *" # 10분마다 실행
+    time-range-minutes: 10 # 시간 범위
 
-
+  #이벤트 오픈 스케줄러
+  event-open:
+    cron: "0 * * * * *"

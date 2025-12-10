@@ -18,10 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class EventOpenScheduler {
 
-	private final EventRepository eventRepository;
+	private final EventRepository eventRepository; //TODO 서비스로 변경
 
-
-	@Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul") // 매 분 실행
+	@Scheduled(cron = "${scheduler.event-open.cron}", zone = "Asia/Seoul") // 매 분 실행
 	public void openTicketing() {
 		try {
 			LocalDateTime now = LocalDateTime.now();
