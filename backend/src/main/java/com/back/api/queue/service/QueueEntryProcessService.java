@@ -104,12 +104,10 @@ public class QueueEntryProcessService {
 			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
 
 		if (queueEntry.getQueueEntryStatus() == QueueEntryStatus.EXPIRED) {
-			log.debug("Already expired queue entry cannot be expired again.");
 			return;
 		}
 
 		if (queueEntry.getQueueEntryStatus() != QueueEntryStatus.ENTERED) {
-			log.debug("Only entered queue entry can be expired.");
 			return;
 		}
 
@@ -137,6 +135,28 @@ public class QueueEntryProcessService {
 		}
 
 		log.info("Success to Expire {} queue entries in batch.", successCount);
+	}
+
+	//TODO 결제 도메인에서 사용 필요
+	@Transactional
+	public void completePayment(Long eventId, Long userId) {
+
+		QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
+			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
+
+		if(queueEntry.getQueueEntryStatus() != QueueEntryStatus.ENTERED){
+			return;
+		}
+
+		queueEntry.completePayment();
+		queueEntryRepository.save(queueEntry);
+
+		try{
+			queueEntryRedisRepository.removeFromEnteredQueue(eventId, userId);
+		} catch (Exception e) {
+			log.error("결제 완료 사용자 큐에서 제거 실패", e);
+		}
+
 	}
 
 }

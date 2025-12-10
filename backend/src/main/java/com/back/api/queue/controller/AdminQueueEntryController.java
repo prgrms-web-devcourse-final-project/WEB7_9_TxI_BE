@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.back.api.queue.dto.request.ShuffleQueueRequest;
 import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.ShuffleQueueResponse;
+import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.queue.service.QueueEntryReadService;
 import com.back.api.queue.service.QueueShuffleService;
 import com.back.global.response.ApiResponse;
@@ -28,6 +29,7 @@ public class AdminQueueEntryController {
 
 	private final QueueShuffleService queueShuffleService;
 	private final QueueEntryReadService queueEntryReadService;
+	private final QueueEntryProcessService queueEntryProcessService;
 
 	@PostMapping("/{eventId}/shuffle")
 	@Operation(summary = "대기열 셔플", description = "이벤트의 대기열을 랜덤 큐로 셔플합니다.(수동)")
@@ -57,5 +59,19 @@ public class AdminQueueEntryController {
 		return ApiResponse.ok("대기열 통계를 조회했습니다.", response);
 	}
 
-	//대기열 초기화 API 필요한지 검토 필요
+	//테스트용
+	@PostMapping("/{eventId}/users/{userId}/complete")
+	@Operation(summary = "결제 완료 처리", description = "특정 사용자의 결제를 완료 처리합니다.")
+	public ApiResponse<Void> completePayment(
+		@Parameter(description = "이벤트 ID", example = "1")
+		@PathVariable Long eventId,
+
+		@Parameter(description = "사용자 ID", example = "1")
+		@PathVariable Long userId
+	) {
+
+		queueEntryProcessService.completePayment(eventId, userId);
+		return ApiResponse.noContent("결제 완료 처리되었습니다.");
+
+	}
 }

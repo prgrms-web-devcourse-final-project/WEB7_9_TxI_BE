@@ -3,7 +3,6 @@ package com.back.api.queue.scheduler;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile("!dev") //임시 스케줄러 차단
+//@Profile("!dev") //임시 스케줄러 차단
 public class QueueShuffleScheduler {
 
 	private final QueueEntryRepository queueEntryRepository;
@@ -35,13 +34,14 @@ public class QueueShuffleScheduler {
 	private final PreRegisterRepository preRegisterRepository; //TODO service로 변경 필요
 	private final QueueSchedulerProperties properties;
 
-	@Scheduled(cron = "${queue.scheduler.shuffle.cron}",  zone = "Asia/Seoul") //10분마다 실행
+	@Scheduled(cron = "${queue.scheduler.shuffle.cron}",  zone = "Asia/Seoul")
 	public void autoShuffleQueue() {
 		try {
 			LocalDateTime now = LocalDateTime.now();
 
 			int timeRangeMinutes = properties.getShuffle().getTimeRangeMinutes();
 
+			//TODO 시간 범위가 필요할까?
 			LocalDateTime targetTime = now.plusHours(1);
 			LocalDateTime rangeStart = targetTime.minusMinutes(timeRangeMinutes);
 			LocalDateTime rangeEnd = targetTime.plusMinutes(timeRangeMinutes);
@@ -53,18 +53,16 @@ public class QueueShuffleScheduler {
 			);
 
 			if (eventList.isEmpty()) {
-				log.info("No events found for auto shuffle");
 				return;
 			}
 
-			log.info("Found {} events for auto shuffle", eventList.size());
 
 			for (Event event : eventList) {
 				shuffleQueueForEvent(event);
 			}
 
 		} catch (Exception e) {
-			log.error("Auto shuffle scheduler failed", e);
+			log.error("자동 셔플 스케줄러 실패", e);
 		}
 	}
 
@@ -75,7 +73,6 @@ public class QueueShuffleScheduler {
 		long existingCount = queueEntryRepository.countByEvent_Id(eventId);
 
 		if (existingCount > 0) {
-			log.info("Queue already shuffled for eventId: {}", eventId);
 			return;
 		}
 
@@ -83,7 +80,7 @@ public class QueueShuffleScheduler {
 		List<Long> preRegisteredUserIds = preRegisterRepository.findRegisteredUserIdsByEventId(eventId);
 
 		if (preRegisteredUserIds.isEmpty()) {
-			log.info("No pre-registered users for eventId: {}", eventId);
+			log.info("이벤트 ID {}에 대한 사전 등록 사용자가 없습니다.", eventId);
 			return;
 		}
 

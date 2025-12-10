@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile("!dev") //임시 스케줄러 차단
+//@Profile("!dev") //임시 스케줄러 차단
 public class QueueEntryScheduler {
 
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
@@ -44,7 +43,6 @@ public class QueueEntryScheduler {
 			);
 
 			if (openEvents.isEmpty()) {
-				log.debug("No open events found for queue entry processing");
 				return;
 			}
 
@@ -52,40 +50,54 @@ public class QueueEntryScheduler {
 				processEventQueueEntries(event);
 			}
 		} catch (Exception e) {
-			log.error("Auto queue entry scheduler failed", e);
+			log.error("자동 입장 스케줄러 실패", e);
 		}
 	}
 
 	//특정 이벤트 대기열 처리
 	private void processEventQueueEntries(Event event) {
+
 		Long eventId = event.getId();
 
+		//대기 중인 인원 확인
 		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
 
 		if (totalWaitingCount == 0) {
-			log.debug("No waiting users for eventId: {}", eventId);
 			return;
 		}
 
-		int batchSize = properties.getEntry().getBatchSize();
-		batchSize =  Math.min(batchSize, totalWaitingCount.intValue());
+		//입장 완료된 인원 확인
+		Long currentEnteredCount = queueEntryRedisRepository.getTotalEnteredCount(eventId);
+		int maxEnteredLimit = properties.getEntry().getMaxEnteredLimit();
 
-		Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, batchSize);
+		//입장 가능한 인원 확인
+		int availableEnteredCount = maxEnteredLimit - currentEnteredCount.intValue();
+
+		if(availableEnteredCount < 0) {
+			return;
+		}
+
+		//한번에 입장시킬 인원. 현재는 100명
+		int batchSize = properties.getEntry().getBatchSize();
+
+		// 입장 인원 선정 -> batchSize와 빈 자리 중 작은 값으로 설정
+		// 빈 자리 순차적으로 들어갈 수 있도록 함
+		int entryCount = Math.min(Math.min(batchSize, availableEnteredCount), totalWaitingCount.intValue());
+
+		//상위 N명 추출
+		Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, entryCount);
 
 		if (topWaitingUsers.isEmpty()) {
-			log.debug("No top waiting users found for eventId: {}", eventId);
 			return;
 		}
 
 		List<Long> userIds = new ArrayList<>();
-
-		for (Object userId : topWaitingUsers) {
+		for(Object userId : topWaitingUsers) {
 			userIds.add(Long.parseLong(userId.toString()));
 		}
 
 		queueEntryProcessService.processBatchEntry(eventId, userIds);
 
 	}
-
 
 }
