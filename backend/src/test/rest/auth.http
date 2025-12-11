@@ -1,0 +1,26 @@
+### 회원가입
+POST {{BASE_URL}}/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "qwer1234",
+  "nickname": "테스트유저",
+  "year": "2002",
+  "month": "2",
+  "day": "11"
+}
+
+### 로그인
+POST {{BASE_URL}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "qwer1234"
+}
+
+> {%
+    const data = response.body.data;
+    client.global.set("ACCESS_TOKEN", data.tokens.accessToken);
+%}

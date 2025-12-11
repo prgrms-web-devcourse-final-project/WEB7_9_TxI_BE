@@ -55,7 +55,7 @@ public class QueueEntryProcessService {
 				processEntry(eventId, userId);
 				successCount++;
 			} catch (ErrorException e) {
-				log.error("Failed to process entry for eventId {} and userId {}: {}", eventId, userId, e.getMessage());
+				log.error("eventId {} / userId {} 처리 중 오류 발생: {}", eventId, userId, e.getMessage());
 				failCount++;
 			}
 		}
@@ -74,6 +74,11 @@ public class QueueEntryProcessService {
 			throw new ErrorException(QueueEntryErrorCode.ALREADY_EXPIRED);
 		}
 
+		//이미 결제된 경우
+		if (status == QueueEntryStatus.COMPLETED) {
+			throw new ErrorException(QueueEntryErrorCode.ALREADY_COMPLETED);
+		}
+
 		//대기중 상태가 아닌 경우
 		if (status != QueueEntryStatus.WAITING) {
 			throw new ErrorException(QueueEntryErrorCode.NOT_WAITING_STATUS);
@@ -84,10 +89,10 @@ public class QueueEntryProcessService {
 		try {
 			queueEntryRedisRepository.moveToEnteredQueue(eventId, userId);
 			queueEntryRedisRepository.incrementEnteredCount(eventId);
-			log.debug("Success to update eventId {} to Redis", eventId);
+			log.debug("eventId {} - Redis 업데이트 성공", eventId);
 
 		} catch (Exception e) {
-			log.error("Failed to update eventId {} to Redis", eventId);
+			log.error("eventId {} - Redis 업데이트 실패", eventId);
 		}
 	}
 
@@ -104,12 +109,10 @@ public class QueueEntryProcessService {
 			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
 
 		if (queueEntry.getQueueEntryStatus() == QueueEntryStatus.EXPIRED) {
-			log.debug("Already expired queue entry cannot be expired again.");
 			return;
 		}
 
 		if (queueEntry.getQueueEntryStatus() != QueueEntryStatus.ENTERED) {
-			log.debug("Only entered queue entry can be expired.");
 			return;
 		}
 
@@ -118,9 +121,9 @@ public class QueueEntryProcessService {
 
 		try {
 			queueEntryRedisRepository.removeFromEnteredQueue(eventId, userId);
-			log.debug("Success to Expire eventId {} to Redis", eventId);
+			log.debug("eventId {} - Redis 만료 처리 성공", eventId);
 		} catch (Exception e) {
-			log.error("Failed to Expire eventId {} to Redis", eventId);
+			log.error("eventId {} - Redis 만료 처리 실패", eventId);
 		}
 
 		//TODO 알림 로직 구현 필요
@@ -135,8 +138,51 @@ public class QueueEntryProcessService {
 			expireEntry(entry.getEventId(), entry.getUserId());
 			successCount++;
 		}
+		log.info("총 {}개 대기열 항목 만료 처리 완료", successCount);
+	}
 
-		log.info("Success to Expire {} queue entries in batch.", successCount);
+	//TODO 결제 도메인에서 사용 필요
+	@Transactional
+	public void completePayment(Long eventId, Long userId) {
+
+		QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
+			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
+
+		validatePaymentCompletion(queueEntry);
+
+		queueEntry.completePayment();
+		queueEntryRepository.save(queueEntry);
+
+		try {
+			queueEntryRedisRepository.removeFromEnteredQueue(eventId, userId);
+		} catch (Exception e) {
+			log.error("결제 완료 사용자 대기열 제거 실패");
+		}
+
+	}
+
+	private void validatePaymentCompletion(QueueEntry queueEntry) {
+		QueueEntryStatus status = queueEntry.getQueueEntryStatus();
+
+		// 이미 결제 완료된 경우
+		if (status == QueueEntryStatus.COMPLETED) {
+			throw new ErrorException(QueueEntryErrorCode.ALREADY_COMPLETED);
+		}
+
+		// 만료된 경우
+		if (status == QueueEntryStatus.EXPIRED) {
+			throw new ErrorException(QueueEntryErrorCode.ALREADY_EXPIRED);
+		}
+
+		// 대기 중인 경우 (입장도 안 했는데 결제 시도)
+		if (status == QueueEntryStatus.WAITING) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_ENTERED_STATUS);
+		}
+
+		// ENTERED 상태가 아닌 경우
+		if (status != QueueEntryStatus.ENTERED) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_ENTERED_STATUS);
+		}
 	}
 
 }

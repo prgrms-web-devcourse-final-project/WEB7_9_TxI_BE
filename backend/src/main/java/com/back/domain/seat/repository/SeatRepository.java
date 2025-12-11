@@ -1,6 +1,7 @@
 package com.back.domain.seat.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -12,7 +13,15 @@ import com.back.domain.seat.entity.SeatGrade;
 
 public interface SeatRepository extends JpaRepository<Seat, Long> {
 
-	List<Seat> findByEventId(Long eventId);
+	@Query("""
+			SELECT s
+			FROM Seat s
+			WHERE s.event.id = :eventId
+			ORDER BY s.grade ASC, s.seatCode ASC
+		""")
+	List<Seat> findSortedSeatListByEventId(Long eventId);
+
+	Optional<Seat> findByEventIdAndId(Long eventId, Long seatId);
 
 	@Modifying
 	@Query("DELETE FROM Seat s WHERE s.event.id = :eventId")
@@ -29,9 +38,9 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 	@Query("""
 		SELECT s.seatCode FROM Seat s
 		WHERE s.event.id = :eventId
-		  AND s.grade = :grade
-		  AND s.seatCode = :seatCode
-		  AND s.id <> :seatId
+			AND s.grade = :grade
+			AND s.seatCode = :seatCode
+			AND s.id <> :seatId
 		""")
 	List<String> findExistingSeatCodesExceptSelf(Long eventId, SeatGrade grade, String seatCode, Long seatId);
 }

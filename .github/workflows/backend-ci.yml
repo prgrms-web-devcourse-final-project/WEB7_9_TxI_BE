@@ -445,3 +445,36 @@ jobs:
             echo "failed=0" >> $GITHUB_OUTPUT
             echo "skipped=0" >> $GITHUB_OUTPUT
           fi
+
+  docker-build-and-push:
+    runs-on: ubuntu-latest
+    needs: backend-test   # 테스트/커버리지 성공 후에만 실행
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: backend   # Dockerfile 있는 곳
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_NAME="min7712/waitfair-backend"
+
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+
+          # backend/ 가 컨텍스트, 그 안의 Dockerfile 사용
+          docker build -t $IMAGE_NAME:latest \
+                       -t $IMAGE_NAME:${TIMESTAMP}-${SHORT_SHA} .
+
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:${TIMESTAMP}-${SHORT_SHA}

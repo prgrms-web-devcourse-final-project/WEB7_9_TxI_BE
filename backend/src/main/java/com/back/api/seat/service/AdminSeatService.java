@@ -209,8 +209,9 @@ public class AdminSeatService {
 		boolean changed = !seat.getSeatCode().equals(request.seatCode())
 			|| seat.getGrade() != request.grade();
 
-		if (!changed)
+		if (!changed) {
 			return;
+		}
 
 		List<String> existing = seatRepository.findExistingSeatCodesExceptSelf(
 			seat.getEvent().getId(),

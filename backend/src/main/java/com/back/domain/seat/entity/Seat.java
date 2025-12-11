@@ -67,15 +67,22 @@ public class Seat extends BaseEntity {
 	@Version // optimistic Locking을 위한 버전 필드
 	private int version;
 
+	public void markAsAvailable() {
+		this.seatStatus = SeatStatus.AVAILABLE;
+	}
+
 	public void markAsSold() {
-		if (seatStatus != SeatStatus.AVAILABLE) {
-			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_RESERVED);
+		if (seatStatus != SeatStatus.RESERVED) {
+			throw new ErrorException(SeatErrorCode.SEAT_STATUS_TRANSITION);
 		}
 		this.seatStatus = SeatStatus.SOLD;
 	}
 
 	public void markAsReserved() {
-		if (seatStatus != SeatStatus.AVAILABLE) {
+		if (seatStatus == SeatStatus.RESERVED) {
+			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_RESERVED);
+		}
+		if (seatStatus == SeatStatus.SOLD) {
 			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
 		}
 		this.seatStatus = SeatStatus.RESERVED;

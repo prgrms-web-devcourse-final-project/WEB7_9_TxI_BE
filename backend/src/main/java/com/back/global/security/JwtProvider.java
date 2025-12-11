@@ -57,12 +57,25 @@ public class JwtProvider {
 			return null;
 		}
 
-		Number idNo = (Number)payload.get("id");
+		Object idObj = payload.get("id");
+		if (!(idObj instanceof Number idNo)) {
+			return null;
+		}
+
 		long id = idNo.longValue();
 
 		String nickname = (String)payload.get("nickname");
 
-		UserRole role = (UserRole)payload.get("role");
+		Object roleObj = payload.get("role");
+
+		UserRole role = switch (roleObj) {
+			case UserRole r -> r;
+			case String s -> UserRole.valueOf(s); // "NORMAL" -> UserRole.NORMAL
+			case null -> UserRole.NORMAL;
+			default -> throw new IllegalStateException(
+				"Unsupported role type in JWT payload: " + roleObj.getClass()
+			);
+		};
 
 		return Map.of("id", id, "nickname", nickname, "role", role);
 	}

@@ -59,11 +59,11 @@ class AdminSeatControllerTest {
 		void bulkCreateSeats_Success() throws Exception {
 			String requestBody = """
 				{
-				  "seats": [
-				    {"seatCode": "A1", "grade": "VIP", "price": 150000},
-				    {"seatCode": "A2", "grade": "VIP", "price": 150000},
-				    {"seatCode": "B1", "grade": "R", "price": 100000}
-				  ]
+					"seats": [
+					{"seatCode": "A1", "grade": "VIP", "price": 150000},
+					{"seatCode": "A2", "grade": "VIP", "price": 150000},
+					{"seatCode": "B1", "grade": "R", "price": 100000}
+					]
 				}
 				""";
 
@@ -87,7 +87,7 @@ class AdminSeatControllerTest {
 		void bulkCreateSeats_EmptyList() throws Exception {
 			String requestBody = """
 				{
-				  "seats": []
+					"seats": []
 				}
 				""";
 
@@ -103,10 +103,10 @@ class AdminSeatControllerTest {
 		void bulkCreateSeats_InternalDuplicate() throws Exception {
 			String requestBody = """
 				{
-				  "seats": [
-				    {"seatCode": "A1", "grade": "VIP", "price": 150000},
-				    {"seatCode": "A1", "grade": "VIP", "price": 150000}
-				  ]
+					"seats": [
+						{"seatCode": "A1", "grade": "VIP", "price": 150000},
+						{"seatCode": "A1", "grade": "VIP", "price": 150000}
+					]
 				}
 				""";
 
@@ -125,10 +125,10 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "seats": [
-				    {"seatCode": "A1", "grade": "VIP", "price": 150000},
-				    {"seatCode": "A2", "grade": "VIP", "price": 150000}
-				  ]
+					"seats": [
+						{"seatCode": "A1", "grade": "VIP", "price": 150000},
+						{"seatCode": "A2", "grade": "VIP", "price": 150000}
+					]
 				}
 				""";
 
@@ -145,10 +145,10 @@ class AdminSeatControllerTest {
 		void bulkCreateSeats_SameSeatCodeDifferentGrade() throws Exception {
 			String requestBody = """
 				{
-				  "seats": [
-				    {"seatCode": "A1", "grade": "VIP", "price": 150000},
-				    {"seatCode": "A1", "grade": "R", "price": 100000}
-				  ]
+					"seats": [
+						{"seatCode": "A1", "grade": "VIP", "price": 150000},
+						{"seatCode": "A1", "grade": "R", "price": 100000}
+					]
 				}
 				""";
 
@@ -165,9 +165,9 @@ class AdminSeatControllerTest {
 		void bulkCreateSeats_EventNotFound() throws Exception {
 			String requestBody = """
 				{
-				  "seats": [
-				    {"seatCode": "A1", "grade": "VIP", "price": 150000}
-				  ]
+					"seats": [
+						{"seatCode": "A1", "grade": "VIP", "price": 150000}
+					]
 				}
 				""";
 
@@ -188,10 +188,10 @@ class AdminSeatControllerTest {
 		void autoCreateSeats_Success() throws Exception {
 			String requestBody = """
 				{
-				  "rows": 3,
-				  "cols": 5,
-				  "defaultGrade": "R",
-				  "defaultPrice": 100000
+					"rows": 3,
+					"cols": 5,
+					"defaultGrade": "R",
+					"defaultPrice": 100000
 				}
 				""";
 
@@ -215,10 +215,10 @@ class AdminSeatControllerTest {
 		void autoCreateSeats_RowsExceedsLimit() throws Exception {
 			String requestBody = """
 				{
-				  "rows": 27,
-				  "cols": 5,
-				  "defaultGrade": "R",
-				  "defaultPrice": 100000
+					"rows": 27,
+					"cols": 5,
+					"defaultGrade": "R",
+					"defaultPrice": 100000
 				}
 				""";
 
@@ -234,10 +234,10 @@ class AdminSeatControllerTest {
 		void autoCreateSeats_ColsExceedsLimit() throws Exception {
 			String requestBody = """
 				{
-				  "rows": 5,
-				  "cols": 101,
-				  "defaultGrade": "R",
-				  "defaultPrice": 100000
+					"rows": 5,
+					"cols": 101,
+					"defaultGrade": "R",
+					"defaultPrice": 100000
 				}
 				""";
 
@@ -253,10 +253,10 @@ class AdminSeatControllerTest {
 		void autoCreateSeats_NullFields() throws Exception {
 			String requestBody = """
 				{
-				  "rows": null,
-				  "cols": null,
-				  "defaultGrade": null,
-				  "defaultPrice": null
+					"rows": null,
+					"cols": null,
+					"defaultGrade": null,
+					"defaultPrice": null
 				}
 				""";
 
@@ -272,10 +272,10 @@ class AdminSeatControllerTest {
 		void autoCreateSeats_NegativePrice() throws Exception {
 			String requestBody = """
 				{
-				  "rows": 2,
-				  "cols": 3,
-				  "defaultGrade": "R",
-				  "defaultPrice": -1000
+					"rows": 2,
+					"cols": 3,
+					"defaultGrade": "R",
+					"defaultPrice": -1000
 				}
 				""";
 
@@ -293,10 +293,10 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "rows": 2,
-				  "cols": 2,
-				  "defaultGrade": "R",
-				  "defaultPrice": 100000
+					"rows": 2,
+					"cols": 2,
+					"defaultGrade": "R",
+					"defaultPrice": 100000
 				}
 				""";
 
@@ -318,9 +318,9 @@ class AdminSeatControllerTest {
 		void createSingleSeat_Success() throws Exception {
 			String requestBody = """
 				{
-				  "seatCode": "VIP1",
-				  "grade": "VIP",
-				  "price": 200000
+					"seatCode": "VIP1",
+					"grade": "VIP",
+					"price": 200000
 				}
 				""";
 
@@ -343,9 +343,9 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "seatCode": "VIP1",
-				  "grade": "VIP",
-				  "price": 200000
+					"seatCode": "VIP1",
+					"grade": "VIP",
+					"price": 200000
 				}
 				""";
 
@@ -359,7 +359,7 @@ class AdminSeatControllerTest {
 	}
 
 	@Nested
-	@DisplayName("좌석 수정 (PUT /api/v1/admin/seats/{seatId})")
+	@DisplayName("좌석 수정 (PUT /api/v1/admin/events/{eventId}/seats/{seatId})")
 	class UpdateSeatTests {
 
 		@Test
@@ -369,14 +369,14 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "seatCode": "A2",
-				  "grade": "VIP",
-				  "price": 150000,
-				  "seatStatus": "AVAILABLE"
+					"seatCode": "A2",
+					"grade": "VIP",
+					"price": 150000,
+					"seatStatus": "AVAILABLE"
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -394,14 +394,14 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "seatCode": "A1",
-				  "grade": "R",
-				  "price": 120000,
-				  "seatStatus": "SOLD"
+					"seatCode": "A1",
+					"grade": "R",
+					"price": 120000,
+					"seatStatus": "SOLD"
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -418,14 +418,14 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "seatCode": "A1",
-				  "grade": "VIP",
-				  "price": 100000,
-				  "seatStatus": "AVAILABLE"
+					"seatCode": "A1",
+					"grade": "VIP",
+					"price": 100000,
+					"seatStatus": "AVAILABLE"
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat2.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat2.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -438,14 +438,14 @@ class AdminSeatControllerTest {
 		void updateSeat_NotFound() throws Exception {
 			String requestBody = """
 				{
-				  "seatCode": "A1",
-				  "grade": "VIP",
-				  "price": 150000,
-				  "seatStatus": "AVAILABLE"
+					"seatCode": "A1",
+					"grade": "VIP",
+					"price": 150000,
+					"seatStatus": "AVAILABLE"
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", 999999L)
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), 999999L)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -454,7 +454,7 @@ class AdminSeatControllerTest {
 	}
 
 	@Nested
-	@DisplayName("단일 좌석 삭제 (DELETE /api/v1/admin/seats/{seatId})")
+	@DisplayName("단일 좌석 삭제 (DELETE /api/v1/admin/events/{eventId}/seats/{seatId})")
 	class DeleteSeatTests {
 
 		@Test
@@ -462,7 +462,8 @@ class AdminSeatControllerTest {
 		void deleteSeat_Success() throws Exception {
 			var savedSeat = seatHelper.createSeat(testEvent, "A1", SeatGrade.R, 100000);
 
-			mockMvc.perform(delete("/api/v1/admin/seats/{seatId}", savedSeat.getId()))
+			mockMvc.perform(
+					delete("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId()))
 				.andDo(print())
 				.andExpect(status().isNoContent())
 				.andExpect(jsonPath("$.message").value("좌석을 삭제했습니다."));
@@ -471,7 +472,7 @@ class AdminSeatControllerTest {
 		@Test
 		@DisplayName("실패: 존재하지 않는 좌석 삭제")
 		void deleteSeat_NotFound() throws Exception {
-			mockMvc.perform(delete("/api/v1/admin/seats/{seatId}", 999999L))
+			mockMvc.perform(delete("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), 999999L))
 				.andDo(print())
 				.andExpect(status().isBadRequest());
 		}
@@ -514,12 +515,12 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "seats": [
-				    {"seatCode": "A1", "grade": "VIP", "price": 150000},
-				    {"seatCode": "A2", "grade": "VIP", "price": 150000},
-				    {"seatCode": "B1", "grade": "R", "price": 100000},
-				    {"seatCode": "B2", "grade": "R", "price": 100000}
-				  ]
+					"seats": [
+						{"seatCode": "A1", "grade": "VIP", "price": 150000},
+						{"seatCode": "A2", "grade": "VIP", "price": 150000},
+						{"seatCode": "B1", "grade": "R", "price": 100000},
+						{"seatCode": "B2", "grade": "R", "price": 100000}
+					]
 				}
 				""";
 
@@ -538,14 +539,14 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "seatCode": "A2",
-				  "grade": "VIP",
-				  "price": 150000,
-				  "seatStatus": "AVAILABLE"
+					"seatCode": "A2",
+					"grade": "VIP",
+					"price": 150000,
+					"seatStatus": "AVAILABLE"
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat1.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat1.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -560,9 +561,9 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "seats": [
-				    {"seatCode": "A1", "grade": "VIP", "price": 150000}
-				  ]
+					"seats": [
+						{"seatCode": "A1", "grade": "VIP", "price": 150000}
+					]
 				}
 				""";
 
@@ -583,10 +584,10 @@ class AdminSeatControllerTest {
 		void autoCreateSeats_MaxRows() throws Exception {
 			String requestBody = """
 				{
-				  "rows": 26,
-				  "cols": 1,
-				  "defaultGrade": "A",
-				  "defaultPrice": 50000
+					"rows": 26,
+					"cols": 1,
+					"defaultGrade": "A",
+					"defaultPrice": 50000
 				}
 				""";
 
@@ -605,10 +606,10 @@ class AdminSeatControllerTest {
 		void autoCreateSeats_MaxCols() throws Exception {
 			String requestBody = """
 				{
-				  "rows": 1,
-				  "cols": 100,
-				  "defaultGrade": "A",
-				  "defaultPrice": 50000
+					"rows": 1,
+					"cols": 100,
+					"defaultGrade": "A",
+					"defaultPrice": 50000
 				}
 				""";
 
@@ -626,9 +627,9 @@ class AdminSeatControllerTest {
 		void createSeat_ZeroPrice() throws Exception {
 			String requestBody = """
 				{
-				  "seatCode": "FREE1",
-				  "grade": "A",
-				  "price": 0
+					"seatCode": "FREE1",
+					"grade": "A",
+					"price": 0
 				}
 				""";
 
@@ -647,14 +648,14 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "seatCode": "A1",
-				  "grade": "R",
-				  "price": 100000,
-				  "seatStatus": "SOLD"
+					"seatCode": "A1",
+					"grade": "R",
+					"price": 100000,
+					"seatStatus": "SOLD"
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -669,14 +670,14 @@ class AdminSeatControllerTest {
 
 			String requestBody = """
 				{
-				  "seatCode": "A1",
-				  "grade": "R",
-				  "price": 100000,
-				  "seatStatus": "RESERVED"
+					"seatCode": "A1",
+					"grade": "R",
+					"price": 100000,
+					"seatStatus": "RESERVED"
 				}
 				""";
 
-			mockMvc.perform(put("/api/v1/admin/seats/{seatId}", savedSeat.getId())
+			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())

@@ -16,7 +16,7 @@ public class BaseFactory {
 			return entity;
 		} catch (Exception e) {
 			throw new RuntimeException(
-				"Failed to set id on %s".formatted(entity.getClass().getSimpleName()), e);
+				"Failed to set id on %s" .formatted(entity.getClass().getSimpleName()), e);
 		}
 	}
 }

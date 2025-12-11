@@ -3,60 +3,66 @@ package com.back.api.queue.scheduler;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.back.api.event.service.EventService;
 import com.back.api.queue.service.QueueShuffleService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
-import com.back.domain.event.repository.EventRepository;
+import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
+import com.back.global.properties.QueueSchedulerProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /*
  * 대기열 셔플 스케줄러
- * ticketOpenAt 1시간 전 대기열 셔플 자동 실행
- * 스케줄러 동작 주기 : 10분
+ * ticketOpenAt 1시간 전 대기열 셔플 자동 실행 -> 이벤트 상태 PREOPEN에서 READY로 변경
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Profile("!dev") //임시 스케줄러 차단
 public class QueueShuffleScheduler {
 
 	private final QueueEntryRepository queueEntryRepository;
-	private final EventRepository eventRepository; //TODO service로 변경 필요
 	private final QueueShuffleService queueShuffleService;
+	private final EventService eventService;
+	private final PreRegisterRepository preRegisterRepository; //TODO service로 변경 필요
+	private final QueueSchedulerProperties properties;
 
-	@Scheduled(cron = "0 */10 * * * *",  zone = "Asia/Seoul") //10분마다 실행
+	@Scheduled(cron = "${queue.scheduler.shuffle.cron}",  zone = "Asia/Seoul")
 	public void autoShuffleQueue() {
 		try {
 			LocalDateTime now = LocalDateTime.now();
 
-			LocalDateTime targetTime = now.plusHours(1);
-			LocalDateTime rangeStart = targetTime.minusMinutes(10);
-			LocalDateTime rangeEnd = targetTime.plusMinutes(10);
+			int timeRangeMinutes = properties.getShuffle().getTimeRangeMinutes();
 
-			List<Event> eventList = eventRepository.findByTicketOpenAtBetweenAndStatus(
+			//오차 허용을 위해 앞뒤로 1분까지 검사
+			LocalDateTime targetTime = now.plusHours(1);
+			LocalDateTime rangeStart = targetTime.minusMinutes(timeRangeMinutes);
+			LocalDateTime rangeEnd = targetTime.plusMinutes(timeRangeMinutes);
+
+			List<Event> eventList = eventService.findEventsByTicketOpenAtBetweenAndStatus(
 				rangeStart,
 				rangeEnd,
 				EventStatus.PRE_OPEN
 			);
 
 			if (eventList.isEmpty()) {
-				log.info("No events found for auto shuffle");
 				return;
 			}
 
-			log.info("Found {} events for auto shuffle", eventList.size());
 
 			for (Event event : eventList) {
 				shuffleQueueForEvent(event);
 			}
 
 		} catch (Exception e) {
-			log.error("Auto shuffle scheduler failed", e);
+			log.error("자동 셔플 스케줄러 실패", e);
 		}
 	}
 
@@ -67,27 +73,18 @@ public class QueueShuffleScheduler {
 		long existingCount = queueEntryRepository.countByEvent_Id(eventId);
 
 		if (existingCount > 0) {
-			log.info("Queue already shuffled for eventId: {}", eventId);
 			return;
 		}
 
 		//TODO PreRegisterService로 변경 필요
-		//List<Long> preRegisteredUserIds = preRegisterService.getPreRegisteredUserIds(eventId);
-
-		//임시 목 데이터
-		List<Long> preRegisteredUserIds = getMockPreRegisteredUser(eventId);
+		List<Long> preRegisteredUserIds = preRegisterRepository.findRegisteredUserIdsByEventId(eventId);
 
 		if (preRegisteredUserIds.isEmpty()) {
-			log.info("No pre-registered users for eventId: {}", eventId);
+			log.info("이벤트 ID {}에 대한 사전 등록 사용자가 없습니다.", eventId);
 			return;
 		}
 
 		queueShuffleService.shuffleQueue(eventId, preRegisteredUserIds);
 
-	}
-
-	//TODO 임시 목 데이터 삭제. 이후 PreRegisterService에서 조회
-	private List<Long> getMockPreRegisteredUser(Long eventId) {
-		return List.of(1L, 2L, 3L, 4L, 5L);
 	}
 }

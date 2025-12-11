@@ -9,9 +9,11 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.event.service.EventService;
 import com.back.domain.event.entity.Event;
-import com.back.domain.event.repository.EventRepository;
+import com.back.domain.event.entity.EventStatus;
 import com.back.domain.queue.entity.QueueEntry;
+import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
 import com.back.domain.user.entity.User;
@@ -36,13 +38,12 @@ public class QueueShuffleService {
 	private final QueueEntryRepository queueEntryRepository;
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 	private final UserRepository userRepository;
-	private final EventRepository eventRepository;
+	private final EventService eventService;
 
 	@Transactional
 	public void shuffleQueue(Long eventId, List<Long> preRegisteredUserIds) {
 
-		Event event = eventRepository.findById(eventId)
-				.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.EVENT_NOT_FOUND));
+		Event event = eventService.getEventEntity(eventId);
 
 		validateShuffleRequest(eventId, preRegisteredUserIds);
 
@@ -55,6 +56,8 @@ public class QueueShuffleService {
 
 		saveToRedis(eventId, shuffledUserIds);
 		saveToDatabase(event, users, shuffledUserIds);
+
+		event.changeStatus(EventStatus.QUEUE_READY);
 
 		//TODO 알림 로직 추가 필요
 
@@ -96,9 +99,9 @@ public class QueueShuffleService {
 				int rank = i + 1;
 				queueEntryRedisRepository.addToWaitingQueue(eventId, userId, rank);
 			}
-			log.debug("Success to save eventId {} to Redis", eventId);
+			log.debug("eventId {} - Redis 저장 성공", eventId);
 		} catch (Exception e) {
-			log.error("Failed to save eventId {} to Redis", eventId);
+			log.error("eventId {} - Redis 저장 실패", eventId);
 			throw new ErrorException(QueueEntryErrorCode.REDIS_CONNECTION_FAILED);
 		}
 	}
@@ -120,6 +123,7 @@ public class QueueShuffleService {
 				.event(event)
 				.user(user)
 				.queueRank(rank)
+				.queueEntryStatus(QueueEntryStatus.WAITING)
 				.build();
 			entries.add(queueEntry);
 		}

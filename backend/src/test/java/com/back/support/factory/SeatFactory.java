@@ -3,7 +3,6 @@ package com.back.support.factory;
 import com.back.domain.event.entity.Event;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
-import com.back.domain.seat.entity.SeatStatus;
 
 public class SeatFactory extends BaseFactory {
 
