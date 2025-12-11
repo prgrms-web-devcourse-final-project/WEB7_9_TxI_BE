@@ -10,4 +10,6 @@ public enum PreRegisterStatus {
 
 	@Schema(description = "사전등록 취소")
 	CANCELED
+
+	//큐로 넘어가는 상태값
 }

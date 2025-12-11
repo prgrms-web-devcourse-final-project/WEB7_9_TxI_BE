@@ -1,6 +1,7 @@
 package com.back.api.event.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -86,6 +87,10 @@ public class EventService {
 		return events.map(EventListResponse::from);
 	}
 
+	public Event getEventEntity(Long eventId) {
+		return findEventById(eventId);
+	}
+
 	private Event findEventById(Long eventId) {
 		return eventRepository.findById(eventId)
 			.orElseThrow(() -> new ErrorException(EventErrorCode.NOT_FOUND_EVENT));
@@ -122,4 +127,19 @@ public class EventService {
 				}
 			});
 	}
+
+	public List<Event> findEventsByStatus(EventStatus status) {
+		return eventRepository.findByStatus(status);
+	}
+
+
+	public List<Event> findEventsByTicketOpenAtBetweenAndStatus(
+		LocalDateTime start,
+		LocalDateTime end,
+		EventStatus status
+	) {
+		return eventRepository.findByTicketOpenAtBetweenAndStatus(start, end, status);
+	}
+
+
 }

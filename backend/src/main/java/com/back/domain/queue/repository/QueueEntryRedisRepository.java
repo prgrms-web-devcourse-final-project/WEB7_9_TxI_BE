@@ -108,6 +108,22 @@ public class QueueEntryRedisRepository {
 		return count != null ? (Long)count : 0L;
 	}
 
+
+	/* ==================== 임시 데이터 추가용 ==================== */
+	public void addToEnteredQueueDirectly(Long eventId, Long userId) {
+		String key = String.format(ENTERED_KEY, eventId);
+		redisTemplate.opsForSet().add(key, userId.toString());
+		redisTemplate.expire(key, java.time.Duration.ofMinutes(15));
+	}
+
+	/**
+	 * ENTERED 카운트 직접 설정 (테스트 데이터용)
+	 */
+	public void setEnteredCount(Long eventId, int count) {
+		String key = String.format(ENTERED_COUNT_KEY, eventId);
+		redisTemplate.opsForValue().set(key, count);
+	}
+
 	/**
 	 * 테스트용: 특정 이벤트의 모든 큐 데이터 삭제
 	 */
@@ -119,6 +135,7 @@ public class QueueEntryRedisRepository {
 		redisTemplate.delete(waitingKey);
 		redisTemplate.delete(enteredKey);
 		redisTemplate.delete(countKey);
+
 	}
 
 }
