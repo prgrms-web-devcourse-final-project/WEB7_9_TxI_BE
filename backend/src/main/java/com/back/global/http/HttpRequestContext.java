@@ -95,4 +95,43 @@ public class HttpRequestContext {
 			)
 			.orElse(defaultValue);
 	}
+
+	public void setCookie(String name, String value) {
+		if (value == null) {
+			value = "";
+		}
+
+		Cookie cookie = new Cookie(name, value);
+		cookie.setPath("/");
+		cookie.setHttpOnly(true);
+
+		boolean isLocalhostDomain = domain == null
+			|| domain.isBlank()
+			|| "localhost".equalsIgnoreCase(domain)
+			|| "127.0.0.1".equals(domain);
+
+		if (!isLocalhostDomain) {
+			cookie.setDomain(domain);
+		}
+
+		boolean secureRequest = request.isSecure();
+		cookie.setSecure(secureRequest && !isLocalhostDomain);
+		cookie.setAttribute("SameSite", isLocalhostDomain ? "Lax" : "Strict");
+
+		if (value.isBlank()) {
+			cookie.setMaxAge(0);
+		} else {
+			if ("accessToken".equals(name)) {
+				cookie.setMaxAge((int)accessTokenDurationMillis);
+			} else if ("refreshToken".equals(name)) {
+				cookie.setMaxAge((int)refreshTokenDurationMillis);
+			}
+		}
+
+		response.addCookie(cookie);
+	}
+
+	public void deleteCookie(String name) {
+		setCookie(name, null);
+	}
 }

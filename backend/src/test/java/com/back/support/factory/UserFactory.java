@@ -3,13 +3,19 @@ package com.back.support.factory;
 import java.time.LocalDate;
 import java.time.Month;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
 import com.back.domain.user.entity.UserRole;
+import com.back.support.data.TestUser;
 
 public class UserFactory extends BaseFactory {
 
-	public static User fakeUser(UserRole role) {
+	public static TestUser fakeUser(UserRole role, PasswordEncoder encoder) {
+
+		String rawPassword = faker.internet().password();
+
 		// 1960년 ~ 2010년 사이 랜덤 연도
 		int year = faker.number().numberBetween(1960, 2010);
 
@@ -25,13 +31,15 @@ public class UserFactory extends BaseFactory {
 
 		LocalDate birthDate = LocalDate.of(year, monthValue, day);
 
-		return User.builder()
+		User user = User.builder()
 			.activeStatus(UserActiveStatus.ACTIVE)
 			.role(role)
 			.email(faker.internet().emailAddress())
 			.nickname(faker.lorem().characters(3, 8))
-			.password(faker.internet().password(8, 30))
+			.password(encoder.encode(rawPassword))
 			.birthDate(birthDate)
 			.build();
+
+		return new TestUser(user, rawPassword);
 	}
 }
