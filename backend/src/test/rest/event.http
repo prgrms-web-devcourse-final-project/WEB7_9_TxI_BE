@@ -1,0 +1,65 @@
+@BASE_URL = http://localhost:8080
+@EVENT_ID = 1
+
+### 이벤트 생성
+POST {{BASE_URL}}/api/v1/events
+Content-Type: application/json
+
+{
+  "title": "2025 서울 뮤직 페스티벌",
+  "category": "CONCERT",
+  "description": "세계 최고의 아티스트들이 모이는 뮤직 페스티벌입니다.",
+  "place": "잠실 올림픽 주경기장",
+  "imageUrl": "https://example.com/images/event1.jpg",
+  "minPrice": 30000,
+  "maxPrice": 150000,
+  "preOpenAt": "2026-01-15T10:00:00",
+  "preCloseAt": "2026-01-20T23:59:59",
+  "ticketOpenAt": "2026-01-25T10:00:00",
+  "ticketCloseAt": "2026-01-30T23:59:59",
+  "maxTicketAmount": 5000
+}
+
+> {%
+    if (response.body && response.body.data) {
+        client.global.set("EVENT_ID", response.body.data.id);
+    }
+%}
+
+### 이벤트 단건 조회
+GET {{BASE_URL}}/api/v1/events/{{EVENT_ID}}
+
+### 이벤트 목록 조회 (전체)
+GET {{BASE_URL}}/api/v1/events?page=0&size=10
+
+### 이벤트 목록 조회 (상태 필터)
+GET {{BASE_URL}}/api/v1/events?status=READY&page=0&size=10
+
+### 이벤트 목록 조회 (카테고리 필터)
+GET {{BASE_URL}}/api/v1/events?category=CONCERT&page=0&size=10
+
+### 이벤트 목록 조회 (상태 + 카테고리 필터)
+GET {{BASE_URL}}/api/v1/events?status=READY&category=CONCERT&page=0&size=10
+
+### 이벤트 수정
+PUT {{BASE_URL}}/api/v1/events/{{EVENT_ID}}
+Content-Type: application/json
+
+{
+  "title": "2025 서울 뮤직 페스티벌 (업데이트)",
+  "category": "CONCERT",
+  "description": "세계 최고의 아티스트들이 모이는 뮤직 페스티벌입니다. 라인업 업데이트!",
+  "place": "잠실 올림픽 주경기장",
+  "imageUrl": "https://example.com/images/event1_updated.jpg",
+  "minPrice": 40000,
+  "maxPrice": 180000,
+  "preOpenAt": "2026-01-15T10:00:00",
+  "preCloseAt": "2026-01-20T23:59:59",
+  "ticketOpenAt": "2026-01-25T10:00:00",
+  "ticketCloseAt": "2026-01-30T23:59:59",
+  "maxTicketAmount": 6000,
+  "status": "PRE_OPEN"
+}
+
+### 이벤트 삭제
+DELETE {{BASE_URL}}/api/v1/events/{{EVENT_ID}}

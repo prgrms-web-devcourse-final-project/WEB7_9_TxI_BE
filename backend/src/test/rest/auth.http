@@ -23,4 +23,35 @@ Content-Type: application/json
 > {%
     const data = response.body.data;
     client.global.set("ACCESS_TOKEN", data.tokens.accessToken);
+
+    const setCookie = response.headers['Set-Cookie'];
+
+    function extractCookies(raw) {
+        if (!raw) return null;
+
+        // 배열이면 각 쿠키에서 "name=value" 부분만 가져오기
+        if (Array.isArray(raw)) {
+            return raw
+                .map(c => c.split(';')[0]) // "accessToken=..." / "refreshToken=..."
+                .join('; ');
+        }
+
+        // 문자열 하나에 두 개 쿠키가 , 로 들어오는 경우 대비
+        // 예: "accessToken=...; Path=/, refreshToken=...; Path=/"
+        return raw
+            .split(',')
+            .map(s => s.trim())
+            .map(c => c.split(';')[0])
+            .join('; ');
+    }
+
+    const cookieHeader = extractCookies(setCookie);
+    if (cookieHeader) {
+        client.global.set("COOKIE", cookieHeader);
+    }
 %}
+
+### 로그아웃
+POST {{BASE_URL}}/api/v1/auth/logout
+Cookie: {{COOKIE}}
+Content-Type: application/json
