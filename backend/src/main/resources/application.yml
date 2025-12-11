@@ -7,6 +7,7 @@ spring:
     ansi:
       enabled: always
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
         format_sql: true
@@ -26,7 +27,6 @@ spring:
 
 logging:
   level:
-    org.springframework.security: WARN
     org.hibernate.orm.jdbc.bind: TRACE
     org.hibernate.orm.jdbc.extract: TRACE
     org.springframework.transaction.interceptor: TRACE
@@ -51,7 +51,7 @@ custom:
       - DELETE
     allowed-headers:
       - "*"
-  
+
   jwt:
     secret: ${JWT_SECRET}
     access-token-duration: ${JWT_ACCESS_TOKEN_DURATION:3600}
@@ -69,3 +69,25 @@ custom:
     domain: "${custom.dev.domain}"
     back-url: "${custom.dev.back-url}"
     front-url: "${custom.dev.front-url}"
+
+queue:
+  scheduler:
+    #입장 처리 스케줄러
+    entry:
+      cron: "*/10 * * * * *" # 10초마다 실행
+      batch-size: 100 # 한 번에 입장시킬 인원
+      max-entered-limit: 100  # 최대 수용 인원
+
+    #셔플 처리 스케줄러
+    shuffle:
+      cron: "*/30 * * * * *" # 테스트를 위해 30초마다 실행
+      #cron: "0 */10 * * * *" # 10분마다 실행
+      time-range-minutes: 1 # 시간 범위
+
+    expire:
+      cron: "0 * * * * *"
+
+event:
+  scheduler:
+    open:
+      cron: "0 * * * * *"

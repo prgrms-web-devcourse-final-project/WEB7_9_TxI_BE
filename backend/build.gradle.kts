@@ -113,6 +113,8 @@ val coverageExcludes = listOf(
         "**/home/**",
         "**/vo/**",
         "**/Q*.*",
+        "**/controller/**/*Api.class",
+        "**/controller/**/*Api\$*"
 )
 
 /** -----------------------------

@@ -29,14 +29,12 @@ public class JwtUtil {
 
 		Key secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret.trim()));
 
-		String jwt = Jwts.builder()
+		return Jwts.builder()
 			.claims(claims)
 			.issuedAt(issuedAt)
 			.expiration(expiration)
 			.signWith(secretKey)
 			.compact();
-
-		return jwt;
 	}
 
 	public static Map<String, Object> payloadOrNull(String jwt, String secret) {

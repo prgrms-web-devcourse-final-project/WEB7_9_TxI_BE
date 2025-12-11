@@ -6,13 +6,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.back.api.auth.dto.request.LoginRequest;
 import com.back.api.auth.dto.request.SignupRequest;
 import com.back.api.auth.dto.response.AuthResponse;
 import com.back.api.auth.service.AuthService;
 import com.back.global.response.ApiResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -20,17 +19,25 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "Auth API", description = "회원 인증 API, 인증/인가(재발급)")
-public class AuthController {
+public class AuthController implements AuthApi {
 
 	private final AuthService authService;
 
-	@Operation(summary = "사용자 회원가입", description = "이메일, 닉네임, 비밀번호, 생년월일로 회원가입")
+	@Override
 	@PostMapping("/signup")
 	public ApiResponse<AuthResponse> signup(
 		@Valid @RequestBody SignupRequest request
 	) {
 		AuthResponse response = authService.signup(request);
 		return ApiResponse.created("회원가입 성공", response);
+	}
+
+	@Override
+	@PostMapping("/login")
+	public ApiResponse<AuthResponse> login(
+		@Valid @RequestBody LoginRequest request
+	) {
+		AuthResponse response = authService.login(request);
+		return ApiResponse.created("로그인 성공", response);
 	}
 }

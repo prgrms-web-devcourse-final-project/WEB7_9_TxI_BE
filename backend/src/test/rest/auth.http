@@ -1,4 +1,4 @@
-## Send Signup API
+### 회원가입
 POST {{BASE_URL}}/api/v1/auth/signup
 Content-Type: application/json
 
@@ -9,6 +9,15 @@ Content-Type: application/json
   "year": "2002",
   "month": "2",
   "day": "11"
+}
+
+### 로그인
+POST {{BASE_URL}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "qwer1234"
 }
 
 > {%

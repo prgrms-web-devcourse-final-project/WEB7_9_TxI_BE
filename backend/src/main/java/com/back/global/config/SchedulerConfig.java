@@ -8,8 +8,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @Configuration
 @EnableScheduling
 public class SchedulerConfig {
+
 	@Bean
-	public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+	public ThreadPoolTaskScheduler taskScheduler() {
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 		scheduler.setPoolSize(Runtime.getRuntime().availableProcessors() * 2); //cpu 코어 개수 2배로 설정
 		scheduler.initialize();

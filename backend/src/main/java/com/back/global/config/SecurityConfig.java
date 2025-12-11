@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -20,8 +21,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	private final CustomAuthenticationFilter customAuthenticationFilter;
 	private final CorsProperties corsProperties;
+	private final CustomAuthenticationFilter authenticationFilter;
 
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -33,7 +34,7 @@ public class SecurityConfig {
 				.requestMatchers("/h2-console/**").permitAll()  // H2 콘솔 접근 허용
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()  // Swagger 접근 허용
 				.requestMatchers("/.well-known/**").permitAll()
-				.anyRequest().permitAll()
+				.anyRequest().permitAll() // TODO: 보안 인증 설정 시 제거, 현재는 모든 API 요청을 인증없이 허용
 			)
 			.csrf(csrf -> csrf
 				.ignoringRequestMatchers("/h2-console/**")  // H2 콘솔은 CSRF 제외
@@ -44,9 +45,9 @@ public class SecurityConfig {
 				.frameOptions(frameOptions -> frameOptions.sameOrigin())  // H2 콘솔 iframe 허용
 			);
 
-		return http.build();
+		http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-		// TODO: 나중에 인증 규칙 추가, 로그인 구현 때 추가 예정
+		return http.build();
 	}
 
 	@Bean

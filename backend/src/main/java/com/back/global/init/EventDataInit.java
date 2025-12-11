@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.back.domain.event.entity.Event;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 @Profile("dev")
+@Order(2)
 public class EventDataInit implements ApplicationRunner {
 
 	private final EventRepository eventRepository;
@@ -82,10 +84,28 @@ public class EventDataInit implements ApplicationRunner {
 			.status(EventStatus.PRE_OPEN)
 			.build();
 
+
+		Event event4 = Event.builder()
+			.title("2025 스프링 재즈 나이트")
+			.category(EventCategory.CONCERT)
+			.description("국내 최고의 재즈 아티스트들과 함께하는 밤, 감성 가득한 스프링 재즈 콘서트를 즐겨보세요.")
+			.place("예술의전당 콘서트홀")
+			.imageUrl("https://example.com/jazz-night.jpg")
+			.minPrice(15000)
+			.maxPrice(250000)
+			.preOpenAt(now.minusDays(10))
+			.preCloseAt(now.minusDays(8))
+			.ticketOpenAt(now.plusHours(1).plusMinutes(5))
+			.ticketCloseAt(now.plusDays(14))
+			.maxTicketAmount(3000)
+			.status(EventStatus.PRE_OPEN)
+			.build();
+
 		eventRepository.save(event1);
 		eventRepository.save(event2);
 		eventRepository.save(event3);
+		eventRepository.save(event4);
 
-		log.info("Event 초기 데이터 3개가 생성되었습니다.");
+		log.info("Event 초기 데이터 4개가 생성되었습니다.");
 	}
 }
