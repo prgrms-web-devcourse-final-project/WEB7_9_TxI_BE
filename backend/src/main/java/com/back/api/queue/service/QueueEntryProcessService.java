@@ -116,7 +116,7 @@ public class QueueEntryProcessService {
 	}
 
 	private void publishEnteredEvent(QueueEntry queueEntry) {
-		EnteredQueueResponse response = EnteredQueueResponse.from (
+		EnteredQueueResponse response = EnteredQueueResponse.from(
 			queueEntry.getUserId(),
 			queueEntry.getEventId(),
 			queueEntry.getEnteredAt(),
@@ -187,8 +187,8 @@ public class QueueEntryProcessService {
 	public void publishWaitingUpdateEvents(Long eventId) {
 		try {
 
-			// 1. Redis 호출 1번으로 전체 대기열 조회
-			Set<ZSetOperations.TypedTuple<Object>> allWaitingUsers = queueEntryRedisRepository.getAllWaitingUsersWithRank(eventId);
+			Set<ZSetOperations.TypedTuple<Object>> allWaitingUsers =
+				queueEntryRedisRepository.getAllWaitingUsersWithRank(eventId);
 
 			if (allWaitingUsers == null || allWaitingUsers.isEmpty()) {
 				return;
@@ -221,13 +221,12 @@ public class QueueEntryProcessService {
 				}
 			}
 
-			if(!allUpdates.isEmpty()) {
+			if (!allUpdates.isEmpty()) {
 				WaitingQueueBatchEvent batchEvent = WaitingQueueBatchEvent.from(eventId, allUpdates);
 				eventPublisher.publishEvent(batchEvent);
 				log.info("실시간 순위 업데이트 완료 - eventId: {}, 대상: {}명", eventId, allUpdates.size());
 			}
- 		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			log.error("실시간 순위 업데이트 실패 - userId: {}", eventId, e);
 		}
 	}
