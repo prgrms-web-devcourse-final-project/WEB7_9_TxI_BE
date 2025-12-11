@@ -1,0 +1,4 @@
+### 사용자 프로필 조회
+GET {{BASE_URL}}/api/v1/users/profile
+Authorization: Bearer {{ACCESS_TOKEN}}
+Content-Type: application/json
