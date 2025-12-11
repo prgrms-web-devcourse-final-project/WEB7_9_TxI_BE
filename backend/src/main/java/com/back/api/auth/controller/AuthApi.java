@@ -27,4 +27,11 @@ public interface AuthApi {
 		"LOGIN_FAILED",
 	})
 	ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request);
+
+	@Operation(summary = "로그아웃", description = "쿠키에서 refresh 토큰을 제거하고 로그아웃")
+	@ApiErrorCode({
+		"REFRESH_TOKEN_REQUIRED",
+		"REFRESH_TOKEN_NOT_FOUND"
+	})
+	ApiResponse<Void> logout();
 }

@@ -24,3 +24,8 @@ Content-Type: application/json
     const data = response.body.data;
     client.global.set("ACCESS_TOKEN", data.tokens.accessToken);
 %}
+
+### 로그아웃
+POST {{BASE_URL}}/api/v1/auth/logout
+Authorization: Bearer {{ACCESS_TOKEN}}
+Content-Type: application/json

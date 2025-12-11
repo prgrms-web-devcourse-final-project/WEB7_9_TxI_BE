@@ -394,6 +394,21 @@ public class AuthControllerTest {
 			// DB에서 refreshToken 이 2개인지 검증
 			long tokenCount = tokenRepository.countByUserId(savedUser.getId());
 			assertThat(tokenCount).isEqualTo(2);
+
+			assertThat(refreshToken1).isNotEqualTo(refreshToken2);
+			assertThat(accessToken1).isNotEqualTo(accessToken2);
+		}
+	}
+
+	@Nested
+	@DisplayName("로그아웃 API Test `POST /api/v1/auth/logout`")
+	class LogoutTest {
+		private final String logoutApi = "/api/v1/auth/logout";
+
+		@Test
+		@DisplayName("로그아웃 성공")
+		void logout_success() throws Exception {
+
 		}
 	}
 }

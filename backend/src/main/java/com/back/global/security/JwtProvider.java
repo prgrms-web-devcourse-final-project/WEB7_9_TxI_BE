@@ -1,6 +1,8 @@
 package com.back.global.security;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,20 +26,42 @@ public class JwtProvider {
 	@Value("${custom.jwt.refresh-token-duration}")
 	private long refreshTokenDurationMillis;
 
+	private static final String CLAIM_ID = "id";
+	private static final String CLAIM_NICKNAME = "nickname";
+	private static final String CLAIM_ROLE = "role";
+	private static final String CLAIM_TOKEN_TYPE = "tokenType";
+	private static final String CLAIM_JTI = "jti";
+
 	public String generateAccessToken(User user) {
+		Map<String, Object> claims = createBaseClaims(user);
+		claims.put(CLAIM_TOKEN_TYPE, "access");
+		claims.put(CLAIM_JTI, UUID.randomUUID().toString());
+
 		return JwtUtil.toString(
 			secret,
 			accessTokenDurationMillis,
-			Map.of("id", user.getId(), "nickname", user.getNickname(), "role", user.getRole())
+			claims
 		);
 	}
 
 	public String generateRefreshToken(User user) {
+		Map<String, Object> claims = createBaseClaims(user);
+		claims.put(CLAIM_TOKEN_TYPE, "refresh");
+		claims.put(CLAIM_JTI, UUID.randomUUID().toString());
+
 		return JwtUtil.toString(
 			secret,
 			refreshTokenDurationMillis,
-			Map.of("id", user.getId(), "nickname", user.getNickname(), "role", user.getRole())
+			claims
 		);
+	}
+
+	private Map<String, Object> createBaseClaims(User user) {
+		Map<String, Object> claims = new HashMap<>();
+		claims.put(CLAIM_ID, user.getId());
+		claims.put(CLAIM_NICKNAME, user.getNickname());
+		claims.put(CLAIM_ROLE, user.getRole());
+		return claims;
 	}
 
 	/** access token 유효 기간 (ms 단위) */
@@ -65,7 +89,6 @@ public class JwtProvider {
 		long id = idNo.longValue();
 
 		String nickname = (String)payload.get("nickname");
-
 		Object roleObj = payload.get("role");
 
 		UserRole role = switch (roleObj) {
@@ -77,7 +100,11 @@ public class JwtProvider {
 			);
 		};
 
-		return Map.of("id", id, "nickname", nickname, "role", role);
+		return Map.of(
+			CLAIM_ID, id,
+			CLAIM_NICKNAME, nickname,
+			CLAIM_ROLE, role
+		);
 	}
 
 	public boolean isExpired(String jwt) {
