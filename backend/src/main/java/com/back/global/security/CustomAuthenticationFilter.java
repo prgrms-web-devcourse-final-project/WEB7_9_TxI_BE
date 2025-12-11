@@ -3,6 +3,7 @@ package com.back.global.security;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -34,6 +35,11 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private static final String AUTH_PATH_PREFIX = "/api/v1/auth/";
 	private static final String BEARER_PREFIX = "Bearer ";
 
+	private static final Set<String> AUTH_WHITELIST = Set.of(
+		"/api/v1/auth/login",
+		"/api/v1/auth/signup"
+	);
+
 	private final JwtProvider jwtProvider;
 	private final AuthTokenService tokenService;
 	private final SiteProperties siteProperties;
@@ -64,7 +70,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 		if ("OPTIONS".equalsIgnoreCase(request.getMethod())
 			|| !requestUrl.startsWith("/api/")
-			|| requestUrl.startsWith(AUTH_PATH_PREFIX)
+			|| AUTH_WHITELIST.contains(requestUrl)
 		) {
 			filterChain.doFilter(request, response);
 			return;
