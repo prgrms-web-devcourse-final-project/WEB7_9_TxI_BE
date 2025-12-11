@@ -88,7 +88,6 @@ class TicketControllerTest {
 			.andExpect(jsonPath("$.data[0].ticketStatus").value("ISSUED"));
 	}
 
-	// ────────────────────────────────────────────────
 	@Test
 	@DisplayName("내 티켓 조회 - 빈 배열 반환")
 	void getMyTickets_empty() throws Exception {
@@ -100,7 +99,6 @@ class TicketControllerTest {
 			.andExpect(jsonPath("$.data.length()").value(0));
 	}
 
-	// ────────────────────────────────────────────────
 	@Test
 	@DisplayName("내 티켓 조회 - 다른 유저 티켓은 보이지 않아야 함")
 	void getMyTickets_filtering() throws Exception {
