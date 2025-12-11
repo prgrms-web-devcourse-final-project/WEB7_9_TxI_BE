@@ -10,6 +10,7 @@ import com.back.api.seat.dto.request.SelectSeatRequest;
 import com.back.api.selection.service.SeatSelectionService;
 import com.back.api.ticket.dto.response.TicketResponse;
 import com.back.domain.ticket.entity.Ticket;
+import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class SeatSelectionController {
 
 	private final SeatSelectionService seatSelectionService;
+	private final HttpRequestContext httpRequestContext;
 
 	/**
 	 * 좌석 선택 (예약/구매)
@@ -35,8 +37,9 @@ public class SeatSelectionController {
 		@PathVariable Long seatId,
 		@RequestBody SelectSeatRequest request
 	) {
-		Long mockUserId = 1L; // TODO: 실제 인증된 사용자 ID로 교체 필요 (Security Context에서 가져오기)
-		Ticket draftTicket = seatSelectionService.selectSeatAndCreateTicket(eventId, seatId, mockUserId);
+		Long userId = httpRequestContext.getUser().getId();
+
+		Ticket draftTicket = seatSelectionService.selectSeatAndCreateTicket(eventId, seatId, userId);
 
 		return ApiResponse.ok(
 			"좌석을 선택했습니다.",

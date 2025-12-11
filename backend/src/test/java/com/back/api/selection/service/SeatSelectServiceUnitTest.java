@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.back.api.queue.service.QueueEntryReadService;
@@ -48,6 +49,9 @@ class SeatSelectServiceUnitTest {
 	@Mock
 	private QueueEntryReadService queueEntryReadService;
 
+	@Mock
+	private PasswordEncoder passwordEncoder;
+
 	private Event testEvent;
 	private Seat testSeat;
 	private User testUser;
@@ -62,7 +66,7 @@ class SeatSelectServiceUnitTest {
 		seatId = 1L;
 		userId = 100L;
 
-		testUser = UserFactory.fakeUser(UserRole.NORMAL);
+		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
 		testEvent = EventFactory.fakeEvent("테스트 콘서트");
 		testSeat = SeatFactory.fakeSeat(testEvent, "A1", SeatGrade.VIP, 150000);
 
@@ -82,7 +86,7 @@ class SeatSelectServiceUnitTest {
 		@DisplayName("정상적으로 좌석을 선택하고 Draft Ticket을 생성한다")
 		void selectSeatAndCreateTicket_Success() {
 			// given
-			given(queueEntryReadService.existsInWaitingQueue(eventId, userId)).willReturn(true);
+			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
 			given(seatService.reserveSeat(eventId, seatId, userId)).willReturn(testSeat);
 			given(ticketService.createDraftTicket(eventId, seatId, userId)).willReturn(testTicket);
 
@@ -96,7 +100,7 @@ class SeatSelectServiceUnitTest {
 			assertThat(result.getEvent()).isEqualTo(testEvent);
 			assertThat(result.getSeat()).isEqualTo(testSeat);
 
-			then(queueEntryReadService).should().existsInWaitingQueue(eventId, userId);
+			then(queueEntryReadService).should().isUserEntered(eventId, userId);
 			then(seatService).should().reserveSeat(eventId, seatId, userId);
 			then(ticketService).should().createDraftTicket(eventId, seatId, userId);
 		}
@@ -105,7 +109,7 @@ class SeatSelectServiceUnitTest {
 		@DisplayName("큐에 입장하지 않은 사용자는 좌석 선택에 실패한다")
 		void selectSeatAndCreateTicket_NotInQueue_ThrowsException() {
 			// given
-			given(queueEntryReadService.existsInWaitingQueue(eventId, userId)).willReturn(false);
+			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(false);
 
 			// when & then
 			assertThatThrownBy(() -> seatSelectionService.selectSeatAndCreateTicket(eventId, seatId, userId))
@@ -120,7 +124,7 @@ class SeatSelectServiceUnitTest {
 		@DisplayName("좌석 예약 실패 시 티켓 생성하지 않는다")
 		void selectSeatAndCreateTicket_ReserveFail_DoesNotCreateTicket() {
 			// given
-			given(queueEntryReadService.existsInWaitingQueue(eventId, userId)).willReturn(true);
+			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
 			given(seatService.reserveSeat(eventId, seatId, userId))
 				.willThrow(new ErrorException(SeatErrorCode.SEAT_ALREADY_RESERVED));
 
@@ -143,7 +147,7 @@ class SeatSelectServiceUnitTest {
 			// given
 			testSeat.markAsReserved(); // 예약 상태로 변경
 
-			given(queueEntryReadService.existsInWaitingQueue(eventId, userId)).willReturn(true);
+			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
 			given(seatService.reserveSeat(eventId, seatId, userId)).willReturn(testSeat);
 			given(ticketService.createDraftTicket(eventId, seatId, userId)).willReturn(testTicket);
 
@@ -163,7 +167,7 @@ class SeatSelectServiceUnitTest {
 		@DisplayName("티켓 생성 실패 시 예외가 발생한다")
 		void selectSeatAndCreateTicket_TicketCreationFail_ThrowsException() {
 			// given
-			given(queueEntryReadService.existsInWaitingQueue(eventId, userId)).willReturn(true);
+			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
 			given(seatService.reserveSeat(eventId, seatId, userId)).willReturn(testSeat);
 			given(ticketService.createDraftTicket(eventId, seatId, userId))
 				.willThrow(new RuntimeException("티켓 생성 실패"));

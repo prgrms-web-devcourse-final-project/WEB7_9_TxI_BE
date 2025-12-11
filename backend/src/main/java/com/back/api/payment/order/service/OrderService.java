@@ -31,7 +31,7 @@ public class OrderService {
 			.status(OrderStatus.PAID)
 			.build();
 		orderRepository.save(newOrder);
-		seatService.confirmPurchase(orderRequestDto.eventId(), orderRequestDto.seatId(), orderRequestDto.userId());
+		//seatService.confirmPurchase(orderRequestDto.eventId(), orderRequestDto.seatId(), orderRequestDto.userId());
 		// Todo : 티켓 생성 서비스 호출
 		return newOrder;
 	}

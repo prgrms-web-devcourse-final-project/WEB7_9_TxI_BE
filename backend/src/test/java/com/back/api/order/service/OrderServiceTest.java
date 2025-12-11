@@ -77,7 +77,7 @@ class OrderServiceTest {
 		given(orderRepository.save(any(Order.class))).willReturn(savedOrder);
 
 		// confirmPurchase는 Seat을 반환
-		given(seatService.confirmPurchase(eventId, seatId, userId)).willReturn(mockSeat);
+		// given(seatService.confirmPurchase(eventId, seatId, userId)).willReturn(mockSeat);
 
 		// when
 		Order result = orderService.createOrder(requestDto);
@@ -95,7 +95,7 @@ class OrderServiceTest {
 		verify(userRepository, times(1)).getReferenceById(userId);
 		verify(seatRepository, times(1)).getReferenceById(seatId);
 		verify(orderRepository, times(1)).save(any(Order.class));
-		verify(seatService, times(1)).confirmPurchase(eventId, seatId, userId);
+		// verify(seatService, times(1)).confirmPurchase(eventId, seatId, userId);
 	}
 
 	@Test
@@ -142,12 +142,12 @@ class OrderServiceTest {
 		given(orderRepository.save(any(Order.class))).willReturn(mock(Order.class));
 
 		// confirmPurchase Mock 추가
-		given(seatService.confirmPurchase(anyLong(), anyLong(), anyLong())).willReturn(mock(Seat.class));
+		//given(seatService.confirmPurchase(anyLong(), anyLong(), anyLong())).willReturn(mock(Seat.class));
 
 		// when
 		orderService.createOrder(requestDto);
 
 		// then
-		verify(seatService, times(1)).confirmPurchase(eventId, seatId, userId);
+		//verify(seatService, times(1)).confirmPurchase(eventId, seatId, userId);
 	}
 }

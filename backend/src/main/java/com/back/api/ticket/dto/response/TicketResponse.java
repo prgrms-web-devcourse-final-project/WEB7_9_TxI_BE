@@ -25,6 +25,9 @@ public record TicketResponse(
 	@Schema(description = "좌석 가격", example = "100000")
 	int seatPrice,
 
+	@Schema(description = "좌석 상태", example = "SOLD / RESERVED / AVAILABLE")
+	String seatStatus,
+
 	@Schema(description = "티켓 상태", example = "DRAFT / PAID / ISSUED / USED / FAILED")
 	String ticketStatus,
 
@@ -42,6 +45,7 @@ public record TicketResponse(
 			ticket.getSeat().getSeatCode(),
 			ticket.getSeat().getGrade().getDisplayName(),
 			ticket.getSeat().getPrice(),
+			ticket.getSeat().getSeatStatus().name(),
 			ticket.getTicketStatus().name(),
 			ticket.getIssuedAt(),
 			ticket.getUsedAt()

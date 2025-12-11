@@ -13,6 +13,7 @@ import com.back.api.seat.service.SeatService;
 import com.back.domain.seat.entity.Seat;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +28,7 @@ public class SeatController {
 
 	private final SeatService seatService;
 	private final QueueEntryReadService queueEntryReadService;
+	private final HttpRequestContext httpRequestContext;
 
 	/**
 	 * 이벤트의 좌석 목록 조회
@@ -37,14 +39,14 @@ public class SeatController {
 	public ApiResponse<List<SeatResponse>> getSeatsByEvent(
 		@PathVariable Long eventId
 	) {
-		Long mockUserId = 1L; // TODO: 실제 인증된 사용자 ID로 교체 필요 (Security Context에서 가져오기)
+		Long userId = httpRequestContext.getUser().getId();
 
 		// 큐 검증
-		if (!queueEntryReadService.existsInWaitingQueue(eventId, mockUserId)) {
+		if (!queueEntryReadService.existsInWaitingQueue(eventId, userId)) {
 			throw new ErrorException(SeatErrorCode.NOT_IN_QUEUE);
 		}
 
-		List<Seat> seats = seatService.getSeatsByEvent(eventId, mockUserId);
+		List<Seat> seats = seatService.getSeatsByEvent(eventId, userId);
 
 		return ApiResponse.ok(
 			"좌석 목록을 조회했습니다.",

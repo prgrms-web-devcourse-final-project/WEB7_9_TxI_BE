@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.back.config.TestRedisConfig;
@@ -33,6 +34,7 @@ import com.back.domain.user.entity.UserActiveStatus;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.exception.ErrorException;
+import com.back.support.data.TestUser;
 import com.back.support.factory.EventFactory;
 import com.back.support.factory.UserFactory;
 
@@ -55,6 +57,9 @@ public class SeatSelectionServiceIntegrationTest {
 
 	@Autowired
 	private QueueEntryRedisRepository queueEntryRedisRepository;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	private Event event;
 	private User user;
@@ -123,11 +128,11 @@ public class SeatSelectionServiceIntegrationTest {
 		List<Long> enteredUserIds = new ArrayList<>();
 
 		for (int i = 0; i < threadCount; i++) {
-			User testUser = UserFactory.fakeUser(UserRole.NORMAL);
-			userRepository.save(testUser);
+			TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+			userRepository.save(testUser.user());
 
-			queueEntryRedisRepository.moveToEnteredQueue(eventId, testUser.getId());
-			enteredUserIds.add(testUser.getId());
+			queueEntryRedisRepository.moveToEnteredQueue(eventId, testUser.user().getId());
+			enteredUserIds.add(testUser.user().getId());
 		}
 
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
