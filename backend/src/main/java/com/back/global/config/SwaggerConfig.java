@@ -148,8 +148,10 @@ public class SwaggerConfig {
 			CommonErrorCode.class,
 			com.back.global.error.code.AuthErrorCode.class,
 			com.back.global.error.code.EventErrorCode.class,
+			com.back.global.error.code.PreRegisterErrorCode.class,
 			com.back.global.error.code.QueueEntryErrorCode.class,
-			com.back.global.error.code.SeatErrorCode.class
+			com.back.global.error.code.SeatErrorCode.class,
+			com.back.global.error.code.TicketErrorCode.class
 		};
 
 		for (Class<?> clazz : errorCodeClasses) {
