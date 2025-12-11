@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.auth.dto.JwtDto;
+import com.back.api.auth.dto.request.LoginRequest;
 import com.back.api.auth.dto.request.SignupRequest;
 import com.back.api.auth.dto.response.AuthResponse;
 import com.back.api.auth.dto.response.TokenResponse;
@@ -17,6 +18,7 @@ import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.global.http.HttpRequestContext;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +29,7 @@ public class AuthService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final AuthTokenService authTokenService;
+	private final HttpRequestContext requestContext;
 
 	@Transactional
 	public AuthResponse signup(SignupRequest request) {
@@ -55,6 +58,23 @@ public class AuthService {
 		JwtDto tokens = authTokenService.generateTokens(savedUser);
 
 		return buildAuthResponse(savedUser, tokens);
+	}
+
+	@Transactional
+	public AuthResponse login(LoginRequest request) {
+		User user = userRepository.findByEmail(request.email())
+			.orElseThrow(() -> new ErrorException(AuthErrorCode.LOGIN_FAILED));
+
+		if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+			throw new ErrorException(AuthErrorCode.LOGIN_FAILED);
+		}
+
+		JwtDto tokens = authTokenService.generateTokens(user);
+
+		requestContext.setCookie("accessToken", tokens.accessToken());
+		requestContext.setCookie("refreshToken", tokens.refreshToken());
+
+		return buildAuthResponse(user, tokens);
 	}
 
 	private AuthResponse buildAuthResponse(User user, JwtDto tokens) {

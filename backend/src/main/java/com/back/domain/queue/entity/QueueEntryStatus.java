@@ -12,5 +12,8 @@ public enum QueueEntryStatus {
 	ENTERED,
 
 	@Schema(description = "결제 시간 만료")
-	EXPIRED
+	EXPIRED,
+
+	@Schema(description = "결제 완료")
+	COMPLETED
 }

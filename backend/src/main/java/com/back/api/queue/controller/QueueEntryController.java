@@ -10,26 +10,20 @@ import com.back.api.queue.dto.response.QueueEntryStatusResponse;
 import com.back.api.queue.service.QueueEntryReadService;
 import com.back.global.response.ApiResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "QueueEntry API", description = "사용자 대기열 API")
+
 @RestController
 @RequestMapping("/api/v1/queues")
 @RequiredArgsConstructor
-public class QueueEntryController {
+public class QueueEntryController implements QueueEntryApi {
 
 	private final QueueEntryReadService queueEntryReadService;
 
+	@Override
 	@GetMapping("/{eventId}/status")
-	@Operation(summary = "내 대기열 상태 조회", description = "사용자의 현재 대기열 상태를 조회합니다.")
 	public ApiResponse<QueueEntryStatusResponse> getMyQueueEntryStatus(
-		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
-
-		@Parameter(description = "사용자 ID", example = "1")
 		@RequestParam Long userId
 	) {
 		QueueEntryStatusResponse response = queueEntryReadService.getMyQueueStatus(eventId, userId);
@@ -37,14 +31,10 @@ public class QueueEntryController {
 
 	}
 
-
+	@Override
 	@GetMapping("/{eventId}/exists")
-	@Operation(summary = "대기열 진입 여부 조회", description = "사용자가 특정 이벤트의 대기열에 진입했는지 조회합니다.")
 	public ApiResponse<Boolean> existsInQueue(
-		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
-
-		@Parameter(description = "사용자 ID", example = "1")
 		@RequestParam Long userId
 	) {
 		boolean exists = queueEntryReadService.existsInWaitingQueue(eventId, userId);

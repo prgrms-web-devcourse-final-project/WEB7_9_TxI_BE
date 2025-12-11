@@ -1,0 +1,23 @@
+@BASE_URL = http://localhost:8080
+@EVENT_ID = 1
+
+### 사전등록
+POST {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers?userId=1
+
+> {%
+    if (response.body && response.body.data) {
+        client.global.set("PRE_REGISTER_ID", response.body.data.id);
+    }
+%}
+
+### 내 사전등록 조회
+GET {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers/me?userId=1
+
+### 사전등록 여부 확인
+GET {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers/status?userId=1
+
+### 사전등록 현황 조회 (전체 수)
+GET {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers/count
+
+### 사전등록 취소
+DELETE {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers?userId=1
