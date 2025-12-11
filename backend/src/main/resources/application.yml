@@ -7,6 +7,7 @@ spring:
     ansi:
       enabled: always
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
         format_sql: true
@@ -26,7 +27,6 @@ spring:
 
 logging:
   level:
-    org.springframework.security: WARN
     org.hibernate.orm.jdbc.bind: TRACE
     org.hibernate.orm.jdbc.extract: TRACE
     org.springframework.transaction.interceptor: TRACE
@@ -51,7 +51,7 @@ custom:
       - DELETE
     allowed-headers:
       - "*"
-  
+
   jwt:
     secret: ${JWT_SECRET}
     access-token-duration: ${JWT_ACCESS_TOKEN_DURATION:3600}
