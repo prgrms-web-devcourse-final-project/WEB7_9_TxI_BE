@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
 import com.back.api.queue.dto.response.EnteredQueueResponse;
 import com.back.api.queue.dto.response.ExpiredQueueResponse;
+import com.back.api.queue.dto.response.WaitingQueueResponse;
 import com.back.domain.event.entity.Event;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
@@ -39,6 +40,7 @@ public class QueueEntryProcessService {
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 	private final EventPublisher eventPublisher;
 	private final QueueSchedulerProperties properties;
+	private final QueueEntryReadService queueEntryReadService;
 
 	@Transactional
 	public void processEntry(Long eventId, Long userId) {
@@ -172,12 +174,47 @@ public class QueueEntryProcessService {
 			userIds.add(Long.parseLong(userId.toString()));
 		}
 
-		processBatchEntry(eventId, userIds);
+		processBatchEntry(eventId, userIds); // 입장 순서인 사용자 입장처리
 
-		//이벤트 추가
+		publishWaitingUpdateEvents(eventId); // 대기중인 사용자 실시간 순위 업데이트
 
 	}
 
+	public void publishWaitingUpdateEvents(Long eventId) {
+		try {
+			Long currentWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
+			if (currentWaitingCount == 0) {
+				return;
+			}
+
+			//TODO 실시간 업데이트 보여주는 인원을 어떻게 설정할것인가? 너무 많아지면 부하
+			//TODO 전체 반복문 제거하고 단 한번의 이벤트 broadcast하도록 변경
+			int updateLimit = Math.min(200, currentWaitingCount.intValue());
+			Set<Object> topWaitingUsers = queueEntryRedisRepository
+				.getTopWaitingUsers(eventId, updateLimit);
+
+			int successCount = 0;
+
+			for (Object user : topWaitingUsers) {
+				try {
+					Long userId = Long.parseLong(user.toString());
+
+					WaitingQueueResponse response = queueEntryReadService.buildWaitingQueueResponseForUser(eventId, userId);
+
+					if(response != null) {
+						eventPublisher.publishEvent(response);
+						successCount ++;
+					}
+				}
+				catch (Exception e) {
+					log.error("개별 사용자 순위 업데이트 실패 - userId: {}", user, e);
+				}
+			}
+ 		}
+		catch (Exception e) {
+			log.error("사용자 순위 업데이트 실패 - userId: {}", eventId, e);
+		}
+	}
 
 	public boolean canEnterEntry(Long eventId, Long userId) {
 		return queueEntryRepository

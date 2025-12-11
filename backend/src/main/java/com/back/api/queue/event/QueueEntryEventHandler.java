@@ -23,13 +23,13 @@ public class QueueEntryEventHandler {
 		//publisher.publisherToUser(response);
 
 		//테스트용 로그
-		log.info("📨 대기열 이벤트 수신 - userId: {}, eventId: {}, type: {}",
+		log.info("대기열 이벤트 수신 - userId: {}, eventId: {}, type: {}",
 			response.userId(), response.eventId(), response.getClass().getSimpleName());
 
 		try {
 			publisher.publisherToUser(response);
 		} catch (Exception e) {
-			log.error("❌ 대기열 이벤트 처리 실패 - userId: {}, error: {}",
+			log.error("대기열 이벤트 처리 실패 - userId: {}, error: {}",
 				response.userId(), e.getMessage(), e);
 		}
 	}

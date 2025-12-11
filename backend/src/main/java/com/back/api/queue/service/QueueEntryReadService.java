@@ -46,33 +46,55 @@ public class QueueEntryReadService {
 		};
 	}
 
-	//Redis 먼저 조회
-	private WaitingQueueResponse buildWaitingQueueResponse(Long eventId, QueueEntry entry) {
-		Long currentRank = queueEntryRedisRepository.getMyRankInWaitingQueue(eventId, entry.getUserId());
-		Long waitingAheadCount = queueEntryRedisRepository.getWaitingAheadCount(eventId, entry.getUserId());
+	public WaitingQueueResponse buildWaitingQueueResponseForUser(Long eventId, Long userId) {
+		Long currentRank = queueEntryRedisRepository.getMyRankInWaitingQueue(eventId, userId);
+		Long waitingAheadCount = queueEntryRedisRepository.getWaitingAheadCount(eventId, userId);
 		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
 
-		//Redis에 데이터가 없으면 DB 기반 응답 생성
-		if (currentRank == null) {
-			return buildWaitingQueueResponseFromDB(eventId, entry);
+		//Redis에 데이터가 없으면 null
+		if (currentRank == null || waitingAheadCount == null || totalWaitingCount == null) {
+			return null;
 		}
 
-		//TODO 시간 계산 로직 수정
-		int estimatedWaitTime = (int) (waitingAheadCount * 3); //대기 인원당 3분 가정
+		int estimatedWaitTime;
+		int progress;
 
-		int progress = totalWaitingCount > 0
-			? (int) (((totalWaitingCount - waitingAheadCount) * 100) / totalWaitingCount)
-			: 0;
+		//1순위 사용자
+		if(waitingAheadCount == 0) {
+			estimatedWaitTime = 3; // 최소 대기시간 3분
+			progress = 99;         // 100% 직전 구간
+		} else {
+			//TODO 시간 계산 로직 수정
+			estimatedWaitTime = (int) (waitingAheadCount * 3); //대기 인원당 3분 가정
+
+			progress = totalWaitingCount > 0
+				? (int) (((totalWaitingCount - waitingAheadCount) * 100) / totalWaitingCount)
+				: 0;
+		}
+
 
 
 		return WaitingQueueResponse.from(
-			entry.getUserId(),
-			entry.getEventId(),
+			userId,
+			eventId,
 			currentRank.intValue(),
 			waitingAheadCount.intValue(),
 			estimatedWaitTime,
 			progress
 		);
+	}
+
+	//Redis 먼저 조회
+	private WaitingQueueResponse buildWaitingQueueResponse(Long eventId, QueueEntry entry) {
+
+		WaitingQueueResponse response = buildWaitingQueueResponseForUser(eventId, entry.getUserId());
+
+		//Redis에 데이터가 없으면 DB 기반 응답 생성
+		if (response == null) {
+			return buildWaitingQueueResponseFromDB(eventId, entry);
+		}
+
+		return response;
 	}
 
 	//DB 기반
@@ -83,11 +105,21 @@ public class QueueEntryReadService {
 			eventId, QueueEntryStatus.WAITING
 		);
 
-		int estimatedWaitTime = (int) (waitingAheadCount * 3); //대기 인원당 3분 가정
+		int estimatedWaitTime;
+		int progress;
 
-		int progress = totalWaitingCount > 0
-			? (int) (((totalWaitingCount - waitingAheadCount) * 100) / totalWaitingCount)
-			: 0;
+		//1순위 사용자
+		if(waitingAheadCount == 0) {
+			estimatedWaitTime = 3; // 최소 대기시간 3분
+			progress = 99;         // 100% 직전 구간
+		} else {
+			//TODO 시간 계산 로직 수정
+			estimatedWaitTime = (int) (waitingAheadCount * 3); //대기 인원당 3분 가정
+
+			progress = totalWaitingCount > 0
+				? (int) (((totalWaitingCount - waitingAheadCount) * 100) / totalWaitingCount)
+				: 0;
+		}
 
 		return WaitingQueueResponse.from(
 			entry.getUserId(),
