@@ -3,14 +3,13 @@ package com.back.api.ticket.controller;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.ticket.dto.response.TicketResponse;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.ticket.entity.Ticket;
+import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -21,13 +20,15 @@ import lombok.RequiredArgsConstructor;
 public class TicketController implements TicketApi {
 
 	private final TicketService ticketService;
+	private final HttpRequestContext httpRequestContext;
 
+	/* 외부 노출이 필요 없는 엔드포인트, 보관 차원에서 주석 처리
 	@Override
 	@PostMapping("/{ticketId}/payment/success")
 	public ApiResponse<TicketResponse> confirmPayment(
 		@PathVariable Long ticketId
 	) {
-		Long userId = 1L;
+		Long userId = httpRequestContext.getUser().getId();
 
 		Ticket ticket = ticketService.confirmPayment(ticketId, userId);
 
@@ -45,11 +46,11 @@ public class TicketController implements TicketApi {
 		ticketService.failPayment(ticketId);
 		return ApiResponse.noContent("결제 실패 처리 완료");
 	}
-
+	*/
 	@Override
 	@GetMapping("/my")
 	public ApiResponse<List<TicketResponse>> getMyTickets() {
-		Long userId = 1L;
+		Long userId = httpRequestContext.getUser().getId();
 
 		List<Ticket> tickets = ticketService.getMyTickets(userId);
 

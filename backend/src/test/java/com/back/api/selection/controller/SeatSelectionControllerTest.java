@@ -93,9 +93,6 @@ class SeatSelectionControllerTest {
 		return seatRepository.save(seat);
 	}
 
-	// =======================================================================
-	// 1. 좌석 선택 API
-	// =======================================================================
 	@Nested
 	@DisplayName("좌석 선택 API")
 	class SelectSeatTests {
@@ -149,9 +146,6 @@ class SeatSelectionControllerTest {
 		}
 	}
 
-	// =======================================================================
-	// 2. 좌석 상태 전이
-	// =======================================================================
 	@Nested
 	@DisplayName("좌석 상태 전이 검증")
 	class SeatStatusTransitionTests {
@@ -193,9 +187,6 @@ class SeatSelectionControllerTest {
 		}
 	}
 
-	// =======================================================================
-	// 3. WebSocket 이벤트 발행
-	// =======================================================================
 	@Nested
 	@DisplayName("좌석 선택 시 WebSocket SeatStatusMessage 발행")
 	class WebSocketEventTests {
