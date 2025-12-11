@@ -16,32 +16,24 @@ import com.back.global.error.exception.ErrorException;
 import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "Seat API", description = "사용자용 좌석 API")
-public class SeatController {
+public class SeatController implements SeatApi {
 
 	private final SeatService seatService;
 	private final QueueEntryReadService queueEntryReadService;
 	private final HttpRequestContext httpRequestContext;
 
-	/**
-	 * 이벤트의 좌석 목록 조회
-	 * GET /api/v1/events/{eventId}/seats
-	 */
+	@Override
 	@GetMapping("/events/{eventId}/seats")
-	@Operation(summary = "좌석 목록 조회", description = "특정 이벤트의 모든 좌석 목록을 조회합니다. 큐에 입장한 사용자만 조회 가능합니다.")
 	public ApiResponse<List<SeatResponse>> getSeatsByEvent(
 		@PathVariable Long eventId
 	) {
 		Long userId = httpRequestContext.getUser().getId();
 
-		// 큐 검증
 		if (!queueEntryReadService.existsInWaitingQueue(eventId, userId)) {
 			throw new ErrorException(SeatErrorCode.NOT_IN_QUEUE);
 		}

@@ -23,6 +23,10 @@ public class OrderService {
 	private final SeatRepository seatRepository;
 	private final TicketService ticketService;
 
+	/**
+	 * 주문 생성
+	 * draft 티켓 확인 -> 주문 생성 -> 티켓 상태 PAID로 변경
+	 */
 	public Order createOrder(OrderRequestDto orderRequestDto) {
 
 		// 티켓이 DRAFT 상태인지 확인

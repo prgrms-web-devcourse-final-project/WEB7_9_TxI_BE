@@ -13,23 +13,17 @@ import com.back.api.ticket.service.TicketService;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.response.ApiResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/tickets")
 @RequiredArgsConstructor
-@Tag(name = "Ticket API", description = "티켓 결제 및 조회 API")
-public class TicketController {
+public class TicketController implements TicketApi {
 
 	private final TicketService ticketService;
 
-	/**
-	 * 결제 성공 처리
-	 */
+	@Override
 	@PostMapping("/{ticketId}/payment/success")
-	@Operation(summary = "결제 성공", description = "Draft Ticket을 ISSUED 상태로 변경합니다.")
 	public ApiResponse<TicketResponse> confirmPayment(
 		@PathVariable Long ticketId
 	) {
@@ -43,11 +37,8 @@ public class TicketController {
 		);
 	}
 
-	/**
-	 * 결제 실패 처리
-	 */
+	@Override
 	@PostMapping("/{ticketId}/payment/fail")
-	@Operation(summary = "결제 실패", description = "Draft Ticket을 FAILED로 변경하고 좌석을 AVAILABLE로 복구합니다.")
 	public ApiResponse<Void> failPayment(
 		@PathVariable Long ticketId
 	) {
@@ -55,11 +46,8 @@ public class TicketController {
 		return ApiResponse.noContent("결제 실패 처리 완료");
 	}
 
-	/**
-	 * 내 티켓 조회
-	 */
+	@Override
 	@GetMapping("/my")
-	@Operation(summary = "내 티켓 목록 조회")
 	public ApiResponse<List<TicketResponse>> getMyTickets() {
 		Long userId = 1L;
 

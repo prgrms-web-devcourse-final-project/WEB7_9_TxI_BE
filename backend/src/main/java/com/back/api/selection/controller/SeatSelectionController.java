@@ -13,15 +13,12 @@ import com.back.domain.ticket.entity.Ticket;
 import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/events/{eventId}/seats/{seatId}")
 @RequiredArgsConstructor
-@Tag(name = "Seat Selection API", description = "좌석 선택 및 Draft Ticket 생성 API")
-public class SeatSelectionController {
+public class SeatSelectionController implements SeatSelectionApi {
 
 	private final SeatSelectionService seatSelectionService;
 	private final HttpRequestContext httpRequestContext;
@@ -30,8 +27,8 @@ public class SeatSelectionController {
 	 * 좌석 선택 (예약/구매)
 	 * POST /api/v1/events/{eventId}/seats/{seatId}/select
 	 */
+	@Override
 	@PostMapping("/select")
-	@Operation(summary = "좌석 선택", description = "특정 좌석을 RESERVED 상태로 변경합니다. 결제 단계가 종료되면 SOLD 상태로 변경됩니다.")
 	public ApiResponse<TicketResponse> selectSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId,
