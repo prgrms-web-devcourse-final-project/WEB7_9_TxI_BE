@@ -17,17 +17,24 @@ import org.springframework.context.annotation.Import;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.config.TestRedisConfig;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
+import com.back.domain.queue.repository.QueueEntryRepository;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
+import com.back.domain.user.entity.User;
+import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.support.factory.EventFactory;
+import com.back.support.helper.SeatHelper;
+import com.back.support.helper.UserHelper;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -46,6 +53,18 @@ public class SeatServiceIntegrationTest {
 	@Autowired
 	private QueueEntryRedisRepository queueEntryRedisRepository;
 
+	@Autowired
+	private QueueEntryProcessService queueEntryProcessService;
+
+	@Autowired
+	private SeatHelper seatHelper;
+
+	@Autowired
+	private QueueEntryRepository queueEntryRepository;
+
+	@Autowired
+	private UserHelper userHelper;
+
 	private Event event;
 
 	@BeforeEach
@@ -61,15 +80,21 @@ public class SeatServiceIntegrationTest {
 	@DisplayName("이벤트의 좌석 목록 조회 성공")
 	void getSeatsByEvent_Success() {
 
-		Seat seat1 = Seat.createSeat(event, "A1", SeatGrade.VIP, 150000);
-		Seat seat2 = Seat.createSeat(event, "A2", SeatGrade.S, 100000);
-		Seat seat3 = Seat.createSeat(event, "A3", SeatGrade.R, 50000);
-		seatRepository.save(seat1);
-		seatRepository.save(seat2);
-		seatRepository.save(seat3);
+		seatHelper.createSeat(event, "A1", SeatGrade.VIP, 150000);
+		seatHelper.createSeat(event, "A2", SeatGrade.S, 100000);
+		seatHelper.createSeat(event, "A3", SeatGrade.R, 50000);
 
+		// User 생성
+		User user = userHelper.createUser(UserRole.NORMAL).user();
 		Long eventId = event.getId();
-		Long userId = 1L;
+		Long userId = user.getId();
+
+		// QueueEntry 생성 (WAITING 상태)
+		QueueEntry queueEntry = new QueueEntry(user, event, 1);
+		queueEntryRepository.save(queueEntry);
+
+		// WAITING -> ENTERED 상태로 변경
+		queueEntryProcessService.processEntry(eventId, userId);
 
 		List<Seat> seats = seatService.getSeatsByEvent(eventId, userId);
 

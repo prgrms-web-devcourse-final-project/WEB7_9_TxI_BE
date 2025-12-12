@@ -146,4 +146,16 @@ public class TicketService {
 
 		return ticket;
 	}
+
+	/**
+	 * 사용자가 이미 해당 이벤트에 대해 좌석을 선택(임시/발급완료 된 티켓이 존재)했는지 확인
+	 */
+	@Transactional(readOnly = true)
+	public boolean hasUserAlreadySelectedSeat(Long eventId, Long userId) {
+		return ticketRepository.existsByEventIdAndOwnerIdAndTicketStatusIn(
+			eventId,
+			userId,
+			List.of(TicketStatus.DRAFT, TicketStatus.PAID, TicketStatus.ISSUED)
+		);
+	}
 }

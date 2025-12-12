@@ -19,10 +19,13 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.config.TestRedisConfig;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
+import com.back.domain.queue.repository.QueueEntryRepository;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.entity.SeatStatus;
@@ -56,7 +59,13 @@ public class SeatSelectionServiceIntegrationTest {
 	private UserRepository userRepository;
 
 	@Autowired
+	private QueueEntryRepository queueEntryRepository;
+
+	@Autowired
 	private QueueEntryRedisRepository queueEntryRedisRepository;
+
+	@Autowired
+	private QueueEntryProcessService queueEntryProcessService;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -94,8 +103,12 @@ public class SeatSelectionServiceIntegrationTest {
 		Long seatId = seat.getId();
 		Long userId = user.getId();
 
-		// 큐 입장 처리
-		queueEntryRedisRepository.moveToEnteredQueue(eventId, userId);
+		// QueueEntry 생성 (WAITING 상태)
+		QueueEntry queueEntry = new QueueEntry(user, event, 1);
+		queueEntryRepository.save(queueEntry);
+
+		// WAITING -> ENTERED 상태로 변경
+		queueEntryProcessService.processEntry(eventId, userId);
 
 		Ticket draftTicket = seatSelectionService.selectSeatAndCreateTicket(eventId, seatId, userId);
 
@@ -131,7 +144,13 @@ public class SeatSelectionServiceIntegrationTest {
 			TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
 			userRepository.save(testUser.user());
 
-			queueEntryRedisRepository.moveToEnteredQueue(eventId, testUser.user().getId());
+			// QueueEntry 생성 (WAITING 상태)
+			QueueEntry queueEntry = new QueueEntry(testUser.user(), event, i + 1);
+			queueEntryRepository.save(queueEntry);
+
+			// WAITING -> ENTERED 상태로 변경
+			queueEntryProcessService.processEntry(eventId, testUser.user().getId());
+
 			enteredUserIds.add(testUser.user().getId());
 		}
 

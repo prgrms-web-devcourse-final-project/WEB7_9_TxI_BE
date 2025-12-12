@@ -33,6 +33,11 @@ public class SeatSelectionService {
 			throw new ErrorException(SeatErrorCode.NOT_IN_QUEUE);
 		}
 
+		// 좌석 여러개 선택 방어 로직
+		if (ticketService.hasUserAlreadySelectedSeat(eventId, userId)) {
+			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_EXISTS);
+		}
+
 		Seat reservedSeat = seatService.reserveSeat(eventId, seatId, userId);
 
 		Ticket draftTicket = ticketService.createDraftTicket(eventId, seatId, userId);

@@ -48,6 +48,8 @@ public class OrderService {
 		// 티켓 상태를 PAID로 변경
 		Ticket confirmedTicket = ticketService.confirmPayment(draft.getId(), userId);
 
+		// TODO: 큐 상태 변경(결제 완료처리)
+
 		return OrderResponseDto.toDto(savedOrder, confirmedTicket);
 	}
 }

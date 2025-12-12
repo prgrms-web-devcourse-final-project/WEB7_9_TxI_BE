@@ -18,6 +18,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
 	boolean existsBySeatIdAndTicketStatusIn(Long seatId, List<TicketStatus> paid);
 
+	boolean existsByEventIdAndOwnerIdAndTicketStatusIn(Long eventId, Long userId, List<TicketStatus> statuses);
+
 	@Query("SELECT t FROM Ticket t WHERE t.ticketStatus = :status AND t.createAt < :time")
 	List<Ticket> findExpiredDraftTickets(TicketStatus status, LocalDateTime time);
 

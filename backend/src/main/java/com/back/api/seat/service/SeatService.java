@@ -6,9 +6,9 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.queue.service.QueueEntryReadService;
 import com.back.api.seat.dto.response.SeatStatusMessage;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.repository.SeatRepository;
 import com.back.global.error.code.SeatErrorCode;
@@ -26,7 +26,7 @@ public class SeatService {
 
 	private final SeatRepository seatRepository;
 	private final EventRepository eventRepository;
-	private final QueueEntryRedisRepository queueEntryRedisRepository;
+	private final QueueEntryReadService queueEntryReadService;
 	private final EventPublisher eventPublisher;
 
 	/**
@@ -37,6 +37,10 @@ public class SeatService {
 		// 이벤트 존재 여부 확인
 		if (!eventRepository.existsById(eventId)) {
 			throw new ErrorException(SeatErrorCode.NOT_FOUND_EVENT);
+		}
+		// TODO: Q ENTERED 상태인지 확인
+		if (!queueEntryReadService.isUserEntered(eventId, userId)) {
+			throw new ErrorException(SeatErrorCode.NOT_IN_QUEUE);
 		}
 
 		return seatRepository.findSortedSeatListByEventId(eventId);

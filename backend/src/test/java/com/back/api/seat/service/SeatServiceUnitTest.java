@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
+import com.back.api.queue.service.QueueEntryReadService;
 import com.back.api.seat.dto.response.SeatStatusMessage;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
@@ -48,6 +49,9 @@ class SeatServiceUnitTest {
 
 	@Mock
 	private EventRepository eventRepository;
+
+	@Mock
+	private QueueEntryReadService queueEntryReadService;
 
 	@Mock
 	private QueueEntryRedisRepository queueEntryRedisRepository;
@@ -101,6 +105,7 @@ class SeatServiceUnitTest {
 			);
 
 			given(eventRepository.existsById(eventId)).willReturn(true);
+			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
 			given(seatRepository.findSortedSeatListByEventId(eventId)).willReturn(expectedSeats);
 
 			// when
@@ -110,6 +115,7 @@ class SeatServiceUnitTest {
 			assertThat(result).hasSize(3);
 			assertThat(result).isEqualTo(expectedSeats);
 			then(eventRepository).should().existsById(eventId);
+			then(queueEntryReadService).should().isUserEntered(eventId, userId);
 			then(seatRepository).should().findSortedSeatListByEventId(eventId);
 		}
 
@@ -124,6 +130,24 @@ class SeatServiceUnitTest {
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.NOT_FOUND_EVENT);
 
+			then(queueEntryReadService).should(never()).isUserEntered(any(), any());
+			then(seatRepository).should(never()).findSortedSeatListByEventId(any());
+		}
+
+		@Test
+		@DisplayName("큐에 입장하지 않은 사용자의 좌석 조회에 실패")
+		void getSeatsByEvent_NotInQueue_ThrowsException() {
+			// given
+			given(eventRepository.existsById(eventId)).willReturn(true);
+			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(false);
+
+			// when & then
+			assertThatThrownBy(() -> seatService.getSeatsByEvent(eventId, userId))
+				.isInstanceOf(ErrorException.class)
+				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.NOT_IN_QUEUE);
+
+			then(eventRepository).should().existsById(eventId);
+			then(queueEntryReadService).should().isUserEntered(eventId, userId);
 			then(seatRepository).should(never()).findSortedSeatListByEventId(any());
 		}
 	}
