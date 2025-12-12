@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.back.api.payment.order.dto.request.OrderRequestDto;
 import com.back.api.payment.order.dto.response.OrderResponseDto;
 import com.back.api.payment.order.service.OrderService;
+import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
@@ -48,6 +49,9 @@ class OrderServiceTest {
 
 	@Mock
 	private TicketService ticketService;
+
+	@Mock
+	private QueueEntryProcessService queueEntryProcessService;
 
 	@Test
 	@DisplayName("주문 생성 성공 - Draft Ticket 검증 후 Order 생성 및 Ticket 확정")
@@ -101,6 +105,7 @@ class OrderServiceTest {
 		verify(ticketService).getDraftTicket(seatId, userId);
 		verify(orderRepository).save(any(Order.class));
 		verify(ticketService).confirmPayment(ticketId, userId);
+		verify(queueEntryProcessService).completePayment(eventId, userId);
 	}
 
 	@Test
@@ -108,7 +113,8 @@ class OrderServiceTest {
 	void createOrder_savesCorrectOrder() {
 		// given
 		Long userId = 1L;
-		OrderRequestDto requestDto = new OrderRequestDto(30_000L, 10L, 20L);
+		Long eventId = 10L;
+		OrderRequestDto requestDto = new OrderRequestDto(30_000L, eventId, 20L);
 
 		Event event = mock(Event.class);
 		User user = mock(User.class);
@@ -139,6 +145,7 @@ class OrderServiceTest {
 				&& order.getUser() == user
 				&& order.getSeat() == seat
 		));
+		verify(queueEntryProcessService).completePayment(eventId, userId);
 	}
 
 	@Test
@@ -146,10 +153,11 @@ class OrderServiceTest {
 	void createOrder_callsConfirmPayment() {
 		// given
 		Long userId = 2L;
+		Long eventId = 1L;
 		Long seatId = 3L;
 		Long ticketId = 100L;
 
-		OrderRequestDto requestDto = new OrderRequestDto(10_000L, 1L, seatId);
+		OrderRequestDto requestDto = new OrderRequestDto(10_000L, eventId, seatId);
 
 		Ticket draftTicket = Ticket.builder()
 			.id(ticketId)
@@ -169,5 +177,6 @@ class OrderServiceTest {
 		// then
 		verify(ticketService).getDraftTicket(seatId, userId);
 		verify(ticketService).confirmPayment(ticketId, userId);
+		verify(queueEntryProcessService).completePayment(eventId, userId);
 	}
 }

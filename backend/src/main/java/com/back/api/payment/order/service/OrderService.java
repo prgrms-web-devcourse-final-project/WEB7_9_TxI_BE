@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.payment.order.dto.request.OrderRequestDto;
 import com.back.api.payment.order.dto.response.OrderResponseDto;
+import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.payment.order.entity.Order;
@@ -24,6 +25,7 @@ public class OrderService {
 	private final UserRepository userRepository;
 	private final SeatRepository seatRepository;
 	private final TicketService ticketService;
+	private final QueueEntryProcessService queueEntryProcessService;
 
 	/**
 	 * 주문 생성
@@ -45,10 +47,11 @@ public class OrderService {
 			.build();
 		Order savedOrder = orderRepository.save(newOrder);
 
-		// 티켓 상태를 PAID로 변경
+		// 티켓 상태를 ISSUED로 최종 변경 & 좌석 SOLD 처리
 		Ticket confirmedTicket = ticketService.confirmPayment(draft.getId(), userId);
 
 		// TODO: 큐 상태 변경(결제 완료처리)
+		queueEntryProcessService.completePayment(orderRequestDto.eventId(), userId);
 
 		return OrderResponseDto.toDto(savedOrder, confirmedTicket);
 	}
