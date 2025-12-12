@@ -2,11 +2,9 @@ package com.back.api.selection.controller;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.back.api.seat.dto.request.SelectSeatRequest;
 import com.back.api.selection.service.SeatSelectionService;
 import com.back.api.ticket.dto.response.TicketResponse;
 import com.back.domain.ticket.entity.Ticket;
@@ -31,8 +29,7 @@ public class SeatSelectionController implements SeatSelectionApi {
 	@PostMapping("/select")
 	public ApiResponse<TicketResponse> selectSeat(
 		@PathVariable Long eventId,
-		@PathVariable Long seatId,
-		@RequestBody SelectSeatRequest request
+		@PathVariable Long seatId
 	) {
 		Long userId = httpRequestContext.getUser().getId();
 

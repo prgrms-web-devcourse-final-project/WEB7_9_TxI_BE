@@ -1,9 +1,7 @@
 package com.back.api.selection.controller;
 
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import com.back.api.seat.dto.request.SelectSeatRequest;
 import com.back.api.ticket.dto.response.TicketResponse;
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
@@ -27,7 +25,6 @@ public interface SeatSelectionApi {
 	)
 	public ApiResponse<TicketResponse> selectSeat(
 		@PathVariable Long eventId,
-		@PathVariable Long seatId,
-		@RequestBody SelectSeatRequest request
+		@PathVariable Long seatId
 	);
 }
