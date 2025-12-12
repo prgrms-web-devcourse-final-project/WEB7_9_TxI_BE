@@ -99,6 +99,15 @@ public class AuthService {
 		requestContext.deleteCookie("refreshToken");
 	}
 
+	@Transactional
+	public void verifyPassword(String rawPassword) {
+		User user = requestContext.getUser();
+
+		if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+			throw new ErrorException(AuthErrorCode.PASSWORD_MISMATCH);
+		}
+	}
+
 	private AuthResponse buildAuthResponse(User user, JwtDto tokens) {
 		TokenResponse tokenResponse = new TokenResponse(
 			tokens.tokenType(),

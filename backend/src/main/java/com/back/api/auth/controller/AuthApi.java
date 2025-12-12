@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.back.api.auth.dto.request.LoginRequest;
 import com.back.api.auth.dto.request.SignupRequest;
+import com.back.api.auth.dto.request.VerifyPasswordRequest;
 import com.back.api.auth.dto.response.AuthResponse;
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
@@ -35,4 +36,11 @@ public interface AuthApi {
 		"UNAUTHORIZED"
 	})
 	ApiResponse<Void> logout();
+
+	@Operation(summary = "비밀번호 인증", description = "프로필 정보 수정 시 비밀번호 인증,"
+		+ " API 호출 성공하면 비밀번호 인증 성공입니다.")
+	@ApiErrorCode({
+		"PASSWORD_MISMATCH"
+	})
+	ApiResponse<Void> verifyPassword(@Valid @RequestBody VerifyPasswordRequest request);
 }

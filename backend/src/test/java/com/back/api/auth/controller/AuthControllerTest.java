@@ -516,4 +516,137 @@ public class AuthControllerTest {
 			assertThat(activeTokens).isZero();
 		}
 	}
+
+	@Nested
+	@DisplayName("비밀번호 일치 확인 API - `POST /api/v1/auth/verify-password`")
+	class VerifyPasswordTest {
+
+		private final String verifyPasswordApi = "/api/v1/auth/verify-password";
+
+		private SecurityUser toSecurityUser(User user) {
+			return new SecurityUser(
+				user.getId(),
+				user.getPassword(),
+				user.getNickname(),
+				user.getRole(),
+				java.util.List.of(new SimpleGrantedAuthority("ROLE_USER"))
+			);
+		}
+
+		@Test
+		@DisplayName("비밀번호 인증 성공")
+		void verify_password_success() throws Exception {
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			User savedUser = existedUser.user();
+			String rawPassword = existedUser.rawPassword();
+
+			String loginJson = mapper.writeValueAsString(Map.of(
+				"email", savedUser.getEmail(),
+				"password", rawPassword
+			));
+
+			ResultActions loginActions = mvc.perform(
+				post("/api/v1/auth/login")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(loginJson)
+			).andDo(print());
+
+			MockHttpServletResponse loginResponse = loginActions.andReturn().getResponse();
+			Cookie[] cookies = loginResponse.getCookies();
+			assertThat(cookies).isNotEmpty();
+
+			SecurityUser securityUser = toSecurityUser(savedUser);
+
+			String requestJson = mapper.writeValueAsString(Map.of(
+				"password", rawPassword
+			));
+
+			ResultActions actions = mvc.perform(
+				post(verifyPasswordApi)
+					.with(user(securityUser))
+					.cookie(cookies)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(requestJson)
+			).andDo(print());
+
+			actions.andExpect(status().isNoContent());
+		}
+
+		@Test
+		@DisplayName("비밀번호 인증 실패 - 요청 데이터 누락")
+		void failed_by_missing_parameter() throws Exception {
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			User savedUser = existedUser.user();
+			String rawPassword = existedUser.rawPassword();
+
+			String loginJson = mapper.writeValueAsString(Map.of(
+				"email", savedUser.getEmail(),
+				"password", rawPassword
+			));
+
+			ResultActions loginActions = mvc.perform(
+				post("/api/v1/auth/login")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(loginJson)
+			).andDo(print());
+
+			MockHttpServletResponse loginResponse = loginActions.andReturn().getResponse();
+			Cookie[] cookies = loginResponse.getCookies();
+			assertThat(cookies).isNotEmpty();
+
+			SecurityUser securityUser = toSecurityUser(savedUser);
+
+			ResultActions actions = mvc.perform(
+				post(verifyPasswordApi)
+					.with(user(securityUser))
+					.cookie(cookies)
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
+
+			actions.andExpect(status().isBadRequest());
+		}
+
+		@Test
+		@DisplayName("비밀번호 인증 실패 - 비밀번호 불일치")
+		void failed_by_wrong_parameter() throws Exception {
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			User savedUser = existedUser.user();
+			String rawPassword = existedUser.rawPassword();
+
+			String loginJson = mapper.writeValueAsString(Map.of(
+				"email", savedUser.getEmail(),
+				"password", rawPassword
+			));
+
+			ResultActions loginActions = mvc.perform(
+				post("/api/v1/auth/login")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(loginJson)
+			).andDo(print());
+
+			MockHttpServletResponse loginResponse = loginActions.andReturn().getResponse();
+			Cookie[] cookies = loginResponse.getCookies();
+			assertThat(cookies).isNotEmpty();
+
+			SecurityUser securityUser = toSecurityUser(savedUser);
+
+			String requestJson = mapper.writeValueAsString(Map.of(
+				"password", "A" + rawPassword
+			));
+
+			ResultActions actions = mvc.perform(
+				post(verifyPasswordApi)
+					.with(user(securityUser))
+					.cookie(cookies)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(requestJson)
+			).andDo(print());
+
+			AuthErrorCode error = AuthErrorCode.PASSWORD_MISMATCH;
+
+			actions
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value(error.getMessage()));
+		}
+	}
 }

@@ -18,7 +18,9 @@ public enum AuthErrorCode implements ErrorCode {
 	REFRESH_TOKEN_REQUIRED(HttpStatus.BAD_REQUEST, "리프레시 토큰이 없습니다."),
 	REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "리프레시 토큰을 찾을 수 없습니다."),
 
-	LOGIN_FAILED(HttpStatus.BAD_REQUEST, "이메일과 비밀번호가 올바른지 확인해주세요.");
+	LOGIN_FAILED(HttpStatus.BAD_REQUEST, "이메일과 비밀번호가 올바른지 확인해주세요."),
+
+	PASSWORD_MISMATCH(HttpStatus.NOT_FOUND, "비밀번호가 일치하지 않습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;

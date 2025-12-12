@@ -51,6 +51,15 @@ Content-Type: application/json
     }
 %}
 
+### 비밀번호 검증
+POST {{BASE_URL}}/api/v1/auth/verify-password
+Cookie: {{COOKIE}}
+Content-Type: application/json
+
+{
+  "password": "qwer1234"
+}
+
 ### 로그아웃
 POST {{BASE_URL}}/api/v1/auth/logout
 Cookie: {{COOKIE}}
