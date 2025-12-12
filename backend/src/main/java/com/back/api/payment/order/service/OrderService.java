@@ -1,5 +1,7 @@
 package com.back.api.payment.order.service;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,20 +41,14 @@ public class OrderService {
 
 		// 주문 생성
 		Order newOrder = Order.builder()
+			.ticket(draft)
 			.amount(orderRequestDto.amount())
-			.event(eventRepository.getReferenceById(orderRequestDto.eventId()))
-			.user(userRepository.getReferenceById(userId))
-			.seat(seatRepository.getReferenceById(orderRequestDto.seatId()))
-			.status(OrderStatus.PAID)
+			.status(OrderStatus.PENDING)
+			.orderKey(UUID.randomUUID().toString())
 			.build();
+
 		Order savedOrder = orderRepository.save(newOrder);
 
-		// 티켓 상태를 ISSUED로 최종 변경 & 좌석 SOLD 처리
-		Ticket confirmedTicket = ticketService.confirmPayment(draft.getId(), userId);
-
-		// TODO: 큐 상태 변경(결제 완료처리)
-		queueEntryProcessService.completePayment(orderRequestDto.eventId(), userId);
-
-		return OrderResponseDto.toDto(savedOrder, confirmedTicket);
+		return OrderResponseDto.from(savedOrder, savedOrder.getTicket());
 	}
 }

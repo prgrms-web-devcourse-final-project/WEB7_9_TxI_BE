@@ -8,7 +8,7 @@ public record OrderResponseDto(
 	Long ticketId,
 	Long amount
 ) {
-	public static OrderResponseDto toDto(Order order, Ticket ticket) {
+	public static OrderResponseDto from(Order order, Ticket ticket) {
 		return new OrderResponseDto(
 			order.getId(),
 			ticket.getId(),
