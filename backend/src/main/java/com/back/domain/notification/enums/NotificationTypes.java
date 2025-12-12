@@ -1,4 +1,4 @@
-package com.back.domain.notification.model;
+package com.back.domain.notification.enums;
 
 // 큰 분류 (알림 / 결제 / 사전등록)
 public enum NotificationTypes {

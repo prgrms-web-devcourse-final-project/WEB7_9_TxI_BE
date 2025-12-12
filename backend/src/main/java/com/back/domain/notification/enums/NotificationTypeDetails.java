@@ -1,4 +1,4 @@
-package com.back.domain.notification.model;
+package com.back.domain.notification.enums;
 
 // 세부 타입
 public enum NotificationTypeDetails {
