@@ -1,8 +1,10 @@
 package com.back.api.payment.order.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.payment.order.dto.request.OrderRequestDto;
+import com.back.api.payment.order.dto.response.OrderResponseDto;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.payment.order.entity.Order;
@@ -27,24 +29,25 @@ public class OrderService {
 	 * 주문 생성
 	 * draft 티켓 확인 -> 주문 생성 -> 티켓 상태 PAID로 변경
 	 */
-	public Order createOrder(OrderRequestDto orderRequestDto) {
+	@Transactional
+	public OrderResponseDto createOrder(OrderRequestDto orderRequestDto, Long userId) {
 
 		// 티켓이 DRAFT 상태인지 확인
-		Ticket draft = ticketService.getDraftTicket(orderRequestDto.seatId(), orderRequestDto.userId());
+		Ticket draft = ticketService.getDraftTicket(orderRequestDto.seatId(), userId);
 
 		// 주문 생성
 		Order newOrder = Order.builder()
 			.amount(orderRequestDto.amount())
 			.event(eventRepository.getReferenceById(orderRequestDto.eventId()))
-			.user(userRepository.getReferenceById(orderRequestDto.userId()))
+			.user(userRepository.getReferenceById(userId))
 			.seat(seatRepository.getReferenceById(orderRequestDto.seatId()))
 			.status(OrderStatus.PAID)
 			.build();
-		orderRepository.save(newOrder);
+		Order savedOrder = orderRepository.save(newOrder);
 
 		// 티켓 상태를 PAID로 변경
-		ticketService.confirmPayment(draft.getId(), orderRequestDto.userId());
+		Ticket confirmedTicket = ticketService.confirmPayment(draft.getId(), userId);
 
-		return newOrder;
+		return OrderResponseDto.toDto(savedOrder, confirmedTicket);
 	}
 }
