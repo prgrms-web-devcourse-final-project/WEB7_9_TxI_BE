@@ -1,26 +1,21 @@
 package com.back.api.event.service;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.event.dto.request.EventCreateRequest;
 import com.back.api.event.dto.request.EventUpdateRequest;
@@ -33,14 +28,17 @@ import com.back.domain.event.repository.EventRepository;
 import com.back.global.error.code.EventErrorCode;
 import com.back.global.error.exception.ErrorException;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+@DisplayName("EventService 통합 테스트")
 class EventServiceTest {
 
-	@Mock
-	private EventRepository eventRepository;
-
-	@InjectMocks
+	@Autowired
 	private EventService eventService;
+
+	@Autowired
+	private EventRepository eventRepository;
 
 	private LocalDateTime now;
 	private LocalDateTime preOpenAt;
@@ -55,26 +53,6 @@ class EventServiceTest {
 		preCloseAt = now.plusDays(5);
 		ticketOpenAt = now.plusDays(6);
 		ticketCloseAt = now.plusDays(10);
-	}
-
-	private Event createEvent(Long id, String title, EventCategory category, EventStatus status) {
-		Event event = Event.builder()
-			.title(title)
-			.category(category)
-			.description("테스트 설명")
-			.place("테스트 장소")
-			.imageUrl("https://example.com/image.jpg")
-			.minPrice(10000)
-			.maxPrice(50000)
-			.preOpenAt(preOpenAt)
-			.preCloseAt(preCloseAt)
-			.ticketOpenAt(ticketOpenAt)
-			.ticketCloseAt(ticketCloseAt)
-			.maxTicketAmount(100)
-			.status(status)
-			.build();
-		ReflectionTestUtils.setField(event, "id", id);
-		return event;
 	}
 
 	@Nested
@@ -100,18 +78,18 @@ class EventServiceTest {
 				100
 			);
 
-			Event savedEvent = createEvent(1L, "테스트 이벤트", EventCategory.CONCERT, EventStatus.READY);
-			given(eventRepository.save(any(Event.class))).willReturn(savedEvent);
-
 			// when
 			EventResponse response = eventService.createEvent(request);
 
 			// then
-			assertThat(response.id()).isEqualTo(1L);
+			assertThat(response.id()).isNotNull();
 			assertThat(response.title()).isEqualTo("테스트 이벤트");
 			assertThat(response.category()).isEqualTo(EventCategory.CONCERT);
 			assertThat(response.status()).isEqualTo(EventStatus.READY);
-			then(eventRepository).should(times(1)).save(any(Event.class));
+
+			// DB 검증
+			Event savedEvent = eventRepository.findById(response.id()).orElseThrow();
+			assertThat(savedEvent.getTitle()).isEqualTo("테스트 이벤트");
 		}
 
 		@Test
@@ -198,8 +176,21 @@ class EventServiceTest {
 		@DisplayName("유효한 요청으로 이벤트 수정 성공")
 		void updateEventSuccess() {
 			// given
-			Long eventId = 1L;
-			Event existingEvent = createEvent(eventId, "기존 이벤트", EventCategory.CONCERT, EventStatus.READY);
+			Event existingEvent = eventRepository.save(Event.builder()
+				.title("기존 이벤트")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("https://example.com/image.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.maxTicketAmount(100)
+				.status(EventStatus.READY)
+				.build());
 
 			EventUpdateRequest request = new EventUpdateRequest(
 				"수정된 이벤트",
@@ -217,15 +208,17 @@ class EventServiceTest {
 				EventStatus.PRE_OPEN
 			);
 
-			given(eventRepository.findById(eventId)).willReturn(Optional.of(existingEvent));
-
 			// when
-			EventResponse response = eventService.updateEvent(eventId, request);
+			EventResponse response = eventService.updateEvent(existingEvent.getId(), request);
 
 			// then
 			assertThat(response.title()).isEqualTo("수정된 이벤트");
 			assertThat(response.category()).isEqualTo(EventCategory.POPUP);
 			assertThat(response.status()).isEqualTo(EventStatus.PRE_OPEN);
+
+			// DB 검증
+			Event updatedEvent = eventRepository.findById(existingEvent.getId()).orElseThrow();
+			assertThat(updatedEvent.getTitle()).isEqualTo("수정된 이벤트");
 		}
 
 		@Test
@@ -249,8 +242,6 @@ class EventServiceTest {
 				EventStatus.PRE_OPEN
 			);
 
-			given(eventRepository.findById(eventId)).willReturn(Optional.empty());
-
 			// when & then
 			assertThatThrownBy(() -> eventService.updateEvent(eventId, request))
 				.isInstanceOf(ErrorException.class)
@@ -266,16 +257,30 @@ class EventServiceTest {
 		@DisplayName("이벤트 삭제 성공")
 		void deleteEventSuccess() {
 			// given
-			Long eventId = 1L;
-			Event existingEvent = createEvent(eventId, "테스트 이벤트", EventCategory.CONCERT, EventStatus.READY);
+			Event existingEvent = eventRepository.save(Event.builder()
+				.title("테스트 이벤트")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("https://example.com/image.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.maxTicketAmount(100)
+				.status(EventStatus.READY)
+				.build());
 
-			given(eventRepository.findById(eventId)).willReturn(Optional.of(existingEvent));
+			Long eventId = existingEvent.getId();
 
 			// when
 			eventService.deleteEvent(eventId);
 
 			// then
-			assertThat(existingEvent.isDeleted()).isTrue();
+			// 소프트 딜리트되어 findById로 조회되지 않음 (deleted = false 조건 때문)
+			assertThat(eventRepository.findById(eventId)).isEmpty();
 		}
 
 		@Test
@@ -283,7 +288,6 @@ class EventServiceTest {
 		void deleteEventFailWhenEventNotFound() {
 			// given
 			Long eventId = 999L;
-			given(eventRepository.findById(eventId)).willReturn(Optional.empty());
 
 			// when & then
 			assertThatThrownBy(() -> eventService.deleteEvent(eventId))
@@ -300,16 +304,27 @@ class EventServiceTest {
 		@DisplayName("이벤트 단건 조회 성공")
 		void getEventSuccess() {
 			// given
-			Long eventId = 1L;
-			Event event = createEvent(eventId, "테스트 이벤트", EventCategory.CONCERT, EventStatus.READY);
-
-			given(eventRepository.findById(eventId)).willReturn(Optional.of(event));
+			Event event = eventRepository.save(Event.builder()
+				.title("테스트 이벤트")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("https://example.com/image.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.maxTicketAmount(100)
+				.status(EventStatus.READY)
+				.build());
 
 			// when
-			EventResponse response = eventService.getEvent(eventId);
+			EventResponse response = eventService.getEvent(event.getId());
 
 			// then
-			assertThat(response.id()).isEqualTo(eventId);
+			assertThat(response.id()).isEqualTo(event.getId());
 			assertThat(response.title()).isEqualTo("테스트 이벤트");
 		}
 
@@ -318,7 +333,6 @@ class EventServiceTest {
 		void getEventFailWhenEventNotFound() {
 			// given
 			Long eventId = 999L;
-			given(eventRepository.findById(eventId)).willReturn(Optional.empty());
 
 			// when & then
 			assertThatThrownBy(() -> eventService.getEvent(eventId))
@@ -335,88 +349,137 @@ class EventServiceTest {
 		@DisplayName("전체 이벤트 목록 조회 성공")
 		void getEventsSuccess() {
 			// given
-			Pageable pageable = PageRequest.of(0, 10);
-			List<Event> events = List.of(
-				createEvent(1L, "이벤트1", EventCategory.CONCERT, EventStatus.READY),
-				createEvent(2L, "이벤트2", EventCategory.POPUP, EventStatus.PRE_OPEN)
-			);
-			Page<Event> eventPage = new PageImpl<>(events, pageable, events.size());
+			eventRepository.save(Event.builder()
+				.title("이벤트1")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("https://example.com/image.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.maxTicketAmount(100)
+				.status(EventStatus.READY)
+				.build());
 
-			given(eventRepository.findByConditions(null, null, pageable)).willReturn(eventPage);
+			eventRepository.save(Event.builder()
+				.title("이벤트2")
+				.category(EventCategory.POPUP)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("https://example.com/image.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.maxTicketAmount(100)
+				.status(EventStatus.PRE_OPEN)
+				.build());
+
+			Pageable pageable = PageRequest.of(0, 10);
 
 			// when
 			Page<EventListResponse> response = eventService.getEvents(null, null, pageable);
 
 			// then
-			assertThat(response.getContent()).hasSize(2);
-			assertThat(response.getContent().get(0).title()).isEqualTo("이벤트1");
-			assertThat(response.getContent().get(1).title()).isEqualTo("이벤트2");
+			assertThat(response.getContent().size()).isGreaterThanOrEqualTo(2);
 		}
 
 		@Test
 		@DisplayName("상태별 이벤트 목록 조회 성공")
 		void getEventsByStatusSuccess() {
 			// given
-			Pageable pageable = PageRequest.of(0, 10);
-			EventStatus status = EventStatus.PRE_OPEN;
-			List<Event> events = List.of(
-				createEvent(1L, "이벤트1", EventCategory.CONCERT, EventStatus.PRE_OPEN)
-			);
-			Page<Event> eventPage = new PageImpl<>(events, pageable, events.size());
+			eventRepository.save(Event.builder()
+				.title("사전등록 이벤트")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("https://example.com/image.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.maxTicketAmount(100)
+				.status(EventStatus.PRE_OPEN)
+				.build());
 
-			given(eventRepository.findByConditions(status, null, pageable)).willReturn(eventPage);
+			Pageable pageable = PageRequest.of(0, 10);
 
 			// when
-			Page<EventListResponse> response = eventService.getEvents(status, null, pageable);
+			Page<EventListResponse> response = eventService.getEvents(EventStatus.PRE_OPEN, null, pageable);
 
 			// then
-			assertThat(response.getContent()).hasSize(1);
-			assertThat(response.getContent().get(0).status()).isEqualTo(EventStatus.PRE_OPEN);
+			assertThat(response.getContent()).isNotEmpty();
+			assertThat(response.getContent()).allMatch(event -> event.status() == EventStatus.PRE_OPEN);
 		}
 
 		@Test
 		@DisplayName("카테고리별 이벤트 목록 조회 성공")
 		void getEventsByCategorySuccess() {
 			// given
-			Pageable pageable = PageRequest.of(0, 10);
-			EventCategory category = EventCategory.CONCERT;
-			List<Event> events = List.of(
-				createEvent(1L, "콘서트 이벤트", EventCategory.CONCERT, EventStatus.READY)
-			);
-			Page<Event> eventPage = new PageImpl<>(events, pageable, events.size());
+			eventRepository.save(Event.builder()
+				.title("콘서트 이벤트")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("https://example.com/image.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.maxTicketAmount(100)
+				.status(EventStatus.READY)
+				.build());
 
-			given(eventRepository.findByConditions(null, category, pageable)).willReturn(eventPage);
+			Pageable pageable = PageRequest.of(0, 10);
 
 			// when
-			Page<EventListResponse> response = eventService.getEvents(null, category, pageable);
+			Page<EventListResponse> response = eventService.getEvents(null, EventCategory.CONCERT, pageable);
 
 			// then
-			assertThat(response.getContent()).hasSize(1);
-			assertThat(response.getContent().get(0).category()).isEqualTo(EventCategory.CONCERT);
+			assertThat(response.getContent()).isNotEmpty();
+			assertThat(response.getContent()).allMatch(event -> event.category() == EventCategory.CONCERT);
 		}
 
 		@Test
 		@DisplayName("상태와 카테고리 모두 필터링하여 이벤트 목록 조회 성공")
 		void getEventsByStatusAndCategorySuccess() {
 			// given
-			Pageable pageable = PageRequest.of(0, 10);
-			EventStatus status = EventStatus.PRE_OPEN;
-			EventCategory category = EventCategory.POPUP;
-			List<Event> events = List.of(
-				createEvent(1L, "팝업 이벤트", EventCategory.POPUP, EventStatus.PRE_OPEN)
-			);
-			Page<Event> eventPage = new PageImpl<>(events, pageable, events.size());
+			eventRepository.save(Event.builder()
+				.title("팝업 이벤트")
+				.category(EventCategory.POPUP)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("https://example.com/image.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.maxTicketAmount(100)
+				.status(EventStatus.PRE_OPEN)
+				.build());
 
-			given(eventRepository.findByConditions(status, category, pageable)).willReturn(eventPage);
+			Pageable pageable = PageRequest.of(0, 10);
 
 			// when
-			Page<EventListResponse> response = eventService.getEvents(status, category, pageable);
+			Page<EventListResponse> response = eventService.getEvents(EventStatus.PRE_OPEN, EventCategory.POPUP,
+				pageable);
 
 			// then
-			assertThat(response.getContent()).hasSize(1);
-			assertThat(response.getContent().get(0).status()).isEqualTo(EventStatus.PRE_OPEN);
-			assertThat(response.getContent().get(0).category()).isEqualTo(EventCategory.POPUP);
+			assertThat(response.getContent()).isNotEmpty();
+			assertThat(response.getContent()).allMatch(
+				event -> event.status() == EventStatus.PRE_OPEN && event.category() == EventCategory.POPUP);
 		}
 	}
 }
-
