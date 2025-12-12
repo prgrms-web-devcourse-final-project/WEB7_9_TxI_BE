@@ -10,7 +10,7 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.back.api.queue.dto.event.WaitingQueueBatchEvent;
+import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
 import com.back.api.queue.dto.response.EnteredQueueResponse;
 import com.back.api.queue.dto.response.ExpiredQueueResponse;
@@ -222,7 +222,7 @@ public class QueueEntryProcessService {
 			}
 
 			if (!allUpdates.isEmpty()) {
-				WaitingQueueBatchEvent batchEvent = WaitingQueueBatchEvent.from(eventId, allUpdates);
+				WaitingQueueBatchEventResponse batchEvent = WaitingQueueBatchEventResponse.from(eventId, allUpdates);
 				eventPublisher.publishEvent(batchEvent);
 				log.info("실시간 순위 업데이트 완료 - eventId: {}, 대상: {}명", eventId, allUpdates.size());
 			}

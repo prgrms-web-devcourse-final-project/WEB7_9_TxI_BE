@@ -4,7 +4,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import com.back.api.queue.dto.event.WaitingQueueBatchEvent;
+import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
 import com.back.api.queue.dto.response.QueueEntryStatusResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class QueueEntryEventHandler {
 
 	@EventListener
 	@Async
-	public void handleQueueBatchUpdate(WaitingQueueBatchEvent event) {
+	public void handleQueueBatchUpdate(WaitingQueueBatchEventResponse event) {
 		publisher.publishBatchUpdate(event);
 	}
 

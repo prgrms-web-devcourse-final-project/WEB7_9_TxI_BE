@@ -3,7 +3,7 @@ package com.back.api.queue.event;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import com.back.api.queue.dto.event.WaitingQueueBatchEvent;
+import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
 import com.back.api.queue.dto.response.QueueEntryStatusResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class QueueEntryWebSocketPublisher {
 	}
 
 	//broadcast - 대기 상태
-	public void publishBatchUpdate(WaitingQueueBatchEvent event) {
+	public void publishBatchUpdate(WaitingQueueBatchEventResponse event) {
 
 		String destination = "/topic/events/" + event.eventId() + "/queue";
 
