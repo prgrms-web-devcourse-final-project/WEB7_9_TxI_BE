@@ -38,34 +38,18 @@ public class UserDataInit implements ApplicationRunner {
 
 		log.info("User 초기 데이터를 생성합니다.");
 
-		// 사전등록 V1 인증 테스트용 유저 (ID=1, 홍길동)
-		User testUser = User.builder()
-			.email("test@example.com")
-			.nickname("홍길동")
-			.password(passwordEncoder.encode("password123"))
-			.birthDate(LocalDate.of(1990, 1, 1))
-			.role(UserRole.NORMAL)
-			.activeStatus(UserActiveStatus.ACTIVE)
-			.build();
+		List<User> users = createTestUsers(150);
 
-		userRepository.save(testUser);
-
-		// 추가 테스트 유저 149명 생성
-		List<User> users = createTestUsers(149);
-
-		log.info("User 초기 데이터 {}명이 생성되었습니다. (홍길동 + test1~test149)", users.size() + 1);
+		log.info("User 초기 데이터 {}명이 생성되었습니다.", users.size());
 	}
 
 	private List<User> createTestUsers(int count) {
 		List<User> users = new ArrayList<>();
 
-		// 비밀번호를 한 번만 암호화하여 재사용 (성능 최적화)
-		String encodedPassword = passwordEncoder.encode("abc12345");
-
 		for (int i = 1; i <= count; i++) {
 			User user = User.builder()
 				.email("test" + i + "@test.com")
-				.password(encodedPassword)
+				.password(passwordEncoder.encode("abc12345"))
 				.nickname("test" + i)
 				.role(UserRole.NORMAL)
 				.birthDate(LocalDate.of(2000, 1, 1))

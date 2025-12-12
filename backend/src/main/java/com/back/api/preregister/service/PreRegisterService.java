@@ -122,8 +122,8 @@ public class PreRegisterService {
 	 * - 비밀번호 일치 여부
 	 */
 	private void validateUserInfo(User user, PreRegisterCreateRequest request) {
-		// 이름 검증 (User 엔티티에 name 필드가 없으므로 nickname과 비교)
-		if (!user.getNickname().equals(request.name())) {
+		// 이름 검증
+		if (!user.getNickname().equals(request.nickname())) {
 			throw new ErrorException(PreRegisterErrorCode.INVALID_USER_INFO);
 		}
 

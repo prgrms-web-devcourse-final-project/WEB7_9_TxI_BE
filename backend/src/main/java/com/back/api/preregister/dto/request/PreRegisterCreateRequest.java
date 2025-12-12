@@ -14,7 +14,7 @@ public record PreRegisterCreateRequest(
 	@Schema(description = "이름", example = "홍길동")
 	@NotBlank(message = "이름은 필수입니다.")
 	@Size(max = 50, message = "이름은 50자 이하여야 합니다.")
-	String name,
+	String nickname,
 
 	@Schema(description = "비밀번호 (6자 이상, 인증용)", example = "password123")
 	@NotBlank(message = "비밀번호는 필수입니다.")

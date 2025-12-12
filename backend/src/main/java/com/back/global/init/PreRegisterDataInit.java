@@ -45,7 +45,7 @@ public class PreRegisterDataInit implements ApplicationRunner {
 			return;
 		}
 
-		Long targetEventId = 4L; //사전 등록 중인 이벤트
+		Long targetEventId = 1L; //사전 등록 중인 이벤트 (아이유 콘서트)
 
 		Event event = eventRepository.findById(targetEventId)
 			.orElse(null);
@@ -55,8 +55,9 @@ public class PreRegisterDataInit implements ApplicationRunner {
 			return;
 		}
 
-		List<PreRegister> preRegisters = createTestPreRegisters(event, users, 150);
+		List<PreRegister> preRegisters = createTestPreRegisters(event, users, 50);
 
+		log.info("PreRegister 초기 데이터 {}개가 생성되었습니다.", preRegisters.size());
 	}
 
 	public List<PreRegister> createTestPreRegisters(Event event, List<User> users, int count) {

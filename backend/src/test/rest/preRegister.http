@@ -1,14 +1,15 @@
 @BASE_URL = http://localhost:8080
 @EVENT_ID = 1
+@USER_ID = 51
 
 ### 사전등록 (V1 본인 인증)
-POST {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers?userId=1
+POST {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers?userId={{USER_ID}}
 Content-Type: application/json
 
 {
-  "name": "홍길동",
-  "password": "password123",
-  "birthDate": "1990-01-01",
+  "nickname": "test51",
+  "password": "abc12345",
+  "birthDate": "2000-01-01",
   "agreeTerms": true,
   "agreePrivacy": true
 }
