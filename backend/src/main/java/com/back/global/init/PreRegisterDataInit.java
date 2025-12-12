@@ -45,7 +45,7 @@ public class PreRegisterDataInit implements ApplicationRunner {
 			return;
 		}
 
-		Long targetEventId = 4L; //사전 등록 중인 이벤트
+		Long targetEventId = 1L; //사전 등록 중인 이벤트
 
 		Event event = eventRepository.findById(targetEventId)
 			.orElse(null);
@@ -55,8 +55,9 @@ public class PreRegisterDataInit implements ApplicationRunner {
 			return;
 		}
 
-		List<PreRegister> preRegisters = createTestPreRegisters(event, users, 150);
+		List<PreRegister> preRegisters = createTestPreRegisters(event, users, 140);
 
+		log.info("PreRegister 초기 데이터 {}개가 생성되었습니다.", preRegisters.size());
 	}
 
 	public List<PreRegister> createTestPreRegisters(Event event, List<User> users, int count) {
@@ -65,9 +66,12 @@ public class PreRegisterDataInit implements ApplicationRunner {
 		int registerCount = Math.min(count, users.size());
 
 		for (int i = 0; i < registerCount; i++) {
+			User user = users.get(i);
 			PreRegister preRegister = PreRegister.builder()
 				.event(event)
-				.user(users.get(i))
+				.user(user)
+				.preRegisterAgreeTerms(true)
+				.preRegisterAgreePrivacy(true)
 				.build();
 			preRegisters.add(preRegister);
 		}

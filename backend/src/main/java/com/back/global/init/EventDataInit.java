@@ -44,12 +44,12 @@ public class EventDataInit implements ApplicationRunner {
 			.imageUrl("https://example.com/iu-concert.jpg")
 			.minPrice(99000)
 			.maxPrice(154000)
-			.preOpenAt(now.minusDays(7))
-			.preCloseAt(now.minusDays(5))
-			.ticketOpenAt(now.minusDays(3))
+			.preOpenAt(now.minusDays(1))
+			.preCloseAt(now.plusDays(7))
+			.ticketOpenAt(now.plusDays(10))
 			.ticketCloseAt(now.plusDays(30))
 			.maxTicketAmount(5000)
-			.status(EventStatus.OPEN)
+			.status(EventStatus.PRE_OPEN)
 			.build();
 
 		Event event2 = Event.builder()

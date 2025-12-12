@@ -4,14 +4,17 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.back.api.preregister.dto.request.PreRegisterCreateRequest;
 import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.api.preregister.service.PreRegisterService;
 import com.back.global.response.ApiResponse;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -25,8 +28,9 @@ public class PreRegisterController implements PreRegisterApi {
 	@PostMapping
 	public ApiResponse<PreRegisterResponse> register(
 		@PathVariable Long eventId,
-		@RequestParam Long userId) {
-		PreRegisterResponse response = preRegisterService.register(eventId, userId);
+		@RequestParam Long userId,
+		@Valid @RequestBody PreRegisterCreateRequest request) {
+		PreRegisterResponse response = preRegisterService.register(eventId, userId, request);
 		return ApiResponse.created("사전등록이 완료되었습니다.", response);
 	}
 
