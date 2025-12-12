@@ -17,9 +17,6 @@ public class QueueEntryFactory extends BaseFactory {
 			.build();
 	}
 
-	/**
-	 * 특정 순위의 WAITING 상태 QueueEntry 생성
-	 */
 	public static QueueEntry fakeQueueEntry(Event event, User user, int rank) {
 		return QueueEntry.builder()
 			.event(event)
@@ -29,9 +26,6 @@ public class QueueEntryFactory extends BaseFactory {
 			.build();
 	}
 
-	/**
-	 * 특정 상태의 QueueEntry 생성
-	 */
 	public static QueueEntry fakeQueueEntry(Event event, User user, int rank, QueueEntryStatus status) {
 		QueueEntry queueEntry = QueueEntry.builder()
 			.event(event)
@@ -56,9 +50,6 @@ public class QueueEntryFactory extends BaseFactory {
 		return queueEntry;
 	}
 
-	/**
-	 * ENTERED 상태의 QueueEntry 생성
-	 */
 	public static QueueEntry fakeEnteredQueueEntry(Event event, User user) {
 		QueueEntry queueEntry = QueueEntry.builder()
 			.event(event)
@@ -70,9 +61,6 @@ public class QueueEntryFactory extends BaseFactory {
 		return queueEntry;
 	}
 
-	/**
-	 * EXPIRED 상태의 QueueEntry 생성
-	 */
 	public static QueueEntry fakeExpiredQueueEntry(Event event, User user) {
 		QueueEntry queueEntry = QueueEntry.builder()
 			.event(event)
@@ -85,9 +73,6 @@ public class QueueEntryFactory extends BaseFactory {
 		return queueEntry;
 	}
 
-	/**
-	 * COMPLETED 상태의 QueueEntry 생성
-	 */
 	public static QueueEntry fakeCompletedQueueEntry(Event event, User user) {
 		QueueEntry queueEntry = QueueEntry.builder()
 			.event(event)

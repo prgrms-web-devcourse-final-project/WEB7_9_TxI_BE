@@ -26,11 +26,6 @@ public class QueueEntryHelper {
 		this.queueEntryRedisRepository = queueEntryRedisRepository;
 	}
 
-	public QueueEntry createQueueEntry(Event event, User user) {
-		QueueEntry queueEntry = QueueEntryFactory.fakeQueueEntry(event, user);
-		return queueEntryRepository.save(queueEntry);
-	}
-
 
 	public QueueEntry createQueueEntry(Event event, User user, int rank) {
 		QueueEntry queueEntry = QueueEntryFactory.fakeQueueEntry(event, user, rank);
@@ -91,10 +86,6 @@ public class QueueEntryHelper {
 
 	public void clearRedis(Long eventId) {
 		queueEntryRedisRepository.clearAll(eventId);
-	}
-
-	public void clearQueueEntry() {
-		queueEntryRepository.deleteAll();
 	}
 
 	public void clearAll(Long eventId) {
