@@ -5,8 +5,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.back.api.selection.dto.response.SeatSelectionResponse;
 import com.back.api.selection.service.SeatSelectionService;
-import com.back.api.ticket.dto.response.TicketResponse;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
@@ -27,7 +27,7 @@ public class SeatSelectionController implements SeatSelectionApi {
 	 */
 	@Override
 	@PostMapping("/select")
-	public ApiResponse<TicketResponse> selectSeat(
+	public ApiResponse<SeatSelectionResponse> selectSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId
 	) {
@@ -37,7 +37,7 @@ public class SeatSelectionController implements SeatSelectionApi {
 
 		return ApiResponse.ok(
 			"좌석을 선택했습니다.",
-			TicketResponse.from(draftTicket)
+			SeatSelectionResponse.from(draftTicket)
 		);
 	}
 }
