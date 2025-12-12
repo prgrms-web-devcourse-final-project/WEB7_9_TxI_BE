@@ -86,6 +86,7 @@ public class AuthControllerTest {
 			String requestJson = mapper.writeValueAsString(Map.of(
 				"email", user.getEmail(),
 				"password", testUser.rawPassword(),
+				"fullName", user.getFullName(),
 				"nickname", user.getNickname(),
 				"year", "2002",
 				"month", "2",
@@ -146,6 +147,7 @@ public class AuthControllerTest {
 			String requestJson = mapper.writeValueAsString(Map.of(
 				"email", existedUser.user().getEmail(),
 				"password", existedUser.rawPassword(),
+				"fullName", user.getFullName(),
 				"nickname", "A" + existedUser.user().getNickname(),
 				"year", "2002",
 				"month", "2",
@@ -177,6 +179,7 @@ public class AuthControllerTest {
 			String requestJson = mapper.writeValueAsString(Map.of(
 				"email", "test" + existedUser.user().getEmail(),
 				"password", existedUser.rawPassword(),
+				"fullName", user.getFullName(),
 				"nickname", existedUser.user().getNickname(),
 				"year", "2002",
 				"month", "2",

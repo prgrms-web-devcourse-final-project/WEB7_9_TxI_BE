@@ -4,7 +4,7 @@ import com.back.domain.user.entity.UserRole;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "사용자 상세 정보 응답 DTO")
+@Schema(description = "사용자 상세 정보 DTO")
 public record UserProfileResponse(
 	@Schema(
 		description = "사용자 아이디 정보",
@@ -17,6 +17,12 @@ public record UserProfileResponse(
 		maxLength = 100
 	)
 	String email,
+
+	@Schema(
+		description = "사용자 이름",
+		maxLength = 30
+	)
+	String fullName,
 
 	@Schema(
 		description = "사용자 닉네임",
