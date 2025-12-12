@@ -113,14 +113,14 @@ public class EventService {
 	}
 
 	private void validateDuplicateEvent(String title, String place, LocalDateTime ticketOpenAt) {
-		if (eventRepository.existsByTitleAndPlaceAndTicketOpenAt(title, place, ticketOpenAt)) {
+		if (eventRepository.existsByTitleAndPlaceAndTicketOpenAtAndDeletedFalse(title, place, ticketOpenAt)) {
 			throw new ErrorException(EventErrorCode.DUPLICATE_EVENT);
 		}
 	}
 
 	private void validateDuplicateEventForUpdate(Long eventId, String title, String place,
 		LocalDateTime ticketOpenAt) {
-		eventRepository.findByTitleAndPlaceAndTicketOpenAt(title, place, ticketOpenAt)
+		eventRepository.findByTitleAndPlaceAndTicketOpenAtAndDeletedFalse(title, place, ticketOpenAt)
 			.ifPresent(existingEvent -> {
 				if (!existingEvent.getId().equals(eventId)) {
 					throw new ErrorException(EventErrorCode.DUPLICATE_EVENT);
