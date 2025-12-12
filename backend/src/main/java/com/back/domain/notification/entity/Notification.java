@@ -2,9 +2,9 @@ package com.back.domain.notification.entity;
 
 import java.time.LocalDateTime;
 
-import com.back.domain.event.entity.Event;
-import com.back.domain.notification.model.NotificationTypeDetails;
-import com.back.domain.notification.model.NotificationTypes;
+import com.back.domain.notification.enums.FromWhere;
+import com.back.domain.notification.enums.NotificationTypeDetails;
+import com.back.domain.notification.enums.NotificationTypes;
 import com.back.domain.user.entity.User;
 import com.back.global.entity.BaseEntity;
 
@@ -20,6 +20,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,6 +28,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PUBLIC)
 @Table(name = "notifications")
 public class Notification extends BaseEntity {
 	@Id
@@ -53,38 +55,16 @@ public class Notification extends BaseEntity {
 	@Column(nullable = true)
 	private LocalDateTime readAt;
 
+	@Column(nullable = false)
+	private FromWhere fromWhere;
+
+	@Column(nullable = true)
+	private Long whereId;
+
 	//연관 필드
 	@ManyToOne(fetch = FetchType.LAZY) // -> 리팩토링 고민요소
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
-	@ManyToOne(fetch = FetchType.LAZY) // -> 리팩토링 고민요소
-	@JoinColumn(name = "event_id", nullable = true) // 테스트하느라 잠시 널 허용
-	private Event event;
-
-	private Notification(NotificationTypes type,
-		NotificationTypeDetails typeDetail,
-		String title,
-		String message,
-		User user,
-		Event event) {
-		this.type = type;
-		this.typeDetail = typeDetail;
-		this.title = title;
-		this.message = message;
-		this.user = user;
-		this.event = event;
-		this.isRead = false;
-		this.readAt = null;
-	}
-
-	public static Notification create(NotificationTypes type,
-		NotificationTypeDetails typeDetail,
-		String title,
-		String message,
-		User user,
-		Event event) {
-		return new Notification(type, typeDetail, title, message, user, event);
-	}
 
 	public void markAsRead() {
 		if (!this.isRead) {
@@ -92,5 +72,4 @@ public class Notification extends BaseEntity {
 			this.readAt = LocalDateTime.now();
 		}
 	}
-
 }
