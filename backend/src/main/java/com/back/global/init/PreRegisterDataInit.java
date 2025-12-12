@@ -1,6 +1,5 @@
 package com.back.global.init;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +7,6 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.back.domain.event.entity.Event;
@@ -31,7 +29,6 @@ public class PreRegisterDataInit implements ApplicationRunner {
 	private final PreRegisterRepository preRegisterRepository;
 	private final EventRepository eventRepository;
 	private final UserRepository userRepository;
-	private final PasswordEncoder passwordEncoder;
 
 	@Override
 	public void run(ApplicationArguments args) throws Exception {
@@ -66,16 +63,12 @@ public class PreRegisterDataInit implements ApplicationRunner {
 		List<PreRegister> preRegisters = new ArrayList<>();
 
 		int registerCount = Math.min(count, users.size());
-		String encodedPassword = passwordEncoder.encode("password123");
 
 		for (int i = 0; i < registerCount; i++) {
 			User user = users.get(i);
 			PreRegister preRegister = PreRegister.builder()
 				.event(event)
 				.user(user)
-				.preRegisterName(user.getNickname())
-				.preRegisterBirthDate(user.getBirthDate() != null ? user.getBirthDate() : LocalDate.of(1990, 1, 1))
-				.preRegisterPassword(encodedPassword)
 				.preRegisterAgreeTerms(true)
 				.preRegisterAgreePrivacy(true)
 				.build();

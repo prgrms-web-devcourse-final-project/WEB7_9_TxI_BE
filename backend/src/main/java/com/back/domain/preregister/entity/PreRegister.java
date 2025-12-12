@@ -1,6 +1,5 @@
 package com.back.domain.preregister.entity;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.back.domain.event.entity.Event;
@@ -60,15 +59,6 @@ public class PreRegister extends BaseEntity {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@Column(name = "pre_register_name", nullable = false, length = 50)
-	private String preRegisterName;
-
-	@Column(name = "pre_register_birth_date", nullable = false)
-	private LocalDate preRegisterBirthDate;
-
-	@Column(name = "pre_register_password", nullable = false)
-	private String preRegisterPassword;
-
 	@Column(name = "pre_register_agree_terms", nullable = false)
 	private Boolean preRegisterAgreeTerms;
 
@@ -79,15 +69,11 @@ public class PreRegister extends BaseEntity {
 	private LocalDateTime preRegisterAgreedAt;
 
 	@Builder
-	public PreRegister(Event event, User user, String preRegisterName,
-		LocalDate preRegisterBirthDate, String preRegisterPassword,
+	public PreRegister(Event event, User user,
 		Boolean preRegisterAgreeTerms, Boolean preRegisterAgreePrivacy) {
 		this.event = event;
 		this.user = user;
 		this.preRegisterStatus = PreRegisterStatus.REGISTERED;
-		this.preRegisterName = preRegisterName;
-		this.preRegisterBirthDate = preRegisterBirthDate;
-		this.preRegisterPassword = preRegisterPassword;
 		this.preRegisterAgreeTerms = preRegisterAgreeTerms;
 		this.preRegisterAgreePrivacy = preRegisterAgreePrivacy;
 		this.preRegisterAgreedAt = LocalDateTime.now();

@@ -40,24 +40,18 @@ public class PreRegisterService {
 		// 사전등록 기간 검증
 		validatePreRegistrationPeriod(event);
 
-		// 중복 등록 방지 (1인 1계정)
-		validateDuplicateRegistration(eventId, userId);
-
 		// 본인 인증 정보 검증 (회원가입 정보와 대조)
 		validateUserInfo(user, request);
 
 		// 약관 동의 검증
 		validateAgreements(request);
 
-		// 비밀번호 암호화
-		String encodedPassword = passwordEncoder.encode(request.password());
+		// 중복 등록 방지 (1인 1계정) - 본인 인증 통과 후 검사
+		validateDuplicateRegistration(eventId, userId);
 
 		PreRegister preRegister = PreRegister.builder()
 			.event(event)
 			.user(user)
-			.preRegisterName(request.name())
-			.preRegisterBirthDate(request.birthDate())
-			.preRegisterPassword(encodedPassword)
 			.preRegisterAgreeTerms(request.agreeTerms())
 			.preRegisterAgreePrivacy(request.agreePrivacy())
 			.build();
@@ -125,6 +119,7 @@ public class PreRegisterService {
 	 * 본인 인증 정보 검증 (회원가입 정보와 대조)
 	 * - 이름 일치 여부
 	 * - 생년월일 일치 여부
+	 * - 비밀번호 일치 여부
 	 */
 	private void validateUserInfo(User user, PreRegisterCreateRequest request) {
 		// 이름 검증 (User 엔티티에 name 필드가 없으므로 nickname과 비교)
@@ -135,6 +130,11 @@ public class PreRegisterService {
 		// 생년월일 검증
 		if (user.getBirthDate() == null || !user.getBirthDate().equals(request.birthDate())) {
 			throw new ErrorException(PreRegisterErrorCode.INVALID_USER_INFO);
+		}
+
+		// 비밀번호 검증
+		if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+			throw new ErrorException(PreRegisterErrorCode.INVALID_PASSWORD);
 		}
 	}
 
