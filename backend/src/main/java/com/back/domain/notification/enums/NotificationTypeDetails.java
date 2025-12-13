@@ -2,16 +2,17 @@ package com.back.domain.notification.enums;
 
 // 세부 타입
 public enum NotificationTypeDetails {
-	// 알림
-	ENTER_NOW,          // 대기열 순서 완료
-	TICKET_ISSUED,      // 티켓 발급 완료
-	EVENT_OPEN,         // 이벤트 생성
+	// QueueEntries
+	TICKETING_POSSIBLE,          // 대기열 순서 완료
 
-	// 결제
+	// PAYMENT
 	PAYMENT_SUCCESS,
 	PAYMENT_FAILED,
 
-	// 사전등록
-	PRE_REGISTER_DONE;
+	// PRE_REGISTER
+	PRE_REGISTER_DONE,
+
+	// TICKET
+	TICKET_GET
 }
 
