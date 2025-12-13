@@ -68,7 +68,29 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 	@Query("SELECT e FROM Event e WHERE e.status IN :statuses AND e.deleted = false")
 	List<Event> findByStatusIn(@Param("statuses") List<EventStatus> statuses);
 
-	boolean existsByTitleAndPlaceAndTicketOpenAt(String title, String place, LocalDateTime ticketOpenAt);
+	@Query("""
+			SELECT COUNT(e) > 0
+			FROM Event e
+			WHERE e.title = :title
+			AND e.place = :place
+			AND e.ticketOpenAt = :ticketOpenAt
+			AND e.deleted = false
+		""")
+	boolean existsByTitleAndPlaceAndTicketOpenAtAndDeletedFalse(
+		@Param("title") String title,
+		@Param("place") String place,
+		@Param("ticketOpenAt") LocalDateTime ticketOpenAt);
 
-	Optional<Event> findByTitleAndPlaceAndTicketOpenAt(String title, String place, LocalDateTime ticketOpenAt);
+	@Query("""
+			SELECT e
+			FROM Event e
+			WHERE e.title = :title
+			AND e.place = :place
+			AND e.ticketOpenAt = :ticketOpenAt
+			AND e.deleted = false
+		""")
+	Optional<Event> findByTitleAndPlaceAndTicketOpenAtAndDeletedFalse(
+		@Param("title") String title,
+		@Param("place") String place,
+		@Param("ticketOpenAt") LocalDateTime ticketOpenAt);
 }

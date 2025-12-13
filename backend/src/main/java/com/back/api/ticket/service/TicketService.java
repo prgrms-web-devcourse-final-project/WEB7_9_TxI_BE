@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.seat.service.SeatService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.seat.entity.Seat;
@@ -22,6 +23,9 @@ import com.back.global.error.exception.ErrorException;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 티켓 상태 변경 담당 서비스
+ */
 @Service
 @RequiredArgsConstructor
 public class TicketService {
@@ -30,6 +34,7 @@ public class TicketService {
 	private final UserRepository userRepository;
 	private final EventRepository eventRepository;
 	private final SeatRepository seatRepository;
+	private final SeatService seatService;
 
 	/**
 	 * Draft Ticket 생성 (좌석 선택 직후)
@@ -47,7 +52,15 @@ public class TicketService {
 		Seat seat = seatRepository.findByEventIdAndId(eventId, seatId)
 			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
-		// 이미 Draft Ticket이 존재하면 재사용 or 에러 처리
+		// 좌석에 이미 PAID or ISSUED 티켓 있으면 안 됨
+		if (ticketRepository.existsBySeatIdAndTicketStatusIn(
+			seatId,
+			List.of(TicketStatus.PAID, TicketStatus.ISSUED))
+		) {
+			throw new ErrorException(TicketErrorCode.SEAT_ALREADY_PURCHASED);
+		}
+
+		// 이미 Draft Ticket이 존재하면 중복 생성 금지, 예외처리
 		if (ticketRepository.existsBySeatIdAndTicketStatus(seatId, TicketStatus.DRAFT)) {
 			throw new ErrorException(TicketErrorCode.TICKET_ALREADY_IN_PROGRESS);
 		}
@@ -63,6 +76,25 @@ public class TicketService {
 	}
 
 	/**
+	 * 진행 중인 Draft Ticket 조회
+	 */
+	@Transactional(readOnly = true)
+	public Ticket getDraftTicket(Long eventId, Long seatId, Long userId) {
+		Ticket ticket = ticketRepository.findBySeatIdAndOwnerIdAndTicketStatus(
+			seatId,
+			userId,
+			TicketStatus.DRAFT
+		).orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_IN_PROGRESS));
+
+		// 티켓이 해당 이벤트에 속하는지 검증
+		if (!ticket.getEvent().getId().equals(eventId)) {
+			throw new ErrorException(TicketErrorCode.TICKET_EVENT_MISMATCH);
+		}
+
+		return ticket;
+	}
+
+	/**
 	 * 결제 완료 → Ticket 확정 발급
 	 */
 	public Ticket confirmPayment(Long ticketId, Long userId) {
@@ -74,13 +106,11 @@ public class TicketService {
 			throw new ErrorException(TicketErrorCode.UNAUTHORIZED_TICKET_ACCESS);
 		}
 
-		Seat seat = ticket.getSeat();
-
-		seat.markAsSold(); // 좌석 SOLD 처리
+		// 티켓 결제 확정 처리
 		ticket.markPaid(); // 결제 성공
-
-		// 여기서 실제 ISSUED 시점은 옵션
 		ticket.issue();
+
+		seatService.markSeatAsSold(ticket.getSeat()); // 좌석 SOLD 처리
 
 		return ticket;
 	}
@@ -93,13 +123,11 @@ public class TicketService {
 		Ticket ticket = ticketRepository.findById(ticketId)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));
 
-		Seat seat = ticket.getSeat();
-
-		// 좌석 잠금 해제
-		seat.markAsAvailable();
-
 		// 티켓 실패 처리
 		ticket.fail();
+
+		// 좌석 해제
+		seatService.markSeatAsAvailable(ticket.getSeat());
 	}
 
 	/**
@@ -124,5 +152,17 @@ public class TicketService {
 		}
 
 		return ticket;
+	}
+
+	/**
+	 * 사용자가 이미 해당 이벤트에 대해 좌석을 선택(임시/발급완료 된 티켓이 존재)했는지 확인
+	 */
+	@Transactional(readOnly = true)
+	public boolean hasUserAlreadySelectedSeat(Long eventId, Long userId) {
+		return ticketRepository.existsByEventIdAndOwnerIdAndTicketStatusIn(
+			eventId,
+			userId,
+			List.of(TicketStatus.DRAFT, TicketStatus.PAID, TicketStatus.ISSUED)
+		);
 	}
 }

@@ -35,7 +35,8 @@ public class UserFactory extends BaseFactory {
 			.activeStatus(UserActiveStatus.ACTIVE)
 			.role(role)
 			.email(faker.internet().emailAddress())
-			.nickname(faker.lorem().characters(3, 8))
+			.fullName(faker.lorem().characters(3, 6))
+			.nickname(faker.lorem().characters(3, 6))
 			.password(encoder.encode(rawPassword))
 			.birthDate(birthDate)
 			.build();

@@ -13,10 +13,6 @@ public record OrderRequestDto(
 	@NotNull(message = "이벤트 ID는 필수입니다")
 	Long eventId,
 
-	@Schema(description = "유저 ID", example = "5")
-	@NotNull(message = "유저 ID는 필수입니다")
-	Long userId,
-
 	@Schema(description = "좌석 ID", example = "102")
 	Long seatId
 ) {

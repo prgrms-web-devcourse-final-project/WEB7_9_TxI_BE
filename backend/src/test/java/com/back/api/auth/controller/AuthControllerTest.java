@@ -1,6 +1,7 @@
 package com.back.api.auth.controller;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -17,6 +18,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,10 +31,13 @@ import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.AuthErrorCode;
+import com.back.global.security.SecurityUser;
 import com.back.support.data.TestUser;
 import com.back.support.factory.UserFactory;
 import com.back.support.helper.UserHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -80,6 +86,7 @@ public class AuthControllerTest {
 			String requestJson = mapper.writeValueAsString(Map.of(
 				"email", user.getEmail(),
 				"password", testUser.rawPassword(),
+				"fullName", user.getFullName(),
 				"nickname", user.getNickname(),
 				"year", "2002",
 				"month", "2",
@@ -140,6 +147,7 @@ public class AuthControllerTest {
 			String requestJson = mapper.writeValueAsString(Map.of(
 				"email", existedUser.user().getEmail(),
 				"password", existedUser.rawPassword(),
+				"fullName", user.getFullName(),
 				"nickname", "A" + existedUser.user().getNickname(),
 				"year", "2002",
 				"month", "2",
@@ -171,6 +179,7 @@ public class AuthControllerTest {
 			String requestJson = mapper.writeValueAsString(Map.of(
 				"email", "test" + existedUser.user().getEmail(),
 				"password", existedUser.rawPassword(),
+				"fullName", user.getFullName(),
 				"nickname", existedUser.user().getNickname(),
 				"year", "2002",
 				"month", "2",
@@ -394,6 +403,253 @@ public class AuthControllerTest {
 			// DB에서 refreshToken 이 2개인지 검증
 			long tokenCount = tokenRepository.countByUserId(savedUser.getId());
 			assertThat(tokenCount).isEqualTo(2);
+
+			assertThat(refreshToken1).isNotEqualTo(refreshToken2);
+			assertThat(accessToken1).isNotEqualTo(accessToken2);
+		}
+	}
+
+	@Nested
+	@DisplayName("로그아웃 API Test `POST /api/v1/auth/logout`")
+	class LogoutTest {
+		private final String logoutApi = "/api/v1/auth/logout";
+
+		private SecurityUser toSecurityUser(User user) {
+			return new SecurityUser(
+				user.getId(),
+				user.getPassword(),
+				user.getNickname(),
+				user.getRole(),
+				java.util.List.of(new SimpleGrantedAuthority("ROLE_USER"))
+			);
+		}
+
+		@Test
+		@DisplayName("로그아웃 성공")
+		void logout_success() throws Exception {
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			User savedUser = existedUser.user();
+			String rawPassword = existedUser.rawPassword();
+
+			String loginJson = mapper.writeValueAsString(Map.of(
+				"email", savedUser.getEmail(),
+				"password", rawPassword
+			));
+
+			ResultActions loginActions = mvc.perform(
+				post("/api/v1/auth/login")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(loginJson)
+			).andDo(print());
+
+			// 로그인 응답에서 쿠키 꺼내기. (accessToken, refreshToken 둘 다 있을 것)
+			MockHttpServletResponse loginResponse = loginActions.andReturn().getResponse();
+			Cookie[] cookies = loginResponse.getCookies();
+			assertThat(cookies).isNotEmpty();
+
+			SecurityUser securityUser = toSecurityUser(savedUser);
+
+			ResultActions actions = mvc.perform(
+				post(logoutApi)
+					.with(user(securityUser))
+					.cookie(cookies)
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
+
+			actions.andExpect(status().isNoContent());
+
+			long activeTokens = tokenRepository.countByUserIdAndRevokedFalse(savedUser.getId());
+			assertThat(activeTokens).isZero();
+		}
+
+		@Test
+		@DisplayName("로그아웃 실패 - refreshToken 쿠키 없음 (REFRESH_TOKEN_REQUIRED)")
+		void logout_failed_refresh_token_required() throws Exception {
+			// given: 유저 생성
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			User savedUser = existedUser.user();
+
+			// when: refreshToken 쿠키 없이, 인증된 유저로 로그아웃 요청
+			ResultActions actions = mvc.perform(
+				post(logoutApi)
+					.with(user(toSecurityUser(savedUser)))
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
+
+			// then
+			AuthErrorCode error = AuthErrorCode.REFRESH_TOKEN_REQUIRED;
+
+			actions
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(error.getMessage()));
+
+			// refresh token은 애초에 없으므로 DB에도 아무 변화 없음
+			long activeTokens = tokenRepository.countByUserId(savedUser.getId());
+			assertThat(activeTokens).isZero();
+		}
+
+		@Test
+		@DisplayName("로그아웃 실패 - refreshToken DB에 없음 (REFRESH_TOKEN_NOT_FOUND)")
+		void logout_failed_refresh_token_not_found() throws Exception {
+			// given: 유저 하나 생성 (하지만 이 유저에 대한 refreshToken 레코드는 없음)
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			User savedUser = existedUser.user();
+
+			// 가짜 refreshToken 값 (DB에는 저장하지 않음)
+			String fakeRefreshToken = "this-refresh-token-does-not-exist";
+			Cookie refreshCookie = new Cookie("refreshToken", fakeRefreshToken);
+
+			// when: 가짜 refreshToken 쿠키 + 인증된 유저로 로그아웃 요청
+			ResultActions actions = mvc.perform(
+				post(logoutApi)
+					.with(user(toSecurityUser(savedUser))) // SecurityContext에 유저 세팅
+					.cookie(refreshCookie)                 // 하지만 DB엔 없는 토큰
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
+
+			// then
+			AuthErrorCode error = AuthErrorCode.REFRESH_TOKEN_NOT_FOUND;
+
+			actions
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value(error.getMessage()));
+
+			// 여전히 이 유저의 refreshToken은 DB에 없음
+			long activeTokens = tokenRepository.countByUserId(savedUser.getId());
+			assertThat(activeTokens).isZero();
+		}
+	}
+
+	@Nested
+	@DisplayName("비밀번호 일치 확인 API - `POST /api/v1/auth/verify-password`")
+	class VerifyPasswordTest {
+
+		private final String verifyPasswordApi = "/api/v1/auth/verify-password";
+
+		private SecurityUser toSecurityUser(User user) {
+			return new SecurityUser(
+				user.getId(),
+				user.getPassword(),
+				user.getNickname(),
+				user.getRole(),
+				java.util.List.of(new SimpleGrantedAuthority("ROLE_USER"))
+			);
+		}
+
+		@Test
+		@DisplayName("비밀번호 인증 성공")
+		void verify_password_success() throws Exception {
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			User savedUser = existedUser.user();
+			String rawPassword = existedUser.rawPassword();
+
+			String loginJson = mapper.writeValueAsString(Map.of(
+				"email", savedUser.getEmail(),
+				"password", rawPassword
+			));
+
+			ResultActions loginActions = mvc.perform(
+				post("/api/v1/auth/login")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(loginJson)
+			).andDo(print());
+
+			MockHttpServletResponse loginResponse = loginActions.andReturn().getResponse();
+			Cookie[] cookies = loginResponse.getCookies();
+			assertThat(cookies).isNotEmpty();
+
+			SecurityUser securityUser = toSecurityUser(savedUser);
+
+			String requestJson = mapper.writeValueAsString(Map.of(
+				"password", rawPassword
+			));
+
+			ResultActions actions = mvc.perform(
+				post(verifyPasswordApi)
+					.with(user(securityUser))
+					.cookie(cookies)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(requestJson)
+			).andDo(print());
+
+			actions.andExpect(status().isNoContent());
+		}
+
+		@Test
+		@DisplayName("비밀번호 인증 실패 - 요청 데이터 누락")
+		void failed_by_missing_parameter() throws Exception {
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			User savedUser = existedUser.user();
+			String rawPassword = existedUser.rawPassword();
+
+			String loginJson = mapper.writeValueAsString(Map.of(
+				"email", savedUser.getEmail(),
+				"password", rawPassword
+			));
+
+			ResultActions loginActions = mvc.perform(
+				post("/api/v1/auth/login")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(loginJson)
+			).andDo(print());
+
+			MockHttpServletResponse loginResponse = loginActions.andReturn().getResponse();
+			Cookie[] cookies = loginResponse.getCookies();
+			assertThat(cookies).isNotEmpty();
+
+			SecurityUser securityUser = toSecurityUser(savedUser);
+
+			ResultActions actions = mvc.perform(
+				post(verifyPasswordApi)
+					.with(user(securityUser))
+					.cookie(cookies)
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
+
+			actions.andExpect(status().isBadRequest());
+		}
+
+		@Test
+		@DisplayName("비밀번호 인증 실패 - 비밀번호 불일치")
+		void failed_by_wrong_parameter() throws Exception {
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			User savedUser = existedUser.user();
+			String rawPassword = existedUser.rawPassword();
+
+			String loginJson = mapper.writeValueAsString(Map.of(
+				"email", savedUser.getEmail(),
+				"password", rawPassword
+			));
+
+			ResultActions loginActions = mvc.perform(
+				post("/api/v1/auth/login")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(loginJson)
+			).andDo(print());
+
+			MockHttpServletResponse loginResponse = loginActions.andReturn().getResponse();
+			Cookie[] cookies = loginResponse.getCookies();
+			assertThat(cookies).isNotEmpty();
+
+			SecurityUser securityUser = toSecurityUser(savedUser);
+
+			String requestJson = mapper.writeValueAsString(Map.of(
+				"password", "A" + rawPassword
+			));
+
+			ResultActions actions = mvc.perform(
+				post(verifyPasswordApi)
+					.with(user(securityUser))
+					.cookie(cookies)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(requestJson)
+			).andDo(print());
+
+			AuthErrorCode error = AuthErrorCode.PASSWORD_MISMATCH;
+
+			actions
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value(error.getMessage()));
 		}
 	}
 }

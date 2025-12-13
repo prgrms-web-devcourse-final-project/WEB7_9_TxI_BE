@@ -1,0 +1,9 @@
+@BASE_URL = http://localhost:8080
+@EVENT_ID = 4
+
+### 대기열 상태 조회
+GET {{BASE_URL}}/api/v1/queues/{{EVENT_ID}}/status?userId=1
+
+
+### 대기열 진입 여부 조회
+GET {{BASE_URL}}/api/v1/queues/{{EVENT_ID}}/exists?userId=1

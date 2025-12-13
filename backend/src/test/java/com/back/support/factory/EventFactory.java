@@ -112,4 +112,25 @@ public class EventFactory extends BaseFactory {
 			.status(EventStatus.READY)
 			.build();
 	}
+
+	public static Event fakePreClosedEvent() {
+		int minPrice = faker.number().numberBetween(10000, 50000);
+		int maxPrice = faker.number().numberBetween(minPrice, 200000);
+
+		return Event.builder()
+			.title(faker.book().title())
+			.category(EventCategory.CONCERT)
+			.description(faker.lorem().sentence())
+			.place(faker.address().city())
+			.imageUrl(faker.internet().image())
+			.minPrice(minPrice)
+			.maxPrice(maxPrice)
+			.preOpenAt(LocalDateTime.now().minusDays(10))
+			.preCloseAt(LocalDateTime.now().minusDays(8))
+			.ticketOpenAt(LocalDateTime.now().minusDays(5))
+			.ticketCloseAt(LocalDateTime.now().plusDays(10))
+			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
+			.status(EventStatus.OPEN)
+			.build();
+	}
 }

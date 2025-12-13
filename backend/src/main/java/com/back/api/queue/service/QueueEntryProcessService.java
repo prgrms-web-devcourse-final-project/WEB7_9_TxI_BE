@@ -1,16 +1,29 @@
 package com.back.api.queue.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
+import com.back.api.queue.dto.response.CompletedQueueResponse;
+import com.back.api.queue.dto.response.EnteredQueueResponse;
+import com.back.api.queue.dto.response.ExpiredQueueResponse;
+import com.back.api.queue.dto.response.WaitingQueueResponse;
+import com.back.domain.event.entity.Event;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
 import com.back.global.error.code.QueueEntryErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.global.event.EventPublisher;
+import com.back.global.properties.QueueSchedulerProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,18 +42,24 @@ public class QueueEntryProcessService {
 
 	private final QueueEntryRepository queueEntryRepository;
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
+	private final EventPublisher eventPublisher;
+	private final QueueSchedulerProperties properties;
+	private final QueueEntryReadService queueEntryReadService;
 
 	@Transactional
 	public void processEntry(Long eventId, Long userId) {
-		QueueEntry entry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
+		QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
 			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
 
-		validateEntry(entry);
+		validateEntry(queueEntry);
 
-		entry.enterQueue();
-		queueEntryRepository.save(entry);
+		queueEntry.enterQueue();
+		queueEntryRepository.save(queueEntry);
 
 		updateRedis(eventId, userId);
+
+		publishEnteredEvent(queueEntry); // 입장 처리 웹소켓 이벤트 발행
+
 		//TODO 입장완료 알림 로직 구현
 	}
 
@@ -96,6 +115,122 @@ public class QueueEntryProcessService {
 		}
 	}
 
+	private void publishEnteredEvent(QueueEntry queueEntry) {
+		EnteredQueueResponse response = EnteredQueueResponse.from(
+			queueEntry.getUserId(),
+			queueEntry.getEventId(),
+			queueEntry.getEnteredAt(),
+			queueEntry.getExpiredAt()
+		);
+
+		eventPublisher.publishEvent(response);
+	}
+
+	//특정 이벤트 대기열 처리
+	@Transactional
+	public void processEventQueueEntries(Event event) {
+
+		Long eventId = event.getId();
+
+		//대기 중인 인원 확인
+		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
+
+		if (totalWaitingCount == 0) {
+			return;
+		}
+
+		//입장 완료된 인원 확인
+		Long currentEnteredCount = queueEntryRedisRepository.getTotalEnteredCount(eventId);
+		int maxEnteredLimit = properties.getEntry().getMaxEnteredLimit();
+
+		//입장 가능한 인원 확인
+		int availableEnteredCount = maxEnteredLimit - currentEnteredCount.intValue();
+
+		if (availableEnteredCount <= 0) {
+			log.info("[EventId: {}] 최대 수용 인원 도달 - 현재: {}명, 최대: {}명",
+				eventId, currentEnteredCount, maxEnteredLimit);
+			return;
+		}
+
+		//한번에 입장시킬 인원
+		int batchSize = properties.getEntry().getBatchSize();
+
+		// 입장 인원 선정
+		// 빈 자리 순차적으로 들어갈 수 있도록 함
+		int entryCount = Math.min(
+			batchSize,
+			Math.min(availableEnteredCount, totalWaitingCount.intValue())  // 빈 자리와 대기 인원 중 작은 값
+		);
+
+		log.info("입장 처리 - eventId: {}, 대기: {}명, 입장완료: {}명, 빈자리: {}명, 배치사이즈: {}명, 입장시킬인원: {}명",
+			eventId, totalWaitingCount, currentEnteredCount, availableEnteredCount, batchSize, entryCount);
+
+
+		//상위 N명 추출
+		Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, entryCount);
+
+		if (topWaitingUsers.isEmpty()) {
+			return;
+		}
+
+		List<Long> userIds = new ArrayList<>();
+		for (Object userId : topWaitingUsers) {
+			userIds.add(Long.parseLong(userId.toString()));
+		}
+
+		processBatchEntry(eventId, userIds); // 입장 순서인 사용자 입장처리
+
+		publishWaitingUpdateEvents(eventId); // 대기중인 사용자 실시간 순위 업데이트
+
+	}
+
+	public void publishWaitingUpdateEvents(Long eventId) {
+		try {
+
+			Set<ZSetOperations.TypedTuple<Object>> allWaitingUsers =
+				queueEntryRedisRepository.getAllWaitingUsersWithRank(eventId);
+
+			if (allWaitingUsers == null || allWaitingUsers.isEmpty()) {
+				return;
+			}
+
+			int totalWaitingCount = allWaitingUsers.size();
+
+			Map<Long, WaitingQueueResponse> allUpdates = new HashMap<>();
+			int rank = 1;
+
+			for (ZSetOperations.TypedTuple<Object> tuple : allWaitingUsers) {
+				try {
+					Long userId = Long.parseLong(tuple.getValue().toString());
+					int waitingAhead = rank - 1;
+
+					WaitingQueueResponse response = queueEntryReadService
+						.buildWaitingQueueResponseFromRank(
+							userId,
+							eventId,
+							rank,
+							waitingAhead,
+							totalWaitingCount
+						);
+
+					allUpdates.put(userId, response);
+					rank++;
+
+				} catch (Exception e) {
+					log.error("개별 사용자 업데이트 준비 실패 - user: {}", tuple.getValue(), e);
+				}
+			}
+
+			if (!allUpdates.isEmpty()) {
+				WaitingQueueBatchEventResponse batchEvent = WaitingQueueBatchEventResponse.from(eventId, allUpdates);
+				eventPublisher.publishEvent(batchEvent);
+				log.info("실시간 순위 업데이트 완료 - eventId: {}, 대상: {}명", eventId, allUpdates.size());
+			}
+		} catch (Exception e) {
+			log.error("실시간 순위 업데이트 실패 - userId: {}", eventId, e);
+		}
+	}
+
 	public boolean canEnterEntry(Long eventId, Long userId) {
 		return queueEntryRepository
 			.findByEvent_IdAndUser_Id(eventId, userId)
@@ -126,6 +261,8 @@ public class QueueEntryProcessService {
 			log.error("eventId {} - Redis 만료 처리 실패", eventId);
 		}
 
+		publishExpiredEvent(queueEntry);  // 만료 처리 웹소켓 이벤트 발행
+
 		//TODO 알림 로직 구현 필요
 	}
 
@@ -139,6 +276,15 @@ public class QueueEntryProcessService {
 			successCount++;
 		}
 		log.info("총 {}개 대기열 항목 만료 처리 완료", successCount);
+	}
+
+	private void publishExpiredEvent(QueueEntry queueEntry) {
+		ExpiredQueueResponse response = ExpiredQueueResponse.from(
+			queueEntry.getUserId(),
+			queueEntry.getEventId()
+		);
+
+		eventPublisher.publishEvent(response);
 	}
 
 	//TODO 결제 도메인에서 사용 필요
@@ -158,6 +304,8 @@ public class QueueEntryProcessService {
 		} catch (Exception e) {
 			log.error("결제 완료 사용자 대기열 제거 실패");
 		}
+
+		publishCompletedEvent(queueEntry); // 결제 완료 처리 웹소켓 이벤트 발행
 
 	}
 
@@ -184,5 +332,16 @@ public class QueueEntryProcessService {
 			throw new ErrorException(QueueEntryErrorCode.NOT_ENTERED_STATUS);
 		}
 	}
+
+	private void publishCompletedEvent(QueueEntry queueEntry) {
+		CompletedQueueResponse response = CompletedQueueResponse.from(
+			queueEntry.getUserId(),
+			queueEntry.getEventId()
+		);
+
+		eventPublisher.publishEvent(response);
+
+	}
+
 
 }

@@ -7,7 +7,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 	oneOf = {
 		WaitingQueueResponse.class,
 		EnteredQueueResponse.class,
-		ExpiredQueueResponse.class
+		ExpiredQueueResponse.class,
+		CompletedQueueResponse.class
 	}
 )
 public interface QueueEntryStatusResponse {

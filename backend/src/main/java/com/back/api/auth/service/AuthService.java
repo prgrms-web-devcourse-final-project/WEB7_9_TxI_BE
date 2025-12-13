@@ -12,6 +12,8 @@ import com.back.api.auth.dto.request.SignupRequest;
 import com.back.api.auth.dto.response.AuthResponse;
 import com.back.api.auth.dto.response.TokenResponse;
 import com.back.api.auth.dto.response.UserResponse;
+import com.back.domain.auth.entity.RefreshToken;
+import com.back.domain.auth.repository.RefreshTokenRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
 import com.back.domain.user.entity.UserRole;
@@ -30,6 +32,7 @@ public class AuthService {
 	private final PasswordEncoder passwordEncoder;
 	private final AuthTokenService authTokenService;
 	private final HttpRequestContext requestContext;
+	private final RefreshTokenRepository refreshTokenRepository;
 
 	@Transactional
 	public AuthResponse signup(SignupRequest request) {
@@ -47,6 +50,7 @@ public class AuthService {
 		User user = User.builder()
 			.email(request.email())
 			.password(encoded)
+			.fullName(request.fullName())
 			.nickname(request.nickname())
 			.role(UserRole.NORMAL)
 			.activeStatus(UserActiveStatus.ACTIVE)
@@ -75,6 +79,34 @@ public class AuthService {
 		requestContext.setCookie("refreshToken", tokens.refreshToken());
 
 		return buildAuthResponse(user, tokens);
+	}
+
+	@Transactional
+	public void logout() {
+		String refreshTokenStr = requestContext.getCookieValue("refreshToken", null);
+		if (refreshTokenStr == null || refreshTokenStr.isBlank()) {
+			throw new ErrorException(AuthErrorCode.REFRESH_TOKEN_REQUIRED);
+		}
+
+		User currentUser = requestContext.getUser();
+
+		RefreshToken refreshToken = refreshTokenRepository
+			.findByTokenAndUserIdAndRevokedFalse(refreshTokenStr, currentUser.getId())
+			.orElseThrow(() -> new ErrorException(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND));
+
+		refreshToken.revoke();
+
+		requestContext.deleteCookie("accessToken");
+		requestContext.deleteCookie("refreshToken");
+	}
+
+	@Transactional
+	public void verifyPassword(String rawPassword) {
+		User user = requestContext.getUser();
+
+		if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+			throw new ErrorException(AuthErrorCode.PASSWORD_MISMATCH);
+		}
 	}
 
 	private AuthResponse buildAuthResponse(User user, JwtDto tokens) {

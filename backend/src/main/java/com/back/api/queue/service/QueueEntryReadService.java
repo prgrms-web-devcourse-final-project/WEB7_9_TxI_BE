@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * Redis 우선 조회 -> DB 조회
  * 트랜잭션 읽기 / 쓰기 분리 고려
  * TODO 사용자 / 관리자 권한 분리
+ * TODO 시간 계산 로직 수정
  */
 @Service
 @RequiredArgsConstructor
@@ -46,33 +47,69 @@ public class QueueEntryReadService {
 		};
 	}
 
-	//Redis 먼저 조회
-	private WaitingQueueResponse buildWaitingQueueResponse(Long eventId, QueueEntry entry) {
-		Long currentRank = queueEntryRedisRepository.getMyRankInWaitingQueue(eventId, entry.getUserId());
-		Long waitingAheadCount = queueEntryRedisRepository.getWaitingAheadCount(eventId, entry.getUserId());
-		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
+	public WaitingQueueResponse buildWaitingQueueResponseFromRank(
+		Long userId,
+		Long eventId,
+		int rank,
+		int waitingAhead,
+		int totalWaitingCount
+	) {
+		int estimatedWaitTime;
+		int progress;
 
-		//Redis에 데이터가 없으면 DB 기반 응답 생성
-		if (currentRank == null) {
-			return buildWaitingQueueResponseFromDB(eventId, entry);
+		// 1순위 사용자 처리
+		if (waitingAhead == 0) {
+			estimatedWaitTime = 3;
+			progress = 99;
+		} else {
+			estimatedWaitTime = waitingAhead * 3;
+			progress = totalWaitingCount > 0
+				? (int) (((totalWaitingCount - waitingAhead) * 100) / totalWaitingCount)
+				: 0;
 		}
 
-		//TODO 시간 계산 로직 수정
-		int estimatedWaitTime = (int) (waitingAheadCount * 3); //대기 인원당 3분 가정
-
-		int progress = totalWaitingCount > 0
-			? (int) (((totalWaitingCount - waitingAheadCount) * 100) / totalWaitingCount)
-			: 0;
-
-
 		return WaitingQueueResponse.from(
-			entry.getUserId(),
-			entry.getEventId(),
-			currentRank.intValue(),
-			waitingAheadCount.intValue(),
+			userId,
+			eventId,
+			rank,
+			waitingAhead,
 			estimatedWaitTime,
 			progress
 		);
+	}
+
+	//Redis 조회 + 계산
+	//단일 사용자 조회 (API에서 사용 예정)
+	public WaitingQueueResponse buildWaitingQueueResponseForUser(Long eventId, Long userId) {
+		Long currentRank = queueEntryRedisRepository.getMyRankInWaitingQueue(eventId, userId);
+		Long waitingAheadCount = queueEntryRedisRepository.getWaitingAheadCount(eventId, userId);
+		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
+
+		//Redis에 데이터가 없으면 null
+		if (currentRank == null || waitingAheadCount == null || totalWaitingCount == null) {
+			return null;
+		}
+
+		return buildWaitingQueueResponseFromRank(
+			userId,
+			eventId,
+			currentRank.intValue(),
+			waitingAheadCount.intValue(),
+			totalWaitingCount.intValue()
+		);
+	}
+
+	//Redis 먼저 조회
+	private WaitingQueueResponse buildWaitingQueueResponse(Long eventId, QueueEntry entry) {
+
+		WaitingQueueResponse response = buildWaitingQueueResponseForUser(eventId, entry.getUserId());
+
+		//Redis에 데이터가 없으면 DB 기반 응답 생성
+		if (response == null) {
+			return buildWaitingQueueResponseFromDB(eventId, entry);
+		}
+
+		return response;
 	}
 
 	//DB 기반
@@ -83,19 +120,12 @@ public class QueueEntryReadService {
 			eventId, QueueEntryStatus.WAITING
 		);
 
-		int estimatedWaitTime = (int) (waitingAheadCount * 3); //대기 인원당 3분 가정
-
-		int progress = totalWaitingCount > 0
-			? (int) (((totalWaitingCount - waitingAheadCount) * 100) / totalWaitingCount)
-			: 0;
-
-		return WaitingQueueResponse.from(
+		return buildWaitingQueueResponseFromRank(
 			entry.getUserId(),
 			entry.getEventId(),
 			entry.getQueueRank(),
-			(int)waitingAheadCount,
-			estimatedWaitTime,
-			progress
+			(int) waitingAheadCount,
+			(int) totalWaitingCount
 		);
 	}
 

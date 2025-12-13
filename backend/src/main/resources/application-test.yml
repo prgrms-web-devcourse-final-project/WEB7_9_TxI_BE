@@ -9,7 +9,8 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
-
+    properties:
+      hibernate.id.optimizer.pooled.preferred: false
 custom:
   jwt:
     secret: i14Yy9GnDi28ac/ZtWIjiavJqz8iI0TGwOLzzKPvAq8KdzS2ABNfgv5yBNQYFPDohgxgMR+s/W5aTK7svlfYoQ==

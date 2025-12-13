@@ -22,7 +22,10 @@ public interface OrderApi {
 		"NOT_FOUND_EVENT",
 		"NOT_FOUND_SEAT",
 		"NOT_FOUND_USER",
+		"TICKET_NOT_IN_PROGRESS",
+		"TICKET_NOT_FOUND",
+		"UNAUTHORIZED_TICKET_ACCESS",
+		"INVALID_TICKET_STATE"
 	})
-
 	ApiResponse<OrderResponseDto> createOrder(@Valid @RequestBody OrderRequestDto orderRequestDto);
 }

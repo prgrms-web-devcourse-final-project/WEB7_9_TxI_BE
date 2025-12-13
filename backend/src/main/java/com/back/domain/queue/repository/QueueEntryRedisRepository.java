@@ -3,6 +3,7 @@ package com.back.domain.queue.repository;
 import java.util.Set;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
 import lombok.RequiredArgsConstructor;
@@ -59,6 +60,13 @@ public class QueueEntryRedisRepository {
 	public Set<Object> getTopWaitingUsers(Long eventId, int count) {
 		String key = String.format(WAITING_KEY, eventId);
 		return redisTemplate.opsForZSet().range(key, 0, count - 1);
+	}
+
+	//userId와 rank 함께 전체 대기열 조회
+	//broadCast에서 사용
+	public Set<ZSetOperations.TypedTuple<Object>> getAllWaitingUsersWithRank(Long eventId) {
+		String key = String.format(WAITING_KEY, eventId);
+		return redisTemplate.opsForZSet().rangeWithScores(key, 0, -1);
 	}
 
 	public boolean isInWaitingQueue(Long eventId, Long userId) {

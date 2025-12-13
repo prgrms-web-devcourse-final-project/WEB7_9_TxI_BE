@@ -1,10 +1,13 @@
 package com.back.api.preregister.service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.preregister.dto.request.PreRegisterCreateRequest;
 import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
@@ -28,18 +31,44 @@ public class PreRegisterService {
 	private final PreRegisterRepository preRegisterRepository;
 	private final EventRepository eventRepository;
 	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
 
 	@Transactional
-	public PreRegisterResponse register(Long eventId, Long userId) {
+	public PreRegisterResponse register(Long eventId, Long userId, PreRegisterCreateRequest request) {
 		Event event = findEventById(eventId);
 		User user = findUserById(userId);
 
+		// 사전등록 기간 검증
 		validatePreRegistrationPeriod(event);
-		validateDuplicateRegistration(eventId, userId);
 
+		// 본인 인증 정보 검증 (회원가입 정보와 대조)
+		validateUserInfo(user, request);
+
+		// 약관 동의 검증
+		validateAgreements(request);
+
+		// 기존 사전등록 확인 (CANCELED 상태면 재활용)
+		Optional<PreRegister> existingPreRegister = preRegisterRepository.findByEvent_IdAndUser_Id(eventId, userId);
+
+		if (existingPreRegister.isPresent()) {
+			PreRegister preRegister = existingPreRegister.get();
+
+			// REGISTERED 상태면 중복 등록 예외
+			if (preRegister.isRegistered()) {
+				throw new ErrorException(PreRegisterErrorCode.ALREADY_PRE_REGISTERED);
+			}
+
+			// CANCELED 상태면 재등록 (상태만 변경)
+			preRegister.reRegister();
+			return PreRegisterResponse.from(preRegister);
+		}
+
+		// 새로운 사전등록 생성
 		PreRegister preRegister = PreRegister.builder()
 			.event(event)
 			.user(user)
+			.preRegisterAgreeTerms(request.agreeTerms())
+			.preRegisterAgreePrivacy(request.agreePrivacy())
 			.build();
 
 		PreRegister savedPreRegister = preRegisterRepository.save(preRegister);
@@ -95,9 +124,40 @@ public class PreRegisterService {
 		}
 	}
 
-	private void validateDuplicateRegistration(Long eventId, Long userId) {
-		if (preRegisterRepository.existsByEvent_IdAndUser_Id(eventId, userId)) {
-			throw new ErrorException(PreRegisterErrorCode.ALREADY_PRE_REGISTERED);
+	/**
+	 * 본인 인증 정보 검증 (회원가입 정보와 대조)
+	 * - 이름 일치 여부
+	 * - 생년월일 일치 여부
+	 * - 비밀번호 일치 여부
+	 */
+	private void validateUserInfo(User user, PreRegisterCreateRequest request) {
+		// 이름 검증
+		if (!user.getNickname().equals(request.nickname())) {
+			throw new ErrorException(PreRegisterErrorCode.INVALID_USER_INFO);
+		}
+
+		// 생년월일 검증
+		if (user.getBirthDate() == null || !user.getBirthDate().equals(request.birthDate())) {
+			throw new ErrorException(PreRegisterErrorCode.INVALID_USER_INFO);
+		}
+
+		// 비밀번호 검증
+		if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+			throw new ErrorException(PreRegisterErrorCode.INVALID_PASSWORD);
+		}
+	}
+
+	/**
+	 * 약관 동의 검증
+	 * - 이용약관 동의 (필수)
+	 * - 개인정보 수집 및 이용 동의 (필수)
+	 */
+	private void validateAgreements(PreRegisterCreateRequest request) {
+		if (!Boolean.TRUE.equals(request.agreeTerms())) {
+			throw new ErrorException(PreRegisterErrorCode.TERMS_NOT_AGREED);
+		}
+		if (!Boolean.TRUE.equals(request.agreePrivacy())) {
+			throw new ErrorException(PreRegisterErrorCode.PRIVACY_NOT_AGREED);
 		}
 	}
 }

@@ -2,9 +2,7 @@ package com.back.domain.payment.order.entity;
 
 import static com.back.domain.payment.order.entity.OrderStatus.*;
 
-import com.back.domain.event.entity.Event;
-import com.back.domain.seat.entity.Seat;
-import com.back.domain.user.entity.User;
+import com.back.domain.ticket.entity.Ticket;
 import com.back.global.entity.BaseEntity;
 
 import jakarta.persistence.Entity;
@@ -15,7 +13,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -35,6 +32,10 @@ public class Order extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ticket_id", nullable = false)
+	private Ticket ticket; // 주문과 1:1 매핑, 반드시 필요
+
 	//private String pg_order_id
 
 	private Long amount; // 일단 클라이언트로부터 받고, 추후 서버가 재가공하여 저장
@@ -42,16 +43,31 @@ public class Order extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private OrderStatus status = PENDING;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "event_id", nullable = false)
-	private Event event; //클라이언트로부터 받아야함
+	/**
+	 * ticket에 포함되는 정보, 임시 주석처리
+	 // @ManyToOne(fetch = FetchType.LAZY)
+	 // @JoinColumn(name = "event_id", nullable = false)
+	 // private Event event; //클라이언트로부터 받아야함
+	 //
+	 // @ManyToOne(fetch = FetchType.LAZY)
+	 // @JoinColumn(name = "user_id", nullable = false)
+	 // private User user; //클라이언트로부터 받아야함 //v2에서는 직접 받지 않고 스프링시큐리티를 통해 JWT로부터 추출하는 방식으로 전환할 예정
+	 //
+	 // @OneToOne
+	 // @JoinColumn(name = "seat_id", nullable = false)
+	 // private Seat seat; //클라이언트로부터 받아야함
+	 * */
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
-	private User user; //클라이언트로부터 받아야함 //v2에서는 직접 받지 않고 스프링시큐리티를 통해 JWT로부터 추출하는 방식으로 전환할 예정
+	private String paymentKey; // Toss paymentKey
+	
+	private String orderKey;   // merchant_uid(UUID)
 
-	@OneToOne
-	@JoinColumn(name = "seat_id", nullable = false)
-	private Seat seat; //클라이언트로부터 받아야함
+	public void markPaid(String paymentKey) {
+		this.status = OrderStatus.PAID;
+		this.paymentKey = paymentKey;
+	}
 
+	public void markFailed() {
+		this.status = OrderStatus.FAILED;
+	}
 }
