@@ -16,7 +16,7 @@ public record NotificationResponseDto(
 	LocalDateTime createdAt,
 	LocalDateTime readAt
 ) {
-	public static NotificationResponseDto fromEntity(Notification n) {
+	public static NotificationResponseDto from(Notification n) {
 		return new NotificationResponseDto(
 			n.getId(),
 			n.getType().name(),
