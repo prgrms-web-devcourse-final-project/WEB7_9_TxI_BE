@@ -29,6 +29,7 @@ public class UserDataInit implements ApplicationRunner {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 
+
 	@Override
 	public void run(ApplicationArguments args) {
 		if (userRepository.count() > 0) {
@@ -39,6 +40,17 @@ public class UserDataInit implements ApplicationRunner {
 		log.info("User 초기 데이터를 생성합니다.");
 
 		List<User> users = createTestUsers(150);
+
+		User admin = User.builder()
+			.email("admin@test.com")
+			.password(passwordEncoder.encode("admin1234"))
+			.nickname("admin")
+			.role(UserRole.ADMIN)
+			.birthDate(LocalDate.of(1990, 1, 1))
+			.activeStatus(UserActiveStatus.ACTIVE)
+			.build();
+
+		userRepository.save(admin);
 
 		log.info("User 초기 데이터 {}명이 생성되었습니다.", users.size());
 	}

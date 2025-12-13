@@ -1,7 +1,6 @@
 package com.back.api.queue.controller;
 
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.back.api.queue.dto.response.QueueEntryStatusResponse;
 import com.back.global.config.swagger.ApiErrorCode;
@@ -24,10 +23,7 @@ public interface QueueEntryApi {
 	})
 	ApiResponse<QueueEntryStatusResponse> getMyQueueEntryStatus(
 		@Parameter(description = "이벤트 ID", example = "1")
-		@PathVariable Long eventId,
-
-		@Parameter(description = "사용자 ID", example = "1")
-		@RequestParam Long userId
+		@PathVariable Long eventId
 	);
 
 
@@ -37,9 +33,6 @@ public interface QueueEntryApi {
 	)
 	ApiResponse<Boolean> existsInQueue(
 		@Parameter(description = "이벤트 ID", example = "1")
-		@PathVariable Long eventId,
-
-		@Parameter(description = "사용자 ID", example = "1")
-		@RequestParam Long userId
+		@PathVariable Long eventId
 	);
 }

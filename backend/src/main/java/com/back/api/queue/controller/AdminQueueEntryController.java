@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/admin/queues")
 @RequiredArgsConstructor
+//@PreAuthorize("hasRole('ADMIN')")
 public class AdminQueueEntryController implements AdminQueueEntryApi {
 
 	private final QueueShuffleService queueShuffleService;

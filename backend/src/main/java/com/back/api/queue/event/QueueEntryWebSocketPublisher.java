@@ -3,8 +3,8 @@ package com.back.api.queue.event;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
 import com.back.api.queue.dto.response.QueueEntryStatusResponse;
+import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
 
 import lombok.RequiredArgsConstructor;
 

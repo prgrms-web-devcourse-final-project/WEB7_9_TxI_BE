@@ -82,7 +82,7 @@ public class QueueEntryRedisRepository {
 		String key = String.format(ENTERED_KEY, eventId);
 		redisTemplate.opsForSet().add(key, userId.toString());
 
-		redisTemplate.expire(key, java.time.Duration.ofMinutes(15));
+		redisTemplate.expire(key, java.time.Duration.ofMinutes(15)); //TTL 15분
 		log.info("Moved user to entered queue - eventId: {}, userId: {}", eventId, userId);
 	}
 

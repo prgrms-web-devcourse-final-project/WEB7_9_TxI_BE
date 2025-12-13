@@ -4,8 +4,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
 import com.back.api.queue.dto.response.QueueEntryStatusResponse;
+import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
 
 import lombok.RequiredArgsConstructor;
 
