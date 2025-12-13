@@ -2,3 +2,17 @@
 GET {{BASE_URL}}/api/v1/users/profile
 Authorization: Bearer {{ACCESS_TOKEN}}
 Content-Type: application/json
+
+### 사용자 프로필 수정
+PUT {{BASE_URL}}/api/v1/users/profile
+Authorization: Bearer {{ACCESS_TOKEN}}
+Content-Type: application/json
+
+{
+  "password": "qwer1234@@",
+  "fullName": "New User",
+  "nickname": "New 유저",
+  "year": "1998",
+  "month": "3",
+  "day": "15"
+}

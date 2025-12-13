@@ -36,6 +36,9 @@ public class User extends BaseEntity {
 	@Column(nullable = false, length = 100, unique = true)
 	private String email;
 
+	@Column(nullable = false, name = "full_name", length = 30)
+	private String fullName;
+
 	@Column(nullable = false, length = 20, unique = true)
 	private String nickname;
 
@@ -57,9 +60,10 @@ public class User extends BaseEntity {
 	private LocalDateTime deleteDate;
 
 	@Builder
-	public User(String email, String nickname, String password,
+	public User(String email, String fullName, String nickname, String password,
 		LocalDate birthDate, UserRole role, UserActiveStatus activeStatus) {
 		this.email = email;
+		this.fullName = fullName;
 		this.nickname = nickname;
 		this.password = password;
 		this.birthDate = birthDate;
@@ -70,5 +74,11 @@ public class User extends BaseEntity {
 	public User(Long id, String nickname) {
 		this.id = id;
 		this.nickname = nickname;
+	}
+
+	public void update(String fullName, String nickname, LocalDate birthDate) {
+		this.fullName = fullName;
+		this.nickname = nickname;
+		this.birthDate = birthDate;
 	}
 }

@@ -56,6 +56,10 @@ public class HttpRequestContext {
 			.orElseThrow(() -> new ErrorException(AuthErrorCode.UNAUTHORIZED));
 	}
 
+	public Long getUserId() {
+		return getSecurityUser().getId();
+	}
+
 	public String getHeader(String name, String defaultValue) {
 		return Optional
 			.ofNullable(request.getHeader(name))

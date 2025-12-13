@@ -2,9 +2,12 @@ package com.back.api.user.controller;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.back.api.user.dto.request.UpdateProfileRequest;
 import com.back.api.user.dto.response.UserProfileResponse;
 import com.back.api.user.service.UserService;
 import com.back.global.http.HttpRequestContext;
@@ -24,8 +27,18 @@ public class UserController implements UserApi {
 	@Override
 	@GetMapping("/profile")
 	public ApiResponse<UserProfileResponse> getMe() {
-		long userId = httpRequestContext.getUser().getId();
+		long userId = httpRequestContext.getUserId();
 		UserProfileResponse response = userService.getUser(userId);
 		return ApiResponse.ok(String.format("%s 사용자 조회 성공", userId), response);
+	}
+
+	@Override
+	@PutMapping("/profile")
+	public ApiResponse<UserProfileResponse> updateProfile(
+		@Validated @RequestBody UpdateProfileRequest request
+	) {
+		long userId = httpRequestContext.getUserId();
+		UserProfileResponse response = userService.updateProfile(userId, request);
+		return ApiResponse.ok(String.format("%s 사용자 정보 변경 완료", userId), response);
 	}
 }

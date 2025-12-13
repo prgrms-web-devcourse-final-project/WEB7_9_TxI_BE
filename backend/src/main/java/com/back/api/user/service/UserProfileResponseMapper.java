@@ -22,6 +22,7 @@ public class UserProfileResponseMapper {
 		return new UserProfileResponse(
 			user.getId(),
 			user.getEmail(),
+			user.getFullName(),
 			user.getNickname(),
 			user.getRole(),
 			birthDateStr,

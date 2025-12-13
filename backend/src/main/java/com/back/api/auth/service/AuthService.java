@@ -50,6 +50,7 @@ public class AuthService {
 		User user = User.builder()
 			.email(request.email())
 			.password(encoded)
+			.fullName(request.fullName())
 			.nickname(request.nickname())
 			.role(UserRole.NORMAL)
 			.activeStatus(UserActiveStatus.ACTIVE)

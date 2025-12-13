@@ -82,6 +82,7 @@ public class SeatSelectionServiceIntegrationTest {
 		user = User.builder()
 			.email("user" + uniqueId + "@ex.com")
 			.nickname("user" + uniqueId)
+			.fullName("TestUser")
 			.password("password123")
 			.role(UserRole.NORMAL)
 			.activeStatus(UserActiveStatus.ACTIVE)
