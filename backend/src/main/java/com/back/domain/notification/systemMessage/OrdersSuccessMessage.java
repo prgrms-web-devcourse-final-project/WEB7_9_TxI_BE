@@ -33,6 +33,6 @@ public class OrdersSuccessMessage extends NotificationMessage {
 
 	@Override
 	public String getMessage() {
-		return String.format("[%s]\n결제금액: %d원\n결제에 성공하였습니다", this.eventName, this.amount);
+		return String.format("[%s] 티켓 1매가 결제되었습니다\n결제금액: %d원", this.eventName, this.amount);
 	}
 }
