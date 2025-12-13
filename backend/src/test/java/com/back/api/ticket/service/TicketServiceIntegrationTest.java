@@ -99,7 +99,7 @@ class TicketServiceIntegrationTest {
 
 		Ticket created = ticketService.createDraftTicket(event.getId(), seat.getId(), user.getId());
 
-		Ticket draft = ticketService.getDraftTicket(seat.getId(), user.getId());
+		Ticket draft = ticketService.getDraftTicket(seat.getEvent().getId(), seat.getId(), user.getId());
 
 		assertThat(draft.getId()).isEqualTo(created.getId());
 		assertThat(draft.getTicketStatus()).isEqualTo(TicketStatus.DRAFT);

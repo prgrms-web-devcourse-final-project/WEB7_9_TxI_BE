@@ -3,6 +3,7 @@ package com.back.api.payment.payment.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.payment.order.service.OrderService;
 import com.back.api.payment.payment.client.PaymentClient;
 import com.back.api.payment.payment.dto.request.PaymentConfirmCommand;
 import com.back.api.payment.payment.dto.response.PaymentConfirmResponse;
@@ -10,9 +11,7 @@ import com.back.api.payment.payment.dto.response.PaymentConfirmResult;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.payment.order.entity.Order;
-import com.back.domain.payment.order.repository.OrderRepository;
 import com.back.domain.ticket.entity.Ticket;
-import com.back.global.error.code.OrderErrorCode;
 import com.back.global.error.code.PaymentErrorCode;
 import com.back.global.error.exception.ErrorException;
 
@@ -26,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaymentService {
 
-	private final OrderRepository orderRepository;
+	private final OrderService orderService;
 	private final PaymentClient paymentClient;
 	private final TicketService ticketService;
 	private final QueueEntryProcessService queueEntryProcessService;
@@ -39,18 +38,8 @@ public class PaymentService {
 		Long userId
 	) {
 
-		Order order = orderRepository.findById(orderId)
-			.orElseThrow(() -> new ErrorException(OrderErrorCode.ORDER_NOT_FOUND));
-
-		// Order 소유자 검증
-		if (!order.getTicket().getOwner().getId().equals(userId)) {
-			throw new ErrorException(OrderErrorCode.UNAUTHORIZED_ORDER_ACCESS);
-		}
-
-		// 클라이언트가 보낸 금액과 주문 금액 일치 여부 검증
-		if (!order.getAmount().equals(clientAmount)) {
-			throw new ErrorException(PaymentErrorCode.AMOUNT_VERIFICATION_FAILED);
-		}
+		// OrderService가 order의 정합성(주문자/주문상태/amount) 보장
+		Order order = orderService.getOrderForPayment(orderId, userId, clientAmount);
 
 		PaymentConfirmResult result = paymentClient.confirm(
 			new PaymentConfirmCommand(
