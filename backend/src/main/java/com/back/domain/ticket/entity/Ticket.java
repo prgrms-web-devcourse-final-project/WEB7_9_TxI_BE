@@ -2,8 +2,6 @@ package com.back.domain.ticket.entity;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.BatchSize;
-
 import com.back.domain.event.entity.Event;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.user.entity.User;
@@ -50,23 +48,10 @@ public class Ticket extends BaseEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "seat_id", nullable = false)
-	/**
-	 * event 필드와 마찬가지
-	 */
-	@BatchSize(size = 100)
 	private Seat seat;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "event_id", nullable = false)
-	/**
-	 * TicketResponse DTO에서 event 필드를 항상 참조하므로
-	 * N+1 방지를 위해 batch fetch를 명시적으로 선언.
-	 * NOTE:
-	 * - 현재는 hibernate.default_batch_fetch_size=100 이 전역 설정되어 있음
-	 * - 추후 Ticket 목록/상세 조회 성능 튜닝 시
-	 *   fetch join vs batch 전략 비교를 위한 명시적 포인트
-	 */
-	@BatchSize(size = 100)
 	private Event event;
 
 	@Enumerated(EnumType.STRING)
