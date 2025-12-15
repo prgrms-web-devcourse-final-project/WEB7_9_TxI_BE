@@ -63,6 +63,10 @@ dependencies {
     testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
 
     implementation("org.springframework.boot:spring-boot-starter-websocket")
+
+    // actuator, micrometer
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
 }
 
 tasks.withType<Test> {
@@ -85,9 +89,9 @@ checkstyle {
     toolVersion = "10.12.5"  // 최신 안정 버전으로 업그레이드
     configFile = rootProject.file("config/checkstyle/naver-checkstyle-rules.xml")
     configProperties = mapOf(
-            "suppressionFile" to rootProject
-                    .file("config/checkstyle/naver-checkstyle-suppressions.xml")
-                    .absolutePath
+        "suppressionFile" to rootProject
+            .file("config/checkstyle/naver-checkstyle-suppressions.xml")
+            .absolutePath
     )
     isIgnoreFailures = false  // 명시적으로 설정
 }
@@ -102,20 +106,20 @@ jacoco {
 
 /** 공통 커버리지 제외 패턴 */
 val coverageExcludes = listOf(
-        "**/*Application*",
-        "**/config/**",
-        "**/dto/**",
-        "**/exception/**",
-        "**/response/**",
-        "**/repository/**",
-        "**/init/**",
-        "**/error/**",
-        "**/entity/**",
-        "**/home/**",
-        "**/vo/**",
-        "**/Q*.*",
-        "**/controller/**/*Api.class",
-        "**/controller/**/*Api\$*"
+    "**/*Application*",
+    "**/config/**",
+    "**/dto/**",
+    "**/exception/**",
+    "**/response/**",
+    "**/repository/**",
+    "**/init/**",
+    "**/error/**",
+    "**/entity/**",
+    "**/home/**",
+    "**/vo/**",
+    "**/Q*.*",
+    "**/controller/**/*Api.class",
+    "**/controller/**/*Api\$*"
 )
 
 /** -----------------------------
@@ -156,7 +160,7 @@ tasks.withType<Test>().configureEach {
         override fun afterSuite(suite: TestDescriptor, result: TestResult) {
             if (suite.parent == null) {
                 println(
-                        """
+                    """
                     ------------------------
                     ✅ TEST RESULT SUMMARY
                     Total tests : ${result.testCount}
@@ -224,11 +228,11 @@ tasks.register<JacocoReport>("jacocoFullTestReport") {
     val main = sourceSets.named("main").get()
     sourceDirectories.setFrom(main.allSource.srcDirs)
     classDirectories.setFrom(
-            files(
-                    main.output.classesDirs.files.map {
-                        fileTree(it) { exclude(coverageExcludes) }
-                    }
-            )
+        files(
+            main.output.classesDirs.files.map {
+                fileTree(it) { exclude(coverageExcludes) }
+            }
+        )
     )
 }
 
@@ -266,10 +270,10 @@ tasks.jacocoTestReport {
         html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/html"))
     }
     classDirectories.setFrom(
-            files(
-                    classDirectories.files.map {
-                        fileTree(it) { exclude(coverageExcludes) }
-                    }
-            )
+        files(
+            classDirectories.files.map {
+                fileTree(it) { exclude(coverageExcludes) }
+            }
+        )
     )
 }

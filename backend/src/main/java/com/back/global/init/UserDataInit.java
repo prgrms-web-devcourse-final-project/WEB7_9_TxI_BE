@@ -29,7 +29,6 @@ public class UserDataInit implements ApplicationRunner {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 
-
 	@Override
 	public void run(ApplicationArguments args) {
 		if (userRepository.count() > 0) {

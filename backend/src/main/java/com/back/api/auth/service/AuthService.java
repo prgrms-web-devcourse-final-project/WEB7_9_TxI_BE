@@ -66,7 +66,7 @@ public class AuthService {
 
 	@Transactional
 	public AuthResponse login(LoginRequest request) {
-		User user = userRepository.findByEmail(request.email())
+		User user = userRepository.findByEmailAndDeleteDateIsNull(request.email())
 			.orElseThrow(() -> new ErrorException(AuthErrorCode.LOGIN_FAILED));
 
 		if (!passwordEncoder.matches(request.password(), user.getPassword())) {

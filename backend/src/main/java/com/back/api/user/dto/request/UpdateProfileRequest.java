@@ -39,7 +39,7 @@ public record UpdateProfileRequest(
 		if (year == null || month == null || day == null) {
 			return null;
 		}
-		
+
 		return LocalDate.of(
 			Integer.parseInt(year),
 			Integer.parseInt(month),

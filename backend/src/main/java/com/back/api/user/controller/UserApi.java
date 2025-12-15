@@ -31,4 +31,13 @@ public interface UserApi {
 	ApiResponse<UserProfileResponse> updateProfile(
 		@Validated @RequestBody UpdateProfileRequest request
 	);
+
+	@Operation(
+		summary = "사용자 회원탈퇴",
+		description = "회원탈퇴 시 호출하는 API 입니다."
+	)
+	@ApiErrorCode({
+		"NOT_FOUND_USER",
+	})
+	ApiResponse<Void> deleteUser();
 }

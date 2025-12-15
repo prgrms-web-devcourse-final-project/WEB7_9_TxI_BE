@@ -37,4 +37,11 @@ out/
 .vscode/
 db_dev.mv.db
 db_dev.trace.db
+
+### Environment Variables ###
 .env.properties
+
+### Application Configuration ###
+src/main/resources/application.yml
+src/main/resources/application-*.yml
+!src/main/resources/application-example.yml

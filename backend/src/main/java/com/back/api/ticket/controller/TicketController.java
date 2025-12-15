@@ -3,6 +3,7 @@ package com.back.api.ticket.controller;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,6 +22,33 @@ public class TicketController implements TicketApi {
 
 	private final TicketService ticketService;
 	private final HttpRequestContext httpRequestContext;
+
+	@Override
+	@GetMapping("/my")
+	public ApiResponse<List<TicketResponse>> getMyTickets() {
+		Long userId = httpRequestContext.getUser().getId();
+
+		List<Ticket> tickets = ticketService.getMyTickets(userId);
+
+		return ApiResponse.ok(
+			"사용자의 티켓 목록 조회 성공",
+			tickets.stream().map(TicketResponse::from).toList()
+		);
+	}
+
+	@GetMapping("/my/{ticketId}/details")
+	public ApiResponse<TicketResponse> getMyTicketDetails(
+		@PathVariable Long ticketId
+	) {
+		Long userId = httpRequestContext.getUser().getId();
+
+		Ticket ticket = ticketService.getTicketDetail(ticketId, userId);
+
+		return ApiResponse.ok(
+			"사용자의 티켓 상세 조회 성공",
+			TicketResponse.from(ticket)
+		);
+	}
 
 	/* 외부 노출이 필요 없는 엔드포인트, 보관 차원에서 주석 처리
 	@Override
@@ -47,16 +75,4 @@ public class TicketController implements TicketApi {
 		return ApiResponse.noContent("결제 실패 처리 완료");
 	}
 	*/
-	@Override
-	@GetMapping("/my")
-	public ApiResponse<List<TicketResponse>> getMyTickets() {
-		Long userId = httpRequestContext.getUser().getId();
-
-		List<Ticket> tickets = ticketService.getMyTickets(userId);
-
-		return ApiResponse.ok(
-			"사용자의 티켓 목록 조회 성공",
-			tickets.stream().map(TicketResponse::from).toList()
-		);
-	}
 }
