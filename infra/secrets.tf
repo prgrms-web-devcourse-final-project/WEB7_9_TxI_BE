@@ -1,6 +1,6 @@
 variable "password_1" {
   description = "password_1"
-  default     = "1234"
+  default     = ""
 }
 
 variable "github_access_token_1" {
@@ -10,5 +10,5 @@ variable "github_access_token_1" {
 
 variable "github_access_token_1_owner" {
   description = "github_access_token_1_owner"
-  default     = "kimeunkyoungg"
+  default     = ""
 }
