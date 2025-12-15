@@ -2,6 +2,7 @@ package com.back.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -14,10 +15,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.back.global.properties.CorsProperties;
 import com.back.global.security.CustomAuthenticationFilter;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity  // @PreAuthorize 사용을 위해 추가
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -34,6 +37,7 @@ public class SecurityConfig {
 				.requestMatchers("/h2-console/**").permitAll()  // H2 콘솔 접근 허용
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()  // Swagger 접근 허용
 				.requestMatchers("/.well-known/**").permitAll()
+				//.requestMatchers("/api/v1/admin/**").hasRole("ADMIN") //추후 주석 해제
 				.anyRequest().permitAll() // TODO: 보안 인증 설정 시 제거, 현재는 모든 API 요청을 인증없이 허용
 			)
 			.csrf(csrf -> csrf
@@ -43,6 +47,33 @@ public class SecurityConfig {
 			)
 			.headers(headers -> headers
 				.frameOptions(frameOptions -> frameOptions.sameOrigin())  // H2 콘솔 iframe 허용
+			)
+
+			//401 403 커스텀 에러
+			.exceptionHandling(exceptionHandling -> exceptionHandling
+				.authenticationEntryPoint((request, response, authException) -> {
+					response.setContentType("application/json; charset=UTF-8");
+					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					response.getWriter().write("""
+						{
+							"status": "UNAUTHORIZED",
+							"message": "로그인 후 이용해주세요.",
+							"data": null
+						}
+						""");
+				})
+
+				.accessDeniedHandler((request, response, accessDeniedException) -> {
+					response.setContentType("application/json; charset=UTF-8");
+					response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+					response.getWriter().write("""
+						{
+							"status": "FORBIDDEN",
+							"message": "접근 권한이 없습니다.",
+							"data": null
+						}
+						""");
+				})
 			);
 
 		http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);

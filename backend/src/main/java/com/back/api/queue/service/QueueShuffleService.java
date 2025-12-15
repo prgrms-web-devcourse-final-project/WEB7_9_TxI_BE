@@ -91,7 +91,6 @@ public class QueueShuffleService {
 		return shuffledList;
 	}
 
-
 	private void saveToRedis(Long eventId, List<Long> shuffledUserIds) {
 		try {
 			for (int i = 0; i < shuffledUserIds.size(); i++) {
@@ -129,6 +128,4 @@ public class QueueShuffleService {
 		}
 		queueEntryRepository.saveAll(entries);
 	}
-
-
 }

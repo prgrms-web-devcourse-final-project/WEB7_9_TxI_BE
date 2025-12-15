@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
  * 대기열 조회 로직
  * Redis 우선 조회 -> DB 조회
  * 트랜잭션 읽기 / 쓰기 분리 고려
- * TODO 사용자 / 관리자 권한 분리
  * TODO 시간 계산 로직 수정
  */
 @Service
@@ -45,6 +44,27 @@ public class QueueEntryReadService {
 			case EXPIRED  -> buildExpiredQueueResponse(entry);
 			case COMPLETED -> buildCompletedQueueResponse(entry);
 		};
+	}
+
+	//Redis 조회 + 계산
+	//단일 사용자 조회 (API에서 사용 예정)
+	public WaitingQueueResponse buildWaitingQueueResponseForUser(Long eventId, Long userId) {
+		Long currentRank = queueEntryRedisRepository.getMyRankInWaitingQueue(eventId, userId);
+		Long waitingAheadCount = queueEntryRedisRepository.getWaitingAheadCount(eventId, userId);
+		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
+
+		//Redis에 데이터가 없으면 null
+		if (currentRank == null || waitingAheadCount == null || totalWaitingCount == null) {
+			return null;
+		}
+
+		return buildWaitingQueueResponseFromRank(
+			userId,
+			eventId,
+			currentRank.intValue(),
+			waitingAheadCount.intValue(),
+			totalWaitingCount.intValue()
+		);
 	}
 
 	public WaitingQueueResponse buildWaitingQueueResponseFromRank(
@@ -78,24 +98,63 @@ public class QueueEntryReadService {
 		);
 	}
 
-	//Redis 조회 + 계산
-	//단일 사용자 조회 (API에서 사용 예정)
-	public WaitingQueueResponse buildWaitingQueueResponseForUser(Long eventId, Long userId) {
-		Long currentRank = queueEntryRedisRepository.getMyRankInWaitingQueue(eventId, userId);
-		Long waitingAheadCount = queueEntryRedisRepository.getWaitingAheadCount(eventId, userId);
-		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
+	//대기열에 있는 지 확인
+	public boolean existsInWaitingQueue(Long eventId, Long userId) {
+		try {
+			if (queueEntryRedisRepository.isInWaitingQueue(eventId, userId)
+				|| queueEntryRedisRepository.isInEnteredQueue(eventId, userId)) {
+				return true;
+			}
+		} catch (Exception e) {
+			log.warn("Redis 조회 실패, DB Fallback");
+		}
+		return queueEntryRepository.existsByEvent_IdAndUser_Id(eventId, userId);
+	}
 
-		//Redis에 데이터가 없으면 null
-		if (currentRank == null || waitingAheadCount == null || totalWaitingCount == null) {
-			return null;
+	//대기열 ENTERED 상태인지 확인
+	//Redis & DB
+	public boolean isUserEntered(Long eventId, Long userId) {
+		try {
+			return queueEntryRedisRepository.isInEnteredQueue(eventId, userId);
+		} catch (Exception e) {
+			log.warn("Redis ENTERED 조회 실패, DB Fallback");
+
+			return queueEntryRepository
+				.findByEvent_IdAndUser_Id(eventId, userId)
+				.map(entry -> entry.getQueueEntryStatus() == QueueEntryStatus.ENTERED)
+				.orElse(false);
+		}
+	}
+
+	public QueueStatisticsResponse getQueueStatistics(Long eventId) {
+		long totalWaitingCount = queueEntryRepository.countByEvent_Id(eventId);
+
+		if (totalWaitingCount == 0) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY);
 		}
 
-		return buildWaitingQueueResponseFromRank(
-			userId,
+
+		long waitingCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
 			eventId,
-			currentRank.intValue(),
-			waitingAheadCount.intValue(),
-			totalWaitingCount.intValue()
+			QueueEntryStatus.WAITING
+		);
+
+		long enteredCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+			eventId,
+			QueueEntryStatus.ENTERED
+		);
+
+		long expiredCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+			eventId,
+			QueueEntryStatus.EXPIRED
+		);
+
+		return QueueStatisticsResponse.from(
+			eventId,
+			totalWaitingCount,
+			waitingCount,
+			enteredCount,
+			expiredCount
 		);
 	}
 
@@ -151,67 +210,4 @@ public class QueueEntryReadService {
 			entry.getEventId()
 		);
 	}
-
-	//대기열에 있는 지 확인
-	public boolean existsInWaitingQueue(Long eventId, Long userId) {
-		try {
-			if (queueEntryRedisRepository.isInWaitingQueue(eventId, userId)
-				|| queueEntryRedisRepository.isInEnteredQueue(eventId, userId)) {
-				return true;
-			}
-		} catch (Exception e) {
-			log.warn("Redis 조회 실패, DB Fallback");
-		}
-		return queueEntryRepository.existsByEvent_IdAndUser_Id(eventId, userId);
-	}
-
-	//대기열 ENTERED 상태인지 확인
-	//Redis & DB
-	public boolean isUserEntered(Long eventId, Long userId) {
-		try {
-			return queueEntryRedisRepository.isInEnteredQueue(eventId, userId);
-		} catch (Exception e) {
-			log.warn("Redis ENTERED 조회 실패, DB Fallback");
-
-			return queueEntryRepository
-				.findByEvent_IdAndUser_Id(eventId, userId)
-				.map(entry -> entry.getQueueEntryStatus() == QueueEntryStatus.ENTERED)
-				.orElse(false);
-		}
-	}
-
-
-	public QueueStatisticsResponse getQueueStatistics(Long eventId) {
-		long totalWaitingCount = queueEntryRepository.countByEvent_Id(eventId);
-
-		if (totalWaitingCount == 0) {
-			throw new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY);
-		}
-
-
-		long waitingCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
-			eventId,
-			QueueEntryStatus.WAITING
-		);
-
-		long enteredCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
-			eventId,
-			QueueEntryStatus.ENTERED
-		);
-
-		long expiredCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
-			eventId,
-			QueueEntryStatus.EXPIRED
-		);
-
-		return QueueStatisticsResponse.from(
-			eventId,
-			totalWaitingCount,
-			waitingCount,
-			enteredCount,
-			expiredCount
-		);
-
-	}
-
 }
