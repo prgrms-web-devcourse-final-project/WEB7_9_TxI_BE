@@ -1,0 +1,15 @@
+# Stage 1: Build custom k6 with xk6-dashboard extension
+FROM golang:1.24 AS builder
+
+WORKDIR /go
+
+RUN go install go.k6.io/xk6/cmd/xk6@latest \
+  && xk6 build --with github.com/grafana/xk6-dashboard@latest
+
+# Stage 2: Final runtime image
+FROM grafana/k6:latest
+
+# 최신 xk6는 /go/k6 경로에 결과물 생성됨
+COPY --from=builder /go/k6 /usr/bin/k6
+
+ENTRYPOINT ["k6"]

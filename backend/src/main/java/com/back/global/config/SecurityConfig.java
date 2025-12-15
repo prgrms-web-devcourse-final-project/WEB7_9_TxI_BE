@@ -38,6 +38,7 @@ public class SecurityConfig {
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()  // Swagger 접근 허용
 				.requestMatchers("/.well-known/**").permitAll()
 				//.requestMatchers("/api/v1/admin/**").hasRole("ADMIN") //추후 주석 해제
+				.requestMatchers("/actuator/**").permitAll()    // 모니터링/Actuator 관련
 				.anyRequest().permitAll() // TODO: 보안 인증 설정 시 제거, 현재는 모든 API 요청을 인증없이 허용
 			)
 			.csrf(csrf -> csrf

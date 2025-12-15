@@ -29,7 +29,6 @@ public class UserDataInit implements ApplicationRunner {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 
-
 	@Override
 	public void run(ApplicationArguments args) {
 		if (userRepository.count() > 0) {
@@ -45,6 +44,7 @@ public class UserDataInit implements ApplicationRunner {
 			.email("admin@test.com")
 			.password(passwordEncoder.encode("admin1234"))
 			.nickname("admin")
+			.fullName("test2")
 			.role(UserRole.ADMIN)
 			.birthDate(LocalDate.of(1990, 1, 1))
 			.activeStatus(UserActiveStatus.ACTIVE)
@@ -63,6 +63,7 @@ public class UserDataInit implements ApplicationRunner {
 				.email("test" + i + "@test.com")
 				.password(passwordEncoder.encode("abc12345"))
 				.nickname("test" + i)
+				.fullName("test2")
 				.role(UserRole.NORMAL)
 				.birthDate(LocalDate.of(2000, 1, 1))
 				.activeStatus(UserActiveStatus.ACTIVE)

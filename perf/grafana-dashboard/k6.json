@@ -1,0 +1,73 @@
+{
+  "title": "WaitFair Backend Performance Dashboard (v1)",
+  "uid": "WaitFair-perf-v1",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 2,
+  "refresh": "5s",
+  "panels": [
+    { "type": "timeseries", "title": "CPU Usage (%)",
+      "targets": [{ "expr": "system_cpu_usage * 100", "legendFormat": "CPU", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 } },
+    { "type": "timeseries", "title": "Heap Memory Used (MB)",
+      "targets": [{ "expr": "jvm_memory_used_bytes{area=\"heap\"} / 1024 / 1024", "legendFormat": "heap", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 } },
+    { "type": "timeseries", "title": "JVM Thread Count",
+      "targets": [{ "expr": "jvm_threads_live_threads", "legendFormat": "threads", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 } },
+    { "type": "timeseries", "title": "GC Pause Duration (ms)",
+      "targets": [{ "expr": "rate(jvm_gc_pause_seconds_sum[1m]) * 1000", "legendFormat": "{{collector}} ({{cause}})", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 } },
+
+    { "type": "timeseries", "title": "HTTP Request Rate (RPS)",
+      "targets": [{ "expr": "rate(http_server_requests_seconds_count[1m])", "legendFormat": "{{uri}} ({{method}}) [{{outcome}}]", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 } },
+    { "type": "timeseries", "title": "Avg Response Time per URI (ms)",
+      "targets": [{ "expr": "(increase(http_server_requests_seconds_sum[1m]) / increase(http_server_requests_seconds_count[1m])) * 1000", "legendFormat": "{{uri}} ({{method}})", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 } },
+
+    { "type": "timeseries", "title": "HikariCP Active Connections",
+      "targets": [{ "expr": "hikaricp_connections_active", "legendFormat": "active", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 } },
+    { "type": "timeseries", "title": "HikariCP Pending Threads",
+      "targets": [{ "expr": "hikaricp_connections_pending", "legendFormat": "pending", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 } },
+
+    { "type": "timeseries", "title": "K6 Virtual Users",
+      "targets": [{ "expr": "k6_vus", "legendFormat": "VU", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 } },
+
+    { "type": "timeseries", "title": "HTTP 5xx Error Rate",
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[1m]))", "legendFormat": "5xx errors", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 40 } },
+    { "type": "timeseries", "title": "Mission Completion Duration (s)",
+      "targets": [{ "expr": "rate(mission_complete_seconds_sum[1m]) / rate(mission_complete_seconds_count[1m])", "legendFormat": "mission avg time", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 40 } },
+    { "type": "timeseries", "title": "Mission Completion Count (5m)",
+      "targets": [{ "expr": "increase(mission_complete_seconds_count[5m])", "legendFormat": "completed", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 40 } },
+
+    { "type": "timeseries", "title": "YouTube API Latency (ms)",
+      "targets": [{ "expr": "rate(youtube_api_latency_seconds_sum[1m]) / rate(youtube_api_latency_seconds_count[1m]) * 1000", "legendFormat": "YouTube", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 48 } },
+    { "type": "timeseries", "title": "GPT AI API Latency (ms)",
+      "targets": [{ "expr": "rate(ai_summary_seconds_sum[1m]) / rate(ai_summary_seconds_count[1m]) * 1000", "legendFormat": "AI latency", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 48 } },
+    { "type": "timeseries", "title": "External API Failures (5m)",
+      "targets": [{ "expr": "increase(youtube_api_failures_total[5m]) + increase(ai_summary_failures_total[5m])", "legendFormat": "API fails", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 48 } },
+
+    { "type": "timeseries", "title": "K6 Req Duration (p99, ms)",
+      "targets": [{ "expr": "k6_http_req_duration_p99", "legendFormat": "req p99 (ms)", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 56 } },
+    { "type": "timeseries", "title": "K6 Failure Rate (%)",
+      "targets": [{ "expr": "k6_http_req_failed_rate * 100", "legendFormat": "failure %", "refId": "A" }],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 56 } },
+    { "type": "timeseries", "title": "K6 Network I/O (KB/s)",
+      "targets": [
+        { "expr": "rate(k6_data_received_total[1m]) / 1024", "legendFormat": "received (KB/s)", "refId": "A" },
+        { "expr": "rate(k6_data_sent_total[1m]) / 1024", "legendFormat": "sent (KB/s)", "refId": "B" }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 56 } }
+  ]
+}

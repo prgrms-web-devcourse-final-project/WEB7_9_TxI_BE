@@ -1,0 +1,10 @@
+# 환경 변수 파일
+.env
+
+# k6 실행 리포트
+results/
+
+# IDE 캐시 / 임시파일 / 로그, 결과파일
+.DS_Store
+*.log
+*.csv
