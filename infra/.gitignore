@@ -1,2 +1,7 @@
 local/.env
 .idea
+.terraform
+terraform.tfstate
+.terraform.lock.hcl
+terraform.tfstate.backup
+secrets.tf
