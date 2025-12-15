@@ -2,7 +2,7 @@ spring:
   config:
     import: optional:file:.env.properties
   profiles:
-    active: dev
+    active: perf
   output:
     ansi:
       enabled: always
