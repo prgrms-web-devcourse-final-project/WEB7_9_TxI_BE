@@ -57,6 +57,7 @@ public class Notification extends BaseEntity {
 	@Column(nullable = true)
 	private LocalDateTime readAt;
 
+	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private DomainName fromWhere;
 

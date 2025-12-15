@@ -1,0 +1,56 @@
+package com.back.api.notification.controller;
+
+import java.util.List;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import com.back.api.notification.dto.NotificationResponseDto;
+import com.back.api.notification.dto.UnreadCountResponseDto;
+import com.back.global.config.swagger.ApiErrorCode;
+import com.back.global.response.ApiResponse;
+import com.back.global.security.SecurityUser;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Notification API", description = "알림 API")
+public interface NotificationApi {
+	@Operation(summary = "알림 조회", description = "웹소켓이 연결되기 전 발생한 알림들을 조회할 수 있습니다(초기 데이터 로딩). 웹소켓이 연결되면 새로운 알림은 웹소켓으로 전달됩니다 ")
+	@ApiErrorCode({
+		"NOTIFICATION_NOT_FOUND",
+		"NOTIFICATION_ACCESS_DENIED"
+	})
+	ApiResponse<List<NotificationResponseDto>> getNotifications(
+		@AuthenticationPrincipal SecurityUser securityUser
+	);
+
+	@Operation(summary = "읽지 않은 알림 개수 조회", description = "웹소켓이 연결된 직후 초기 데이터 로딩을 위해 이용됩니다")
+	@ApiErrorCode({
+		"NOTIFICATION_ACCESS_DENIED"
+	})
+	ApiResponse<UnreadCountResponseDto> getUnreadCount(
+		@AuthenticationPrincipal SecurityUser securityUser
+	);
+
+	@Operation(summary = "단일 알림 읽음 처리")
+	@ApiErrorCode({
+		"NOTIFICATION_ACCESS_DENIED",
+		"INVALID_NOTIFICATION_ID",
+		"NOTIFICATION_PROCESS_FAILED"
+	})
+	ApiResponse<Void> markAsRead(
+		@AuthenticationPrincipal SecurityUser securityUser,
+		@PathVariable Long notificationId
+	);
+
+	@Operation(summary = "모든 알림 읽음 처리")
+	@ApiErrorCode({
+		"NOTIFICATION_ACCESS_DENIED",
+		"INVALID_NOTIFICATION_ID",
+		"NOTIFICATION_PROCESS_FAILED"
+	})
+	ApiResponse<Void> markAllAsRead(
+		@AuthenticationPrincipal SecurityUser securityUser
+	);
+}

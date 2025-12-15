@@ -16,7 +16,6 @@ public interface OrderApi {
 	@Operation(
 		summary = "주문 생성 및 결제",
 		description = "새로운 주문을 생성합니다. v1에서는 주문과 결제가 통합되어 진행됩니다."
-			+ "데이터베이스에 이벤트,유저,좌석이 있어야합니다"
 	)
 	@ApiErrorCode({
 		"NOT_FOUND_EVENT",
