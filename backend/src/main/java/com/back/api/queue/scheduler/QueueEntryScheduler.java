@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile("!dev") //임시 스케줄러 차단
+@Profile({"prod", "perf"})
 public class QueueEntryScheduler {
 
 	private final QueueEntryProcessService queueEntryProcessService;

@@ -3,6 +3,9 @@ package com.back.domain.user.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+
 import com.back.global.entity.BaseEntity;
 
 import jakarta.persistence.Column;
@@ -23,6 +26,11 @@ import lombok.NoArgsConstructor;
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@FilterDef(name = "deletedFilter")
+@Filter(
+	name = "deletedFilter",
+	condition = "deleted_at IS NULL"
+)
 public class User extends BaseEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
@@ -80,5 +88,10 @@ public class User extends BaseEntity {
 		this.fullName = fullName;
 		this.nickname = nickname;
 		this.birthDate = birthDate;
+	}
+
+	public void softDelete() {
+		this.deleteDate = LocalDateTime.now();
+		this.activeStatus = UserActiveStatus.BLOCKED;
 	}
 }

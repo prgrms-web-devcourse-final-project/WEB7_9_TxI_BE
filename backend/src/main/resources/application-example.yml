@@ -1,3 +1,7 @@
+# Application Configuration Example
+# 이 파일을 복사하여 application.yml로 사용하세요
+# cp application-example.yml application.yml
+
 spring:
   config:
     import: optional:file:.env.properties
@@ -53,7 +57,7 @@ custom:
       - "*"
 
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET}  # .env.properties에 설정 필요
     access-token-duration: ${JWT_ACCESS_TOKEN_DURATION:3600}
     refresh-token-duration: ${JWT_REFRESH_TOKEN_DURATION:1209600}
 
@@ -62,7 +66,7 @@ custom:
     back-url: "http://${custom.dev.domain}:${server.port}"
     front-url: "http://${custom.dev.domain}:3000"
   prod:
-    domain: ${API_BASE_URL}
+    domain: ${API_BASE_URL}  # .env.properties에 설정 필요
     back-url: "https://api.${custom.prod.domain}"
     front-url: "https://www.${custom.prod.domain}"
   site:

@@ -16,3 +16,8 @@ Content-Type: application/json
   "month": "3",
   "day": "15"
 }
+
+### 회원탈퇴
+DELETE {{BASE_URL}}/api/v1/users/me
+Authorization: Bearer {{ACCESS_TOKEN}}
+Content-Type: application/json

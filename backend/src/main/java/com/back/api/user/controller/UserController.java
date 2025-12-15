@@ -1,6 +1,7 @@
 package com.back.api.user.controller;
 
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,5 +41,13 @@ public class UserController implements UserApi {
 		long userId = httpRequestContext.getUserId();
 		UserProfileResponse response = userService.updateProfile(userId, request);
 		return ApiResponse.ok(String.format("%s 사용자 정보 변경 완료", userId), response);
+	}
+
+	@Override
+	@DeleteMapping("/me")
+	public ApiResponse<Void> deleteUser() {
+		long userUd = httpRequestContext.getUserId();
+		userService.deleteUser(userUd);
+		return ApiResponse.noContent("회원탈퇴 완료");
 	}
 }

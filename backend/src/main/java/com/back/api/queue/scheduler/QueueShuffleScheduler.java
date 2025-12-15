@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile("!dev") //임시 스케줄러 차단
+@Profile({"prod", "perf"})
 public class QueueShuffleScheduler {
 
 	private final QueueEntryRepository queueEntryRepository;
@@ -34,7 +34,7 @@ public class QueueShuffleScheduler {
 	private final PreRegisterRepository preRegisterRepository; //TODO service로 변경 필요
 	private final QueueSchedulerProperties properties;
 
-	@Scheduled(cron = "${queue.scheduler.shuffle.cron}",  zone = "Asia/Seoul")
+	@Scheduled(cron = "${queue.scheduler.shuffle.cron}", zone = "Asia/Seoul")
 	public void autoShuffleQueue() {
 		try {
 			LocalDateTime now = LocalDateTime.now();
@@ -55,7 +55,6 @@ public class QueueShuffleScheduler {
 			if (eventList.isEmpty()) {
 				return;
 			}
-
 
 			for (Event event : eventList) {
 				shuffleQueueForEvent(event);
