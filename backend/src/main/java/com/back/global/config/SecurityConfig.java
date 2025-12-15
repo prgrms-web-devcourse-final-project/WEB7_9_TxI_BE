@@ -33,12 +33,13 @@ public class SecurityConfig {
 
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/favicon.ico").permitAll()
-				.requestMatchers("/h2-console/**").permitAll()  // H2 콘솔 접근 허용
-				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()  // Swagger 접근 허용
-				.requestMatchers("/.well-known/**").permitAll()
-				//.requestMatchers("/api/v1/admin/**").hasRole("ADMIN") //추후 주석 해제
-				.anyRequest().permitAll() // TODO: 보안 인증 설정 시 제거, 현재는 모든 API 요청을 인증없이 허용
+					.requestMatchers("/favicon.ico").permitAll()
+					.requestMatchers("/h2-console/**").permitAll()  // H2 콘솔 접근 허용
+					.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()  // Swagger 접근 허용
+					.requestMatchers("/.well-known/**").permitAll()
+					//.requestMatchers("/api/v1/admin/**").hasRole("ADMIN") //추후 주석 해제
+					.requestMatchers("/actuator/**").permitAll()    // 모니터링/Actuator 관련
+				//.anyRequest().permitAll() // TODO: 보안 인증 설정 시 제거, 현재는 모든 API 요청을 인증없이 허용
 			)
 			.csrf(csrf -> csrf
 				.ignoringRequestMatchers("/h2-console/**")  // H2 콘솔은 CSRF 제외
