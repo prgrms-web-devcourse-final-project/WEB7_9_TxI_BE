@@ -60,7 +60,7 @@ public class Order extends BaseEntity {
 
 	private String paymentKey; // Toss paymentKey
 	
-	private String orderKey;   // merchant_uid(UUID)
+	private String orderKey; // merchant_uid(UUID)
 
 	public void markPaid(String paymentKey) {
 		this.status = OrderStatus.PAID;

@@ -70,7 +70,9 @@ public class QueueEntryProcessService {
 			new QueueEntriesMessage(
 				userId,
 				enqueue.getId(),
-				eventRepository.findById(eventId).get().getTitle()
+				eventRepository.findById(eventId)
+					.map(Event::getTitle)
+					.orElse("제목 없음")
 			)
 		);
 	}
