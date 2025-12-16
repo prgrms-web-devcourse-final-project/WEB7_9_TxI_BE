@@ -45,6 +45,7 @@ custom:
       - POST
       - PUT
       - DELETE
+      - OPTIONS
     allowed-headers:
       - "*"
 
