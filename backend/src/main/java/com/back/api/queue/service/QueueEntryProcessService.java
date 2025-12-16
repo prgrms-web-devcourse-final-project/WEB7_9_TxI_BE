@@ -16,6 +16,8 @@ import com.back.api.queue.dto.response.ExpiredQueueResponse;
 import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
 import com.back.api.queue.dto.response.WaitingQueueResponse;
 import com.back.domain.event.entity.Event;
+import com.back.domain.event.repository.EventRepository;
+import com.back.domain.notification.systemMessage.QueueEntriesMessage;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
@@ -45,6 +47,7 @@ public class QueueEntryProcessService {
 	private final EventPublisher eventPublisher;
 	private final QueueSchedulerProperties properties;
 	private final QueueEntryReadService queueEntryReadService;
+	private final EventRepository eventRepository;
 
 
 	/* ==================== 입장 처리 ==================== */
@@ -57,13 +60,21 @@ public class QueueEntryProcessService {
 		validateEntry(queueEntry);
 
 		queueEntry.enterQueue();
-		queueEntryRepository.save(queueEntry);
+		QueueEntry enqueue = queueEntryRepository.save(queueEntry);
 
 		updateRedis(eventId, userId);
 
 		publishEnteredEvent(queueEntry); // 입장 처리 웹소켓 이벤트 발행
 
-		//TODO 입장완료 알림 로직 구현
+		eventPublisher.publishEvent(
+			new QueueEntriesMessage(
+				userId,
+				enqueue.getId(),
+				eventRepository.findById(eventId)
+					.map(Event::getTitle)
+					.orElse("제목 없음")
+			)
+		);
 	}
 
 	@Transactional

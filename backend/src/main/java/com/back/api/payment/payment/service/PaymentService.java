@@ -1,5 +1,6 @@
 package com.back.api.payment.payment.service;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +11,7 @@ import com.back.api.payment.payment.dto.response.PaymentConfirmResponse;
 import com.back.api.payment.payment.dto.response.PaymentConfirmResult;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
+import com.back.domain.notification.systemMessage.OrdersSuccessMessage;
 import com.back.domain.payment.order.entity.Order;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.error.code.PaymentErrorCode;
@@ -29,6 +31,7 @@ public class PaymentService {
 	private final PaymentClient paymentClient;
 	private final TicketService ticketService;
 	private final QueueEntryProcessService queueEntryProcessService;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
 	public PaymentConfirmResponse confirmPayment(
@@ -73,6 +76,18 @@ public class PaymentService {
 		queueEntryProcessService.completePayment(
 			ticket.getEvent().getId(),
 			userId
+		);
+
+		String eventTitle = ticket.getEvent().getTitle();
+
+		// 알림 메시지 발행
+		eventPublisher.publishEvent(
+			new OrdersSuccessMessage(
+				userId,
+				orderId,
+				order.getAmount(),
+				eventTitle
+			)
 		);
 
 		return PaymentConfirmResponse.from(order, ticket);

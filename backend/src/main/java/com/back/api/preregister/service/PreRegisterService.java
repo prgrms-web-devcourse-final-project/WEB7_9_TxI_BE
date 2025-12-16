@@ -3,6 +3,7 @@ package com.back.api.preregister.service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,7 @@ import com.back.api.preregister.dto.request.PreRegisterCreateRequest;
 import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.notification.systemMessage.PreRegisterDoneMessage;
 import com.back.domain.preregister.entity.PreRegister;
 import com.back.domain.preregister.entity.PreRegisterStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
@@ -32,6 +34,7 @@ public class PreRegisterService {
 	private final EventRepository eventRepository;
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
 	public PreRegisterResponse register(Long eventId, Long userId, PreRegisterCreateRequest request) {
@@ -72,6 +75,15 @@ public class PreRegisterService {
 			.build();
 
 		PreRegister savedPreRegister = preRegisterRepository.save(preRegister);
+
+		eventPublisher.publishEvent(
+			new PreRegisterDoneMessage(
+				userId,
+				savedPreRegister.getId(),
+				event.getTitle()
+			)
+		);
+
 		return PreRegisterResponse.from(savedPreRegister);
 	}
 
