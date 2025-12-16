@@ -2,13 +2,6 @@ spring:
   config:
     activate:
       on-profile: prod
-    import: optional:classpath:application-secret.yml
-
-  datasource:
-    url: ${SUPABASE_URL}
-    username: ${SUPABASE_USERNAME}
-    password: ${SUPABASE_PASSWORD}
-    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
