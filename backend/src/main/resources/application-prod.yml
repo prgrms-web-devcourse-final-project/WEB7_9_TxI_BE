@@ -31,10 +31,6 @@ logging:
 
 # custom.site 설정을 prod로 오버라이드
 custom:
-  jwt:
-    secret: ${JWT_SECRET}
-    access-token-duration: ${JWT_ACCESS_TOKEN_DURATION}
-    refresh-token-duration: ${JWT_REFRESH_TOKEN_DURATION}
   site:
     domain: "${custom.prod.domain}"
     back-url: "${custom.prod.back-url}"
