@@ -39,9 +39,6 @@ springdoc:
     operations-sorter: method
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
-  servers:
-    - url: http://localhost:8080
-      description: Local server
 
 custom:
   cors:
