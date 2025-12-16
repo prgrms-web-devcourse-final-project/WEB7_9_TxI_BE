@@ -31,15 +31,15 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates cur
 # Build argument로 Doppler 토큰 받기
 ARG DOPPLER_TOKEN
 ENV DOPPLER_TOKEN=$DOPPLER_TOKEN
+ENV DOPPLER_PROJECT=waitfair
+ENV DOPPLER_CONFIG=prd
 
 # 첫 번째 스테이지에서 빌드된 JAR 파일 복사
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 # 실행할 JAR 파일 지정
-#ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
-ENTRYPOINT ["doppler", "run", "--", "java", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
-
+ENTRYPOINT ["doppler", "run", "--project", "waitfair", "--config", "prd", "--", "java", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
 
 
 
