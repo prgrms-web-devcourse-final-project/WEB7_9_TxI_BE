@@ -80,7 +80,7 @@ jobs:
 
       - name: export image name
         id: export_image
-        run: echo "image_name=WEB7_9_TxI_BE" >> $GITHUB_OUTPUT
+        run: echo "image_name=waitfair" >> $GITHUB_OUTPUT
 
       - name: 빌드 앤 푸시
         uses: docker/build-push-action@v3
