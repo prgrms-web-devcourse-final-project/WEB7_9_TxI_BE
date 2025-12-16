@@ -18,7 +18,7 @@ custom:
     refresh-token-duration: 1209600000
   dev:
     domain: localhost
-    back-url: "http://${custom.dev.domain}:${server.port}"
+    back-url: "http://${custom.dev.domain}:8080"
     front-url: "http://${custom.dev.domain}:3000"
   prod:
     domain: waitfair.shop
