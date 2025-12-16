@@ -63,7 +63,7 @@ custom:
   dev:
     domain: localhost
     back-url: "http://${custom.dev.domain}:8080"
-    front-url: "http://${custom.dev.domain}:3000"
+    front-url: "http://${custom.dev.domain}:5173"
   prod:
     domain: ${API_BASE_URL}
     back-url: "https://api.${custom.prod.domain}"
