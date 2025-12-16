@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.back.api.payment.order.service.OrderService;
@@ -52,6 +53,9 @@ class PaymentServiceTest {
 
 	@Mock
 	private PasswordEncoder passwordEncoder;
+
+	@Mock
+	private ApplicationEventPublisher eventPublisher;
 
 	@Test
 	@DisplayName("결제 성공 - Order PAID, Ticket ISSUED, Seat SOLD")
