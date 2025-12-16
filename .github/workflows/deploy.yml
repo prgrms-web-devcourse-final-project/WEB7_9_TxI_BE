@@ -1,6 +1,6 @@
 name: deploy
 env:
-  IMAGE_NAME: waitfair-backend
+  IMAGE_NAME: waitfair
 
 on:
   push:
