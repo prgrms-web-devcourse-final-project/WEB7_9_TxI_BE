@@ -16,7 +16,22 @@ custom:
     secret: i14Yy9GnDi28ac/ZtWIjiavJqz8iI0TGwOLzzKPvAq8KdzS2ABNfgv5yBNQYFPDohgxgMR+s/W5aTK7svlfYoQ==
     access-token-duration: 3600000
     refresh-token-duration: 1209600000
+  dev:
+    domain: localhost
+    back-url: "http://${custom.dev.domain}:${server.port}"
+    front-url: "http://${custom.dev.domain}:3000"
+  prod:
+    domain: waitfair.shop
+    back-url: "https://api.${custom.prod.domain}"
+    front-url: "https://www.${custom.prod.domain}"
+  site:
+    domain: "${custom.dev.domain}"
+    back-url: "${custom.dev.back-url}"
+    front-url: "${custom.dev.front-url}"
 
 security:
   password:
     bcrypt-strength: 4
+
+
+
