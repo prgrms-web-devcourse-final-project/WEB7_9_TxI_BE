@@ -188,7 +188,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	private void addCorsHeaders(HttpServletResponse response) {
-		response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); //TODO 하드 코딩 제거
+		response.setHeader("Access-Control-Allow-Origin",
+			siteProperties.getFrontUrl()); // TODO: 개발 환경에서 다중 origin 허용 가능한지 찾아보기
 		response.setHeader("Access-Control-Allow-Credentials", "true");
 		response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
 		response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
