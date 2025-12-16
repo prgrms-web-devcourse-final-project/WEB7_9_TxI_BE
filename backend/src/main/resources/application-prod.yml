@@ -38,7 +38,8 @@ custom:
 
   cors:
     allowed-origins:
-      - ${FRONTEND_URL} # 예: https://www.example.com
+      - ${FRONTEND_URL}
+      - ${BACKEND_URL}
     allowed-methods:
       - GET
       - POST
