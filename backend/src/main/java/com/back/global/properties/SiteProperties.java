@@ -11,5 +11,7 @@ import lombok.Setter;
 @Component
 @ConfigurationProperties(prefix = "custom.site")
 public class SiteProperties {
+	private String domain;
+	private String backUrl;
 	private String frontUrl;
 }
