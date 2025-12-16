@@ -1,6 +1,6 @@
 name: deploy
 env:
-  IMAGE_NAME: waitfair-backend
+  IMAGE_NAME: waitfair
 
 on:
   push:
@@ -123,66 +123,8 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
-          
-            # 공통 변수
-            IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest"
-            NETWORK="common"
-            HEALTH_ENDPOINT="/actuator/health"
-            TIMEOUT=60
-
-            # 현재 실행 중인 컨테이너 확인
-            if docker ps --format '{{.Names}}' | grep -q "app1_1"; then
-              CURRENT="app1_1"
-              NEXT="app1_2"
-              CURRENT_PORT=8080
-              NEXT_PORT=8081
-            else
-              CURRENT="app1_2"
-              NEXT="app1_1"
-              CURRENT_PORT=8081
-              NEXT_PORT=8080
-            fi
-
-            # 다음 컨테이너 실행
-            echo "Starting new container: $NEXT on port $NEXT_PORT..."
-            docker pull "$IMAGE"
-            docker stop "$NEXT" 2>/dev/null
-            docker rm "$NEXT" 2>/dev/null
-            docker run -d \
-              --network $NETWORK \
-              --name "$NEXT" \
-              -p "$NEXT_PORT":8080 \
-              "$IMAGE"
-
-            # 헬스체크 대기
-            echo "Waiting for health check..."
-            START_TIME=$(date +%s)
-            while true; do
-              CONTENT=$(curl -s http://localhost:$NEXT_PORT$HEALTH_ENDPOINT)
-
-              if [[ "$CONTENT" == *'"status":"UP"'* ]]; then
-                echo "✅ $NEXT is UP!"
-                break
-              fi
-
-              ELAPSED_TIME=$(( $(date +%s) - START_TIME ))
-              if [[ $ELAPSED_TIME -ge $TIMEOUT ]]; then
-                echo "❌ Timeout: $NEXT did not start in $TIMEOUT seconds."
-                docker stop "$NEXT"
-                docker rm "$NEXT"
-                exit 1
-              fi
-
-              echo "⏳ Waiting for $NEXT to be UP..."
-              sleep 5
-            done
-
-            # 기존 컨테이너 중지 및 제거
-            echo "Stopping old container: $CURRENT"
-            docker stop "$CURRENT" 2>/dev/null
-            docker rm "$CURRENT" 2>/dev/null
-
-            # dangling image 제거
+            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            docker stop app1 2>/dev/null || true && \
+            docker rm app1 2>/dev/null || true && \
+            docker run -d --name app1 --network common -p 8080:8080 ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
             docker image prune -f
-
-            echo "✅ Deployment complete. Running container: $NEXT on port $NEXT_PORT"
