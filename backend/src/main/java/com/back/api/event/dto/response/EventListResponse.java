@@ -13,7 +13,7 @@ public record EventListResponse(
 	@Schema(description = "이벤트 ID", example = "1")
 	Long id,
 
-	@Schema(description = "이벤트 제목", example = "2025 서울 뮤직 페스티벌")
+	@Schema(description = "이벤트 제목", example = "2026 서울 뮤직 페스티벌")
 	String title,
 
 	@Schema(description = "이벤트 카테고리", example = "CONCERT")
@@ -31,20 +31,20 @@ public record EventListResponse(
 	@Schema(description = "최대 티켓 가격 (원)", example = "150000")
 	Integer maxPrice,
 
-	@Schema(description = "사전등록 시작일시", example = "2025-01-01T10:00:00")
+	@Schema(description = "사전등록 시작일시", example = "2026-01-11T10:00:00")
 	LocalDateTime preOpenAt,
 
-	@Schema(description = "사전등록 종료일시", example = "2025-01-10T23:59:59")
+	@Schema(description = "사전등록 종료일시", example = "2026-01-20T23:59:59")
 	LocalDateTime preCloseAt,
 
-	@Schema(description = "티켓팅 시작일시", example = "2025-01-15T10:00:00")
+	@Schema(description = "티켓팅 시작일시", example = "2026-01-25T10:00:00")
 	LocalDateTime ticketOpenAt,
 
 	@Schema(description = "이벤트 상태 (READY: 준비중, PRE_OPEN: 사전등록중, QUEUE_READY: 대기열 준비, OPEN: 티켓팅 진행중, CLOSED: 마감)",
 		example = "PRE_OPEN")
 	EventStatus status,
 
-	@Schema(description = "생성일시", example = "2024-12-01T10:00:00")
+	@Schema(description = "생성일시", example = "2025-12-01T10:00:00")
 	LocalDateTime createdAt
 ) {
 	public static EventListResponse from(Event event) {

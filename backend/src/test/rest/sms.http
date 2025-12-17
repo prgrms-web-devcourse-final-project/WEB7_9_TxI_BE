@@ -1,0 +1,85 @@
+### SMS 인증번호 발송
+POST http://localhost:8080/api/v1/sms/send
+Content-Type: application/json
+
+{
+  "phoneNumber": "01012345678"
+}
+
+> {%
+    if (response.status === 200) {
+        client.log("✅ SMS 발송 성공!");
+        client.log("💡 dev/test 환경에서는 고정 인증번호 123456 사용 (application-dev.yml 설정)");
+        client.log("   다음 검증 요청을 바로 실행하면 자동으로 통과됩니다.");
+    }
+%}
+
+### SMS 인증번호 발송 (잘못된 형식)
+POST http://localhost:8080/api/v1/sms/send
+Content-Type: application/json
+
+{
+  "phoneNumber": "010-1234-5678"
+}
+
+### SMS 인증번호 발송 (빈 값)
+POST http://localhost:8080/api/v1/sms/send
+Content-Type: application/json
+
+{
+  "phoneNumber": ""
+}
+
+### SMS 인증번호 발송 (잘못된 형식 - 유효한 번호 아닐 때)
+POST http://localhost:8080/api/v1/sms/send
+Content-Type: application/json
+
+{
+  "phoneNumber": "010123456"
+}
+
+### SMS 인증번호 검증 (성공)
+# 💡 테스트 환경에서는 항상 고정 인증번호 "123456" 사용
+# HTTP 파일 전체 실행 시 자동으로 통과됩니다
+POST http://localhost:8080/api/v1/sms/verify
+Content-Type: application/json
+
+{
+  "phoneNumber": "01012345678",
+  "verificationCode": "123456"
+}
+
+> {%
+    if (response.status === 200) {
+        client.log("SMS 인증 성공!");
+        client.log("Redis에 인증 완료 플래그가 저장되었습니다 (10분간 유효)");
+        client.log("이제 사전등록 API를 호출할 수 있습니다.");
+    }
+%}
+
+### SMS 인증번호 검증 (실패 - 잘못된 코드)
+POST http://localhost:8080/api/v1/sms/verify
+Content-Type: application/json
+
+{
+  "phoneNumber": "01012345678",
+  "verificationCode": "999999"
+}
+
+### SMS 인증번호 검증 (실패 - 만료)
+POST http://localhost:8080/api/v1/sms/verify
+Content-Type: application/json
+
+{
+  "phoneNumber": "01099999999",
+  "verificationCode": "123456"
+}
+
+### SMS 인증번호 검증 (잘못된 형식 - 5자리)
+POST http://localhost:8080/api/v1/sms/verify
+Content-Type: application/json
+
+{
+  "phoneNumber": "01012345678",
+  "verificationCode": "12345"
+}

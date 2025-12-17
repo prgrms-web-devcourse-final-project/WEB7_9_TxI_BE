@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,9 @@ import com.back.global.error.code.PreRegisterErrorCode;
 import com.back.global.error.exception.ErrorException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -35,6 +38,9 @@ public class PreRegisterService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final ApplicationEventPublisher eventPublisher;
+	private final StringRedisTemplate redisTemplate;
+
+	private static final String SMS_VERIFIED_PREFIX = "SMS_VERIFIED:";
 
 	@Transactional
 	public PreRegisterResponse register(Long eventId, Long userId, PreRegisterCreateRequest request) {
@@ -43,6 +49,9 @@ public class PreRegisterService {
 
 		// 사전등록 기간 검증
 		validatePreRegistrationPeriod(event);
+
+		// SMS 인증 완료 여부 검증
+		validateSmsVerification(request.phoneNumber());
 
 		// 본인 인증 정보 검증 (회원가입 정보와 대조)
 		validateUserInfo(user, request);
@@ -138,24 +147,13 @@ public class PreRegisterService {
 
 	/**
 	 * 본인 인증 정보 검증 (회원가입 정보와 대조)
-	 * - 이름 일치 여부
 	 * - 생년월일 일치 여부
-	 * - 비밀번호 일치 여부
+	 * - 이름은 User 엔티티에서 자동으로 가져옴
 	 */
 	private void validateUserInfo(User user, PreRegisterCreateRequest request) {
-		// 이름 검증
-		if (!user.getNickname().equals(request.nickname())) {
-			throw new ErrorException(PreRegisterErrorCode.INVALID_USER_INFO);
-		}
-
 		// 생년월일 검증
 		if (user.getBirthDate() == null || !user.getBirthDate().equals(request.birthDate())) {
 			throw new ErrorException(PreRegisterErrorCode.INVALID_USER_INFO);
-		}
-
-		// 비밀번호 검증
-		if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-			throw new ErrorException(PreRegisterErrorCode.INVALID_PASSWORD);
 		}
 	}
 
@@ -171,5 +169,24 @@ public class PreRegisterService {
 		if (!Boolean.TRUE.equals(request.agreePrivacy())) {
 			throw new ErrorException(PreRegisterErrorCode.PRIVACY_NOT_AGREED);
 		}
+	}
+
+	/**
+	 * SMS 인증 완료 여부 검증
+	 * - SMS 인증을 통과한 경우 Redis에 인증 완료 플래그가 저장됨
+	 * - 인증 완료 후 사전등록 시 해당 플래그를 검증
+	 */
+	private void validateSmsVerification(String phoneNumber) {
+		String verifiedKey = SMS_VERIFIED_PREFIX + phoneNumber;
+		String verified = redisTemplate.opsForValue().get(verifiedKey);
+
+		if (verified == null || !Boolean.parseBoolean(verified)) {
+			log.warn("SMS 인증 미완료 - 전화번호: {}", phoneNumber);
+			throw new ErrorException(PreRegisterErrorCode.SMS_VERIFICATION_NOT_COMPLETED);
+		}
+
+		// 인증 완료 플래그 삭제 (재사용 방지)
+		redisTemplate.delete(verifiedKey);
+		log.info("SMS 인증 완료 확인 - 전화번호: {}", phoneNumber);
 	}
 }

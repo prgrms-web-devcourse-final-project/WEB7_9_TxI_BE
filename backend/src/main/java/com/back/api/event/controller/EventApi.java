@@ -84,7 +84,7 @@ public interface EventApi {
 		@Parameter(description = "이벤트 카테고리 필터 (미입력 시 전체 조회)", example = "CONCERT")
 		@RequestParam(required = false) EventCategory category,
 
-		@Parameter(description = "페이징 정보")
+		@Parameter(description = "페이징 정보(기본값: page=0, size=10, sort=\"createAt\" 으로 설정해주세요.)")
 		@PageableDefault(size = 10, sort = "createAt", direction = Sort.Direction.DESC)
 		Pageable pageable);
 }

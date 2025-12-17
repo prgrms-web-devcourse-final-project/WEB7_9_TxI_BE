@@ -6,12 +6,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.preregister.dto.request.PreRegisterCreateRequest;
 import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.api.preregister.service.PreRegisterService;
+import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
 
 import jakarta.validation.Valid;
@@ -23,13 +23,14 @@ import lombok.RequiredArgsConstructor;
 public class PreRegisterController implements PreRegisterApi {
 
 	private final PreRegisterService preRegisterService;
+	private final HttpRequestContext httpRequestContext;
 
 	@Override
 	@PostMapping
 	public ApiResponse<PreRegisterResponse> register(
 		@PathVariable Long eventId,
-		@RequestParam Long userId,
 		@Valid @RequestBody PreRegisterCreateRequest request) {
+		Long userId = httpRequestContext.getUserId();
 		PreRegisterResponse response = preRegisterService.register(eventId, userId, request);
 		return ApiResponse.created("사전등록이 완료되었습니다.", response);
 	}
@@ -37,8 +38,8 @@ public class PreRegisterController implements PreRegisterApi {
 	@Override
 	@DeleteMapping
 	public ApiResponse<Void> cancel(
-		@PathVariable Long eventId,
-		@RequestParam Long userId) {
+		@PathVariable Long eventId) {
+		Long userId = httpRequestContext.getUserId();
 		preRegisterService.cancel(eventId, userId);
 		return ApiResponse.noContent("사전등록이 취소되었습니다.");
 	}
@@ -46,8 +47,8 @@ public class PreRegisterController implements PreRegisterApi {
 	@Override
 	@GetMapping("/me")
 	public ApiResponse<PreRegisterResponse> getMyPreRegister(
-		@PathVariable Long eventId,
-		@RequestParam Long userId) {
+		@PathVariable Long eventId) {
+		Long userId = httpRequestContext.getUserId();
 		PreRegisterResponse response = preRegisterService.getMyPreRegister(eventId, userId);
 		return ApiResponse.ok("사전등록 정보를 조회했습니다.", response);
 	}
@@ -63,8 +64,8 @@ public class PreRegisterController implements PreRegisterApi {
 	@Override
 	@GetMapping("/status")
 	public ApiResponse<Boolean> isRegistered(
-		@PathVariable Long eventId,
-		@RequestParam Long userId) {
+		@PathVariable Long eventId) {
+		Long userId = httpRequestContext.getUserId();
 		Boolean isRegistered = preRegisterService.isRegistered(eventId, userId);
 		return ApiResponse.ok("사전등록 여부를 확인했습니다.", isRegistered);
 	}

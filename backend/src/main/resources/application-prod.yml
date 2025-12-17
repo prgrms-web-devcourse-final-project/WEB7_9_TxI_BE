@@ -3,21 +3,6 @@ spring:
     activate:
       on-profile: prod
 
-  datasource:
-    url: ${SUPABASE_URL}
-    username: ${SUPABASE_USERNAME}
-    password: ${SUPABASE_PASSWORD}
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-      data-source-properties:
-        prepareThreshold: 0
-        cachePrepStmts: false
-        useServerPrepStmts: false
-
   jpa:
     hibernate:
       ddl-auto: validate  # 운영에서는 validate만 사용
@@ -26,13 +11,13 @@ spring:
       hibernate:
         format_sql: false
         use_sql_comments: false
-      show-sql: false
+      show-sql: false # 이거 없으면 aws 세션에서 확인할 때 쿼리 로그 뜸
 
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
 # 운영 환경용 로깅 설정
 logging:
@@ -55,8 +40,13 @@ custom:
     allowed-origins:
       - ${FRONTEND_URL}
       - ${BACKEND_URL}
-      - http://localhost:3000
-      - http://localhost:5173 # 프론트 배포 후 제거
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+    allowed-headers:
+      - "*"
 
 # Actuator 설정 (최소한의 엔드포인트만 노출)
 management:
@@ -68,32 +58,8 @@ management:
     health:
       show-details: never
 
-# TODO: 프론트 완료 후 아래 주석처리 한 걸로 교체
-cookie:
-  secure: true
-  same-site: None
-  domain: ""
-
-#cookie:
-#  secure: true
-#  same-site: None
-#  domain: ".waitfair.shop"
-
-# 임시 운영환경용 스케줄러. redis 해결 후 삭제
-queue:
-  scheduler:
-    #입장 처리 스케줄러
-    entry:
-      cron: "0 0 3 * * *"  # 매일 새벽 3시
-      batch-size: 100
-      max-entered-limit: 100
-    shuffle:
-      cron: "0 0 4 * * *"  # 매일 새벽 4시
-      time-range-minutes: 1
-    expire:
-      cron: "0 0 5 * * *"  # 매일 새벽 5시
-
-event:
-  scheduler:
-    open:
-      cron: "0 0 2 * * *"  # 매일 새벽 2시
+sms:
+  coolsms:
+    api-key: ${COOLSMS_API_KEY}
+    api-secret: ${COOLSMS_API_SECRET}
+    from-number: ${COOLSMS_FROM_NUMBER}

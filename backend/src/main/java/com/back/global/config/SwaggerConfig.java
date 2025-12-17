@@ -160,7 +160,8 @@ public class SwaggerConfig {
 			com.back.global.error.code.PreRegisterErrorCode.class,
 			com.back.global.error.code.QueueEntryErrorCode.class,
 			com.back.global.error.code.SeatErrorCode.class,
-			com.back.global.error.code.TicketErrorCode.class
+			com.back.global.error.code.TicketErrorCode.class,
+			com.back.global.error.code.SmsErrorCode.class
 		};
 
 		for (Class<?> clazz : errorCodeClasses) {

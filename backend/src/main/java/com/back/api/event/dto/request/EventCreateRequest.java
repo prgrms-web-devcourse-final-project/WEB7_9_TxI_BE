@@ -13,7 +13,7 @@ import jakarta.validation.constraints.NotNull;
 
 @Schema(description = "이벤트 생성 요청 DTO")
 public record EventCreateRequest(
-	@Schema(description = "이벤트 제목", example = "2025 서울 뮤직 페스티벌")
+	@Schema(description = "이벤트 제목", example = "2026 서울 뮤직 페스티벌")
 	@NotBlank(message = "이벤트 제목은 필수입니다.")
 	String title,
 
@@ -41,19 +41,19 @@ public record EventCreateRequest(
 	@Min(value = 0, message = "최대 가격은 0 이상이어야 합니다.")
 	Integer maxPrice,
 
-	@Schema(description = "사전등록 시작일시", example = "2025-01-01T10:00:00")
+	@Schema(description = "사전등록 시작일시", example = "2026-01-11T10:00:00")
 	@NotNull(message = "사전등록 시작일은 필수입니다.")
 	LocalDateTime preOpenAt,
 
-	@Schema(description = "사전등록 종료일시", example = "2025-01-10T23:59:59")
+	@Schema(description = "사전등록 종료일시", example = "2026-01-15T23:59:59")
 	@NotNull(message = "사전등록 종료일은 필수입니다.")
 	LocalDateTime preCloseAt,
 
-	@Schema(description = "티켓팅 시작일시", example = "2025-01-15T10:00:00")
+	@Schema(description = "티켓팅 시작일시", example = "2026-01-25T10:00:00")
 	@NotNull(message = "티켓팅 시작일은 필수입니다.")
 	LocalDateTime ticketOpenAt,
 
-	@Schema(description = "티켓팅 종료일시", example = "2025-01-20T23:59:59")
+	@Schema(description = "티켓팅 종료일시", example = "2026-01-30T23:59:59")
 	@NotNull(message = "티켓팅 종료일은 필수입니다.")
 	LocalDateTime ticketCloseAt,
 

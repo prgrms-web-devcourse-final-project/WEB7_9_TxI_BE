@@ -122,3 +122,9 @@ management:
 security:
   password:
     bcrypt-strength: 8 # prod 8 이상, perf/test/dev 4
+
+# coolSMS
+coolsms:
+  api-Key: ${SMS_API_KEY}
+  api-Secret: ${SMS_SECRET_KEY}
+  sender-Number: ${SMS_SENDER_NUMBER}

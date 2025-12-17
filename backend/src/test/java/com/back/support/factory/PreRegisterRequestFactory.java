@@ -6,14 +6,25 @@ import com.back.api.preregister.dto.request.PreRegisterCreateRequest;
 
 public class PreRegisterRequestFactory extends BaseFactory {
 
+	private static final String DEFAULT_PHONE_NUMBER = "01012345678";
+
 	public static PreRegisterCreateRequest fakePreRegisterRequest(
-		String nickname,
-		String password,
 		LocalDate birthDate
 	) {
 		return new PreRegisterCreateRequest(
-			nickname,
-			password,
+			DEFAULT_PHONE_NUMBER,
+			birthDate,
+			true,
+			true
+		);
+	}
+
+	public static PreRegisterCreateRequest fakePreRegisterRequest(
+		String phoneNumber,
+		LocalDate birthDate
+	) {
+		return new PreRegisterCreateRequest(
+			phoneNumber,
 			birthDate,
 			true,
 			true
@@ -21,13 +32,10 @@ public class PreRegisterRequestFactory extends BaseFactory {
 	}
 
 	public static PreRegisterCreateRequest fakePreRegisterRequestWithoutTerms(
-		String nickname,
-		String password,
 		LocalDate birthDate
 	) {
 		return new PreRegisterCreateRequest(
-			nickname,
-			password,
+			DEFAULT_PHONE_NUMBER,
 			birthDate,
 			false,  // 이용약관 미동의
 			true
@@ -35,13 +43,10 @@ public class PreRegisterRequestFactory extends BaseFactory {
 	}
 
 	public static PreRegisterCreateRequest fakePreRegisterRequestWithoutPrivacy(
-		String nickname,
-		String password,
 		LocalDate birthDate
 	) {
 		return new PreRegisterCreateRequest(
-			nickname,
-			password,
+			DEFAULT_PHONE_NUMBER,
 			birthDate,
 			true,
 			false  // 개인정보 수집 미동의

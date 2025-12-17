@@ -2,32 +2,50 @@
 @EVENT_ID = 1
 @USER_ID = 141
 
-### 사전등록 (V1 본인 인증)
-POST {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers?userId={{USER_ID}}
+### 사전등록 (SMS 본인 인증)
+# ⚠️ 주의사항:
+# 1. auth.http에서 먼저 로그인하여 ACCESS_TOKEN을 설정하세요
+# 2. sms.http에서 "SMS 인증번호 발송" 요청 실행
+# 3. 로그에서 인증번호 확인 후 "SMS 인증번호 검증" 요청 실행
+# 4. 인증 성공 후 아래 요청 실행 (10분 내)
+# 5. birthDate는 로그인한 사용자의 실제 생년월일과 일치해야 합니다
+POST {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers
+Authorization: Bearer {{ACCESS_TOKEN}}
 Content-Type: application/json
 
 {
-  "nickname": "test141",
-  "password": "abc12345",
-  "birthDate": "2000-01-01",
+  "phoneNumber": "01012345678",
+  "birthDate": "2002-02-11",
   "agreeTerms": true,
   "agreePrivacy": true
 }
 
 > {%
-    if (response.body && response.body.data) {
+    if (response.status === 200 && response.body && response.body.data) {
+        client.log("✅ 사전등록 성공!");
         client.global.set("PRE_REGISTER_ID", response.body.data.id);
+    } else if (response.status === 400) {
+        client.log("❌ 사전등록 실패");
+        if (response.body && response.body.message) {
+            client.log("오류: " + response.body.message);
+            if (response.body.message.includes("휴대폰 인증")) {
+                client.log("👉 sms.http에서 SMS 인증을 먼저 완료하세요!");
+            }
+        }
     }
 %}
 
 ### 내 사전등록 조회
-GET {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers/me?userId=1
+GET {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers/me
+Authorization: Bearer {{ACCESS_TOKEN}}
 
 ### 사전등록 여부 확인
-GET {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers/status?userId=1
+GET {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers/status
+Authorization: Bearer {{ACCESS_TOKEN}}
 
 ### 사전등록 현황 조회 (전체 수)
 GET {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers/count
 
 ### 사전등록 취소
-DELETE {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers?userId=1
+DELETE {{BASE_URL}}/api/v1/events/{{EVENT_ID}}/pre-registers
+Authorization: Bearer {{ACCESS_TOKEN}}
