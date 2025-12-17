@@ -79,8 +79,6 @@ jobs:
         with:
           context: ./backend
           push: true
-          build-args: |
-            DOPPLER_TOKEN=${{ secrets.DOPPLER_TOKEN }}
           cache-from: type=registry,ref=ghcr.io/${{ steps.export_owner.outputs.owner_lc }}/${{ steps.export_image.outputs.image_name }}:cache
           cache-to: type=registry,ref=ghcr.io/${{ steps.export_owner.outputs.owner_lc }}/${{ steps.export_image.outputs.image_name }}:cache,mode=max
           tags: |
@@ -116,10 +114,18 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
-            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
-            docker stop app1 2>/dev/null || true && \
-            docker rm app1 2>/dev/null || true && \
-             docker run -d --name app1 --network common -p 8080:8080 \
-              -e DOPPLER_TOKEN=${{ secrets.DOPPLER_TOKEN }} \
-              ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
-            docker image prune -f          
+            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
+            
+            docker stop app1 2>/dev/null || true
+            docker rm app1 2>/dev/null || true
+            
+            export DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}"
+            doppler secrets download --project waitfair --config prd --format env --no-file > /tmp/doppler.env
+            unset DOPPLER_TOKEN
+            
+            docker run -d --name app1 --network common -p 8080:8080 \
+              --env-file /tmp/doppler.env \
+              ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
+            
+            rm -f /tmp/doppler.env
+            docker image prune -f
