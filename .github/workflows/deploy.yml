@@ -116,17 +116,22 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
-            export DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}"
+            bash -lc '
+              export DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}"
 
-            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
+              docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
 
-            docker stop app1 2>/dev/null || true
-            docker rm app1 2>/dev/null || true
+              docker stop app1 2>/dev/null || true
+              docker rm app1 2>/dev/null || true
 
-            doppler secrets download --project waitfair --config prd --format env-no-quotes --no-file | \
-            docker run -d --name app1 --network common -p 8080:8080 \
-              --env-file /dev/stdin \
-              ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
+              doppler secrets download --project waitfair --config prd --format env-no-quotes --no-file | \
+              docker run -d \
+                --name app1 \
+                --network common \
+                -p 8080:8080 \
+                --env-file /dev/stdin \
+                ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
 
-            unset DOPPLER_TOKEN
-            docker image prune -f
+              unset DOPPLER_TOKEN
+              docker image prune -f
+            '
