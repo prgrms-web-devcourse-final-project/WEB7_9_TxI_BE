@@ -116,19 +116,10 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
-            DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}" /usr/bin/doppler secrets download --project waitfair --config prd --format env-no-quotes --no-file > /tmp/doppler.env
-
-            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
-
-            docker stop app1 2>/dev/null || true
-            docker rm app1 2>/dev/null || true
-
-            docker run -d \
-              --name app1 \
-              --network common \
-              -p 8080:8080 \
-              --env-file /tmp/doppler.env \
-              ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
-
-            rm -f /tmp/doppler.env
+            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            docker stop app1 2>/dev/null || true && \
+            docker rm app1 2>/dev/null || true && \
+            DOPPLER_TOKEN='${{ secrets.DOPPLER_TOKEN }}' /usr/bin/doppler secrets download --project waitfair --config prd --format env-no-quotes --no-file > /tmp/doppler.env && \
+            docker run -d --name app1 --network common -p 8080:8080 --env-file /tmp/doppler.env ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            rm -f /tmp/doppler.env && \
             docker image prune -f
