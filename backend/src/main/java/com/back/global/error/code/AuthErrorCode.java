@@ -13,6 +13,9 @@ public enum AuthErrorCode implements ErrorCode {
 
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요."),
 
+	FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+	ADMIN_ONLY(HttpStatus.FORBIDDEN, "관리자 계정만 접근 가능합니다."),
+
 	TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
 	INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
 	REFRESH_TOKEN_REQUIRED(HttpStatus.BAD_REQUEST, "리프레시 토큰이 없습니다."),

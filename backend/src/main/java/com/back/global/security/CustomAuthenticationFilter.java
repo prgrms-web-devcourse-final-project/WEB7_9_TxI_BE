@@ -31,8 +31,6 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
-
-	private static final String AUTH_PATH_PREFIX = "/api/v1/auth/";
 	private static final String BEARER_PREFIX = "Bearer ";
 
 	private static final Set<String> AUTH_WHITELIST = Set.of(
@@ -93,7 +91,14 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 		long userId = ((Number)payload.get("id")).longValue();
 		String nickname = (String)payload.getOrDefault("nickname", "");
-		UserRole role = (UserRole)payload.getOrDefault("role", UserRole.NORMAL);
+		Object roleObj = payload.get("role");
+		UserRole role = UserRole.NORMAL;
+
+		if (roleObj instanceof String roleStr) {
+			role = UserRole.valueOf(roleStr);
+		} else if (roleObj instanceof UserRole userRole) {
+			role = userRole;
+		}
 
 		SecurityUser securityUser = new SecurityUser(
 			userId,

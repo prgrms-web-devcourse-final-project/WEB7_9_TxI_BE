@@ -1,5 +1,7 @@
 package com.back.global.config;
 
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +16,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.back.global.error.code.AuthErrorCode;
+import com.back.global.error.code.ErrorCode;
 import com.back.global.properties.CorsProperties;
+import com.back.global.response.ApiResponse;
 import com.back.global.security.CustomAuthenticationFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +34,7 @@ public class SecurityConfig {
 
 	private final CorsProperties corsProperties;
 	private final CustomAuthenticationFilter authenticationFilter;
+	private final ObjectMapper objectMapper;
 
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -40,8 +47,12 @@ public class SecurityConfig {
 				.requestMatchers("/h2-console/**").permitAll()  // H2 콘솔 접근 허용
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()  // Swagger 접근 허용
 				.requestMatchers("/.well-known/**").permitAll()
-				//.requestMatchers("/api/v1/admin/**").hasRole("ADMIN") //추후 주석 해제
+				.requestMatchers("/api/v1/auth/signup").permitAll()
+				.requestMatchers("/api/v1/auth/login").permitAll()
+				.requestMatchers("/api/v1/admin/auth/**").permitAll()
+				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 				.requestMatchers("/actuator/**").permitAll()    // 모니터링/Actuator 관련
+				// .requestMatchers("/api/v1/**").authenticated() // TODO: 개발 후 인증 활성화
 				.anyRequest().permitAll() // TODO: 보안 인증 설정 시 제거, 현재는 모든 API 요청을 인증없이 허용
 			)
 			.csrf(csrf -> csrf
@@ -56,27 +67,11 @@ public class SecurityConfig {
 			//401 403 커스텀 에러
 			.exceptionHandling(exceptionHandling -> exceptionHandling
 				.authenticationEntryPoint((request, response, authException) -> {
-					response.setContentType("application/json; charset=UTF-8");
-					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-					response.getWriter().write("""
-						{
-							"status": "UNAUTHORIZED",
-							"message": "로그인 후 이용해주세요.",
-							"data": null
-						}
-						""");
+					writeError(response, AuthErrorCode.UNAUTHORIZED);
 				})
 
 				.accessDeniedHandler((request, response, accessDeniedException) -> {
-					response.setContentType("application/json; charset=UTF-8");
-					response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-					response.getWriter().write("""
-						{
-							"status": "FORBIDDEN",
-							"message": "접근 권한이 없습니다.",
-							"data": null
-						}
-						""");
+					writeError(response, AuthErrorCode.FORBIDDEN);
 				})
 			);
 
@@ -104,5 +99,13 @@ public class SecurityConfig {
 		@Value("${security.password.bcrypt-strength}") int strength
 	) {
 		return new BCryptPasswordEncoder(strength);
+	}
+
+	private void writeError(HttpServletResponse response, ErrorCode code) throws IOException {
+		response.setStatus(code.getHttpStatus().value());
+		response.setContentType("application/json; charset=UTF-8");
+
+		ApiResponse<?> body = ApiResponse.fail(code);
+		response.getWriter().write(objectMapper.writeValueAsString(body));
 	}
 }
