@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,7 +21,7 @@ import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.exception.ErrorException;
-import com.back.global.properties.SiteProperties;
+import com.back.global.properties.CookieProperties;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -40,8 +42,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtProvider jwtProvider;
 	private final AuthTokenService tokenService;
-	private final SiteProperties siteProperties;
 	private final UserRepository userRepository;
+	private final CookieProperties cookieProperties;
 
 	@Override
 	protected void doFilterInternal(
@@ -49,9 +51,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		HttpServletResponse response,
 		FilterChain filterChain
 	) throws ServletException, IOException {
-
-		addCorsHeaders(response);
-
 		try {
 			authenticate(request, response, filterChain);
 		} catch (ErrorException e) {
@@ -173,8 +172,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 		JwtDto newTokens = tokenService.generateTokens(user);
 
-		addCookie(response, "accessToken", newTokens.accessToken(), request.isSecure());
-		addCookie(response, "refreshToken", newTokens.refreshToken(), request.isSecure());
+		addCookie(response, "accessToken", newTokens.accessToken());
+		addCookie(response, "refreshToken", newTokens.refreshToken());
 
 		return newTokens.accessToken();
 	}
@@ -182,21 +181,19 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private void addCookie(
 		HttpServletResponse response,
 		String name,
-		String value,
-		boolean secure
+		String value
 	) {
-		Cookie cookie = new Cookie(name, value);
-		cookie.setPath("/");
-		cookie.setHttpOnly(true);
-		cookie.setSecure(secure);
-		response.addCookie(cookie);
-	}
+		ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
+			.httpOnly(true)
+			.path("/")
+			.secure(cookieProperties.isSecure())
+			.sameSite(cookieProperties.getSameSite());
 
-	private void addCorsHeaders(HttpServletResponse response) {
-		response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-		response.setHeader("Access-Control-Allow-Credentials", "true");
-		response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-		response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-		response.setHeader("Access-Control-Max-Age", "3600");
+		if (cookieProperties.getDomain() != null && !cookieProperties.getDomain().isBlank()) {
+			builder.domain(cookieProperties.getDomain());
+		}
+
+		ResponseCookie cookie = builder.build();
+		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 	}
 }

@@ -42,9 +42,9 @@ springdoc:
 custom:
   cors:
     allowed-origins:
+      - https://www.waitfair.shop
       - http://localhost:3000
       - http://localhost:5173
-      - http://localhost:8080
     allowed-methods:
       - GET
       - POST
@@ -52,7 +52,13 @@ custom:
       - DELETE
       - OPTIONS
     allowed-headers:
-      - "*"
+      - "Authorization"
+      - "Content-Type"
+      - "Accept"
+      - "Origin"
+      - "X-Requested-With"
+      - "Cache-Control"
+      - "Pragma"
 
   jwt:
     secret: ${JWT_SECRET}

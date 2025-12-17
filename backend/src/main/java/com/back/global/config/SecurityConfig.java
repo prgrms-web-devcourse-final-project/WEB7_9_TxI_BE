@@ -87,6 +87,7 @@ public class SecurityConfig {
 		config.setAllowedMethods(corsProperties.getAllowedMethods());
 		config.setAllowedHeaders(corsProperties.getAllowedHeaders());
 		config.setAllowCredentials(true);
+		config.setMaxAge(3600L);
 
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", config);

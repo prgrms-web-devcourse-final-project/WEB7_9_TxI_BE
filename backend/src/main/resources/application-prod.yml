@@ -67,3 +67,13 @@ management:
   endpoint:
     health:
       show-details: never
+
+# TODO: 프론트 완료 후 아래 주석처리 한 걸로 교체
+cookie:
+  secure: false
+  same-site: Lax
+  domain: ""
+#cookie:
+#  secure: true
+#  same-site: None
+#  domain: ".waitfair.shop"

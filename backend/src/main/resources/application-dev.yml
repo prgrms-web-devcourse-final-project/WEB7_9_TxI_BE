@@ -11,3 +11,8 @@ spring:
 security:
   password:
     bcrypt-strength: 4
+
+cookie:
+  secure: false
+  same-site: Lax
+  domain: ""
