@@ -26,15 +26,13 @@ public class HttpRequestContext {
 	private final HttpServletRequest request;
 	private final HttpServletResponse response;
 	private final UserRepository userRepository;
-
-	@Value("${custom.site.domain:localhost}")
-	private String domain;
+	private final CookieManager cookieManager;
 
 	@Value("${custom.jwt.access-token-duration}")
-	private long accessTokenDurationMillis;
+	private long accessTokenDurationSeconds;
 
 	@Value("${custom.jwt.refresh-token-duration}")
-	private long refreshTokenDurationMillis;
+	private long refreshTokenDurationSeconds;
 
 	private Authentication getAuthentication() {
 		return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
@@ -101,42 +99,40 @@ public class HttpRequestContext {
 	}
 
 	public void setCookie(String name, String value) {
-		if (value == null) {
-			value = "";
-		}
+		long maxAgeSec = 0;
 
-		Cookie cookie = new Cookie(name, value);
-		cookie.setPath("/");
-		cookie.setHttpOnly(true);
-
-		boolean isLocalhostDomain = domain == null
-			|| domain.isBlank()
-			|| "localhost".equalsIgnoreCase(domain)
-			|| "127.0.0.1".equals(domain);
-
-		if (!isLocalhostDomain) {
-			cookie.setDomain(domain);
-		}
-
-		boolean secureRequest = request.isSecure();
-		// cookie.setSecure(secureRequest && !isLocalhostDomain); TODO 리팩토링
-		cookie.setSecure(true);
-		cookie.setAttribute("SameSite", "None");
-
-		if (value.isBlank()) {
-			cookie.setMaxAge(0);
-		} else {
+		if (value != null && !value.isBlank()) {
 			if ("accessToken".equals(name)) {
-				cookie.setMaxAge((int)accessTokenDurationMillis);
+				maxAgeSec = accessTokenDurationSeconds;
 			} else if ("refreshToken".equals(name)) {
-				cookie.setMaxAge((int)refreshTokenDurationMillis);
+				maxAgeSec = refreshTokenDurationSeconds;
 			}
 		}
 
-		response.addCookie(cookie);
+		cookieManager.set(request, response, name, value, maxAgeSec);
 	}
 
 	public void deleteCookie(String name) {
-		setCookie(name, null);
+		cookieManager.delete(request, response, name);
+	}
+
+	public void setAccessTokenCookie(String token) {
+		cookieManager.setAccessToken(request, response, token, accessTokenDurationSeconds);
+	}
+
+	public void setRefreshTokenCookie(String token) {
+		cookieManager.setRefreshToken(request, response, token, refreshTokenDurationSeconds);
+	}
+
+	public void deleteAccessTokenCookie() {
+		cookieManager.deleteAccessToken(request, response);
+	}
+
+	public void deleteRefreshTokenCookie() {
+		cookieManager.deleteRefreshToken(request, response);
+	}
+
+	public void deleteAuthCookies() {
+		cookieManager.deleteAuthCookies(request, response);
 	}
 }

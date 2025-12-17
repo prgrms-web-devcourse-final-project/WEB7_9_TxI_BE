@@ -26,10 +26,16 @@ public class AuthTokenService {
 		String accessToken = jwtProvider.generateAccessToken(user);
 		String refreshTokenStr = jwtProvider.generateRefreshToken(user);
 
+		// === seconds 기준 ===
+		long accessValiditySeconds = jwtProvider.getAccessTokenValiditySeconds();
+		long refreshValiditySeconds = jwtProvider.getRefreshTokenValiditySeconds();
+
+		// === 현재 시각 ===
 		long nowEpochMillis = System.currentTimeMillis();
-		long refreshValidityMillis = jwtProvider.getRefreshTokenValidityMillis();
 		LocalDateTime issuedAt = LocalDateTime.now();
-		LocalDateTime expiresAt = issuedAt.plusNanos(refreshValidityMillis * 1_000_000L);
+
+		// === DB 저장용 만료 시각 (LocalDateTime) ===
+		LocalDateTime expiresAt = issuedAt.plusSeconds(refreshValiditySeconds);
 
 		String userAgent = requestContext.getUserAgent();
 		String ip = requestContext.getClientIp();
@@ -46,16 +52,18 @@ public class AuthTokenService {
 
 		tokenRepository.save(refreshToken);
 
-		long accessValidityMillis = jwtProvider.getAccessTokenValidityMillis();
+		// === API 응답용 epoch millis ===
+		long accessExpiresAtMillis = nowEpochMillis + (accessValiditySeconds * 1000);
+		long refreshExpiresAtMillis = nowEpochMillis + (refreshValiditySeconds * 1000);
 
 		return new JwtDto(
 			JwtDto.BEARER,
 			accessToken,
-			nowEpochMillis + accessValidityMillis,
-			accessValidityMillis,
+			accessExpiresAtMillis,
+			accessValiditySeconds * 1000,
 			refreshTokenStr,
-			nowEpochMillis + refreshValidityMillis,
-			refreshValidityMillis
+			refreshExpiresAtMillis,
+			refreshValiditySeconds * 1000
 		);
 	}
 

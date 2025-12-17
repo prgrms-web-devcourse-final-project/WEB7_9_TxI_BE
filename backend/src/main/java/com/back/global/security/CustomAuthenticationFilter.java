@@ -5,8 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,7 +20,7 @@ import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.exception.ErrorException;
-import com.back.global.properties.CookieProperties;
+import com.back.global.http.CookieManager;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -43,7 +42,13 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private final JwtProvider jwtProvider;
 	private final AuthTokenService tokenService;
 	private final UserRepository userRepository;
-	private final CookieProperties cookieProperties;
+	private final CookieManager cookieManager;
+
+	@Value("${jwt.access-token-duration:3600}")
+	private long accessTokenDurationSeconds;
+
+	@Value("${jwt.refresh-token-duration:1209600}")
+	private long refreshTokenDurationSeconds;
 
 	@Override
 	protected void doFilterInternal(
@@ -51,11 +56,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		HttpServletResponse response,
 		FilterChain filterChain
 	) throws ServletException, IOException {
-		try {
-			authenticate(request, response, filterChain);
-		} catch (ErrorException e) {
-			throw e;
-		}
+		authenticate(request, response, filterChain);
 	}
 
 	private void authenticate(
@@ -153,7 +154,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			return accessToken;
 		}
 
-		String refreshToken = resolveCookie(request, "refreshToken");
+		String refreshToken = resolveCookie(request, CookieManager.REFRESH_TOKEN_COOKIE);
 
 		if (refreshToken == null || refreshToken.isBlank() || jwtProvider.isExpired(refreshToken)) {
 			// refreshToken도 없거나 만료 > 세션 종료 > 재로그인 필요
@@ -172,28 +173,9 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 		JwtDto newTokens = tokenService.generateTokens(user);
 
-		addCookie(response, "accessToken", newTokens.accessToken());
-		addCookie(response, "refreshToken", newTokens.refreshToken());
+		cookieManager.set(request, response, "accessToken", newTokens.accessToken(), accessTokenDurationSeconds);
+		cookieManager.set(request, response, "refreshToken", newTokens.refreshToken(), refreshTokenDurationSeconds);
 
 		return newTokens.accessToken();
-	}
-
-	private void addCookie(
-		HttpServletResponse response,
-		String name,
-		String value
-	) {
-		ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
-			.httpOnly(true)
-			.path("/")
-			.secure(cookieProperties.isSecure())
-			.sameSite(cookieProperties.getSameSite());
-
-		if (cookieProperties.getDomain() != null && !cookieProperties.getDomain().isBlank()) {
-			builder.domain(cookieProperties.getDomain());
-		}
-
-		ResponseCookie cookie = builder.build();
-		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 	}
 }
