@@ -114,28 +114,24 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
-            if ! command -v doppler &> /dev/null
-                        then
-                            echo "Doppler CLI not found. Installing now..."
-                            # (Debian/Ubuntu 기준 설치 명령어)
-                            curl -sLf --retry 3 --tlsv1.2 --proto "=https" '...' | sudo gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg && \
-                            echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/doppler-cli.list && \
-                            sudo apt-get update && \
-                            sudo apt-get -y install doppler
-            else
-               echo "Doppler CLI is already installed."
-            fi && \
-
-            export DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}" && \
-            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            if ! command -v doppler &> /dev/null; then
+              echo "Installing Doppler CLI..."
+              curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | sudo gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg && \
+              echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/doppler-cli.list && \
+              sudo apt-get update && \
+              sudo apt-get -y install doppler
+            fi
             
+            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
             docker stop app1 2>/dev/null || true && \
             docker rm app1 2>/dev/null || true && \
-
-            export DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}" && \
-            doppler run --project waitfair --config prd -- \
-             docker run -d --name app1 --network common -p 8080:8080 \
-              ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
             
+            export DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}" && \
+            doppler secrets download --project waitfair --config prd --format env --no-file > /tmp/doppler.env && \
             unset DOPPLER_TOKEN && \
-            docker image prune -f          
+            
+            docker run -d --name app1 --network common -p 8080:8080 \
+              --env-file /tmp/doppler.env \
+              ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            rm /tmp/doppler.env && \
+            docker image prune -f    
