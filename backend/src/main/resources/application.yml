@@ -3,7 +3,6 @@ spring:
     import: optional:file:.env.properties
   profiles:
     active: dev
-    include: secret
   output:
     ansi:
       enabled: always
