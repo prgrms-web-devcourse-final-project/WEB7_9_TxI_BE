@@ -116,7 +116,8 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
-            export DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}"
+            cat << 'SCRIPT_END' | DOPPLER_TOKEN='${{ secrets.DOPPLER_TOKEN }}' bash
+            set -e
             
             docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
             
@@ -133,5 +134,5 @@ jobs:
               ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
             
             rm -f /tmp/doppler.env
-            unset DOPPLER_TOKEN
             docker image prune -f
+            SCRIPT_END
