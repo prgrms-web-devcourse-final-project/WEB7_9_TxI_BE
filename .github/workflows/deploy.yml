@@ -116,8 +116,7 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
-            DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}" \
-            doppler secrets download --project waitfair --config prd --format env-no-quotes --no-file > /tmp/doppler.env
+            DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}" /usr/bin/doppler secrets download --project waitfair --config prd --format env-no-quotes --no-file > /tmp/doppler.env
 
             docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
 
