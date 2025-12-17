@@ -120,7 +120,7 @@ public class HttpRequestContext {
 
 		boolean secureRequest = request.isSecure();
 		cookie.setSecure(secureRequest && !isLocalhostDomain);
-		cookie.setAttribute("SameSite", isLocalhostDomain ? "Lax" : "Strict");
+		cookie.setAttribute("SameSite", "None");
 
 		if (value.isBlank()) {
 			cookie.setMaxAge(0);
