@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotatedElementUtils;
@@ -20,6 +21,7 @@ import io.swagger.v3.oas.models.examples.Example;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.servers.Server;
 
 /**
  * Swagger 설정 및 API 문서에 에러 응답 자동 등록
@@ -32,9 +34,16 @@ import io.swagger.v3.oas.models.media.MediaType;
 @Configuration
 public class SwaggerConfig {
 
+	@Value("${custom.site.back-url}")
+	private String backUrl;
+
 	@Bean
 	public OpenAPI openApi() {
+		Server server = new Server();
+		server.setUrl(backUrl);
+
 		return new OpenAPI()
+			.addServersItem(server)
 			.info(new Info()
 				.title("WaitFair API")
 				.description("사전 추첨과 강화된 보안을 갖춘 차세대 스마트 예매 플랫폼")

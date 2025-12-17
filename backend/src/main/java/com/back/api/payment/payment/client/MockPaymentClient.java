@@ -7,7 +7,7 @@ import com.back.api.payment.payment.dto.request.PaymentConfirmCommand;
 import com.back.api.payment.payment.dto.response.PaymentConfirmResult;
 
 @Component
-@Profile({"dev", "test", "perf"})
+@Profile({"dev", "test", "perf", "prod"})
 public class MockPaymentClient implements PaymentClient {
 
 	@Override

@@ -25,6 +25,7 @@ import com.back.api.queue.dto.response.EnteredQueueResponse;
 import com.back.api.queue.dto.response.ExpiredQueueResponse;
 import com.back.config.TestRedisConfig;
 import com.back.domain.event.entity.Event;
+import com.back.domain.event.repository.EventRepository;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
@@ -57,6 +58,9 @@ class QueueEntryProcessServiceTest {
 	@Mock
 	private QueueEntryReadService queueEntryReadService;
 
+	@Mock
+	private EventRepository eventRepository;
+
 	private QueueSchedulerProperties queueSchedulerProperties;
 
 	private Event testEvent;
@@ -83,7 +87,8 @@ class QueueEntryProcessServiceTest {
 			queueEntryRedisRepository,
 			eventPublisher,
 			queueSchedulerProperties,
-			queueEntryReadService
+			queueEntryReadService,
+			eventRepository
 		);
 
 		testEvent = EventFactory.fakeEvent("TestEvent");

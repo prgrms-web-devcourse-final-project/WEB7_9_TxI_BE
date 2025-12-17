@@ -1,0 +1,69 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${SUPABASE_URL}
+    username: ${SUPABASE_USERNAME}
+    password: ${SUPABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      data-source-properties:
+        prepareThreshold: 0
+        cachePrepStmts: false
+        useServerPrepStmts: false
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # 운영에서는 validate만 사용
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+      show-sql: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+
+# 운영 환경용 로깅 설정
+logging:
+  level:
+    root: INFO
+    com.back: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
+    org.hibernate.orm.jdbc.extract: WARN
+    org.springframework.transaction.interceptor: WARN
+
+# custom.site 설정을 prod로 오버라이드
+custom:
+  site:
+    domain: "${custom.prod.domain}"
+    back-url: "${custom.prod.back-url}"
+    front-url: "${custom.prod.front-url}"
+
+  cors:
+    allowed-origins:
+      - ${FRONTEND_URL}
+      - ${BACKEND_URL}
+      - http://localhost:3000
+      - http://localhost:5173 # 프론트 배포 후 제거
+
+# Actuator 설정 (최소한의 엔드포인트만 노출)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never

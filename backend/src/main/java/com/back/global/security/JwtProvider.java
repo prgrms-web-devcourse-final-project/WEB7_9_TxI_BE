@@ -60,7 +60,7 @@ public class JwtProvider {
 		Map<String, Object> claims = new HashMap<>();
 		claims.put(CLAIM_ID, user.getId());
 		claims.put(CLAIM_NICKNAME, user.getNickname());
-		claims.put(CLAIM_ROLE, user.getRole());
+		claims.put(CLAIM_ROLE, user.getRole().name());
 		return claims;
 	}
 

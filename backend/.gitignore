@@ -42,6 +42,9 @@ db_dev.trace.db
 .env.properties
 
 ### Application Configuration ###
-src/main/resources/application.yml
-src/main/resources/application-*.yml
 !src/main/resources/application-example.yml
+src/main/resources/application-secret.yml
+src/main/resources/application-local.yml
+src/main/resources/application-test.yml
+src/main/resources/application-perf.yml
+

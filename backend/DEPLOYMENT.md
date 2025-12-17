@@ -64,7 +64,7 @@ FRONTEND_URL=<frontend-url>     # 예: https://www.example.com
 @Component
 @Profile("prod")
 public class TossPaymentClient implements PaymentClient {
-    // 실제 토스페이먼트 API 연동 구현
+	// 실제 토스페이먼트 API 연동 구현
 }
 ```
 

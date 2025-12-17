@@ -1,0 +1,117 @@
+spring:
+  config:
+    import: optional:file:.env.properties
+  profiles:
+    active: dev
+    include: secret
+  output:
+    ansi:
+      enabled: always
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        default_batch_fetch_size: 100
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+logging:
+  level:
+    org.hibernate.orm.jdbc.bind: TRACE
+    org.hibernate.orm.jdbc.extract: TRACE
+    org.springframework.transaction.interceptor: TRACE
+    com.back: DEBUG
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: method
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+
+custom:
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:5173
+      - http://localhost:8080
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    allowed-headers:
+      - "*"
+
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-duration: ${JWT_ACCESS_TOKEN_DURATION:3600}
+    refresh-token-duration: ${JWT_REFRESH_TOKEN_DURATION:1209600}
+
+  dev:
+    domain: localhost
+    back-url: "http://${custom.dev.domain}:8080"
+    front-url: "http://${custom.dev.domain}:5173"
+  prod:
+    domain: ${API_BASE_URL}
+    back-url: "https://api.${custom.prod.domain}"
+    front-url: "https://www.${custom.prod.domain}"
+  site:
+    domain: "${custom.dev.domain}"
+    back-url: "${custom.dev.back-url}"
+    front-url: "${custom.dev.front-url}"
+
+queue:
+  scheduler:
+    #입장 처리 스케줄러
+    entry:
+      cron: "*/10 * * * * *" # 10초마다 실행
+      batch-size: 100 # 한 번에 입장시킬 인원
+      max-entered-limit: 100  # 최대 수용 인원
+
+    #셔플 처리 스케줄러
+    shuffle:
+      cron: "*/30 * * * * *" # 테스트를 위해 30초마다 실행
+      #cron: "0 */10 * * * *" # 10분마다 실행
+      time-range-minutes: 1 # 시간 범위
+
+    expire:
+      cron: "0 * * * * *"
+
+event:
+  scheduler:
+    open:
+      cron: "0 * * * * *"
+
+# Actuator/micrometer/prometheus 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: waitfair-backend
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+security:
+  password:
+    bcrypt-strength: 8 # prod 8 이상, perf/test/dev 4
