@@ -123,7 +123,7 @@ jobs:
             docker stop app1 2>/dev/null || true
             docker rm app1 2>/dev/null || true
             
-            doppler secrets download --project waitfair --config prd --format env-no-quotes --no-file --token="$DOPPLER_TOKEN" > /tmp/doppler.env
+            /usr/bin/doppler secrets download --project waitfair --config prd --format env-no-quotes --no-file --token="$DOPPLER_TOKEN" > /tmp/doppler.env
             
             docker run -d \
               --name app1 \
@@ -132,6 +132,4 @@ jobs:
               --env-file /tmp/doppler.env \
               ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
             
-            rm -f /tmp/doppler.env
-            unset DOPPLER_TOKEN
             docker image prune -f
