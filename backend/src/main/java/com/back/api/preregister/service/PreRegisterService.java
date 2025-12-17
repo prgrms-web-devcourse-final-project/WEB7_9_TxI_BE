@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +35,6 @@ public class PreRegisterService {
 	private final PreRegisterRepository preRegisterRepository;
 	private final EventRepository eventRepository;
 	private final UserRepository userRepository;
-	private final PasswordEncoder passwordEncoder;
 	private final ApplicationEventPublisher eventPublisher;
 	private final StringRedisTemplate redisTemplate;
 
