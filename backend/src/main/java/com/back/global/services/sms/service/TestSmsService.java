@@ -42,16 +42,27 @@ public class TestSmsService extends SmsService {
 		String verificationCodeStr = fixedCode;
 
 		// SMS 발송 (FakeSmsUtil이 로그 출력)
-		smsUtil.sendOne(phoneNum, verificationCodeStr);
+		try {
+			smsUtil.sendOne(phoneNum, verificationCodeStr);
+		} catch (Exception e) {
+			log.error("SMS 발송 실패 - 전화번호: {}, 오류: {}", phoneNum, e.getMessage());
+			throw new com.back.global.error.exception.ErrorException(
+				com.back.global.error.code.SmsErrorCode.SMS_SEND_FAILED);
+		}
 
 		// Redis에 인증번호 저장 (TTL: 3분)
-		String redisKey = REDIS_KEY_PREFIX + phoneNum;
-		redisTemplate.opsForValue().set(
-			redisKey,
-			verificationCodeStr,
-			Duration.ofSeconds(VERIFICATION_CODE_TTL)
-		);
-
-		log.info("테스트용 고정 인증번호 발송 완료 - 전화번호: {}, 인증번호: {}", phoneNum, fixedCode);
+		try {
+			String redisKey = REDIS_KEY_PREFIX + phoneNum;
+			redisTemplate.opsForValue().set(
+				redisKey,
+				verificationCodeStr,
+				Duration.ofSeconds(VERIFICATION_CODE_TTL)
+			);
+			log.info("테스트용 고정 인증번호 발송 완료 - 전화번호: {}, 인증번호: {}", phoneNum, fixedCode);
+		} catch (Exception e) {
+			log.error("Redis 저장 실패 - 전화번호: {}, 오류: {}", phoneNum, e.getMessage());
+			throw new com.back.global.error.exception.ErrorException(
+				com.back.global.error.code.SmsErrorCode.SMS_SEND_FAILED);
+		}
 	}
 }

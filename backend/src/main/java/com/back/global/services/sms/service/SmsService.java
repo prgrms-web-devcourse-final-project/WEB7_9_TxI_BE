@@ -5,7 +5,6 @@ import java.util.Random;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.back.global.error.code.SmsErrorCode;
 import com.back.global.error.exception.ErrorException;
@@ -31,7 +30,6 @@ public class SmsService {
 	 * 인증번호 발송
 	 * @param phoneNum 수신 전화번호 (하이픈 제거된 형태)
 	 */
-	@Transactional
 	public void sendVerificationCode(String phoneNum) {
 		// 6자리 랜덤 인증번호 생성
 		Random random = new Random();
@@ -63,7 +61,6 @@ public class SmsService {
 	 * @param verificationCode 사용자가 입력한 인증번호
 	 * @return 인증 성공 여부
 	 */
-	@Transactional
 	public boolean verifyCode(String phoneNum, String verificationCode) {
 		String redisKey = REDIS_KEY_PREFIX + phoneNum;
 		String storedCode = redisTemplate.opsForValue().get(redisKey);
