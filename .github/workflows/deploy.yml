@@ -116,9 +116,15 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
+<<<<<<< HEAD
             DOPPLER_TOKEN="${{ secrets.DOPPLER_TOKEN }}" \
             doppler secrets download --project waitfair --config prd --format env-no-quotes --no-file > /tmp/doppler.env
 
+=======
+            cat << 'SCRIPT_END' | DOPPLER_TOKEN='${{ secrets.DOPPLER_TOKEN }}' bash
+            set -e
+            
+>>>>>>> 5b4aa7267f16348ca10acdfb05856d7e6b35001d
             docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
 
             docker stop app1 2>/dev/null || true
@@ -132,4 +138,9 @@ jobs:
               ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest
 
             rm -f /tmp/doppler.env
+<<<<<<< HEAD
             docker image prune -f
+=======
+            docker image prune -f
+            SCRIPT_END
+>>>>>>> 5b4aa7267f16348ca10acdfb05856d7e6b35001d
