@@ -64,40 +64,57 @@ class TicketServiceIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("Draft Ticket 생성 - 성공")
-	void createDraftTicket_success() {
+	@DisplayName("Draft Ticket 조회 또는 생성 - 신규 생성")
+	void getOrCreateDraft_create_success() {
 
-		Ticket draft = ticketService.createDraftTicket(
-			event.getId(),
-			seat.getId(),
-			user.getId()
-		);
+		Ticket draft = ticketService.getOrCreateDraft(event.getId(), user.getId());
 
 		assertThat(draft.getTicketStatus()).isEqualTo(TicketStatus.DRAFT);
 		assertThat(draft.getOwner().getId()).isEqualTo(user.getId());
-		assertThat(draft.getSeat().getId()).isEqualTo(seat.getId());
+		assertThat(draft.getEvent().getId()).isEqualTo(event.getId());
+		assertThat(draft.getSeat()).isNull();  // 좌석 없이 생성됨
 	}
 
 	@Test
-	@DisplayName("Draft Ticket 중복 생성 불가")
-	void createDraftTicket_duplicate_fail() {
+	@DisplayName("Draft Ticket 조회 또는 생성 - 기존 티켓 재사용")
+	void getOrCreateDraft_reuse_success() {
 
-		// first draft
-		ticketService.createDraftTicket(event.getId(), seat.getId(), user.getId());
+		// 첫 번째 호출: 생성
+		Ticket firstCall = ticketService.getOrCreateDraft(event.getId(), user.getId());
+		Long firstId = firstCall.getId();
 
-		// second draft should fail
-		assertThatThrownBy(() ->
-			ticketService.createDraftTicket(event.getId(), seat.getId(), user.getId())
-		)
-			.isInstanceOf(ErrorException.class)
-			.hasMessageContaining("이미 진행 중인 티켓이 존재합니다");
+		// 두 번째 호출: 재사용 (새로 생성하지 않음)
+		Ticket secondCall = ticketService.getOrCreateDraft(event.getId(), user.getId());
+
+		assertThat(secondCall.getId()).isEqualTo(firstId);  // 같은 티켓 반환
+
+		// 해당 이벤트/유저의 Draft Ticket이 1개만 존재하는지 검증
+		long draftCount = ticketRepository.findByOwnerId(user.getId()).stream()
+			.filter(t -> t.getEvent().getId().equals(event.getId()))
+			.filter(t -> t.getTicketStatus() == TicketStatus.DRAFT)
+			.count();
+		assertThat(draftCount).isEqualTo(1);
+	}
+
+	@Test
+	@DisplayName("Draft Ticket에 좌석 할당 - 성공")
+	void assignSeat_success() {
+
+		Ticket draft = ticketService.getOrCreateDraft(event.getId(), user.getId());
+		draft.assignSeat(seat);
+		ticketRepository.save(draft);
+
+		Ticket found = ticketRepository.findById(draft.getId()).get();
+		assertThat(found.getSeat().getId()).isEqualTo(seat.getId());
 	}
 
 	@Test
 	@DisplayName("Draft Ticket 조회 - 성공")
 	void getDraftTicket_success() {
 
-		Ticket created = ticketService.createDraftTicket(event.getId(), seat.getId(), user.getId());
+		Ticket created = ticketService.getOrCreateDraft(event.getId(), user.getId());
+		created.assignSeat(seat);
+		ticketRepository.save(created);
 
 		Ticket draft = ticketService.getDraftTicket(seat.getEvent().getId(), seat.getId(), user.getId());
 
@@ -109,8 +126,10 @@ class TicketServiceIntegrationTest {
 	@DisplayName("결제 성공 처리 → DRAFT → PAID → ISSUED + Seat SOLD")
 	void confirmPayment_success() {
 
-		// 1. Draft 생성
-		Ticket draft = ticketService.createDraftTicket(event.getId(), seat.getId(), user.getId());
+		// 1. Draft 생성 및 좌석 할당
+		Ticket draft = ticketService.getOrCreateDraft(event.getId(), user.getId());
+		draft.assignSeat(seat);
+		ticketRepository.save(draft);
 
 		// 2. 좌석 RESERVED 필요
 		seat.markAsReserved();
@@ -131,8 +150,10 @@ class TicketServiceIntegrationTest {
 	@DisplayName("결제 실패 처리 → DRAFT → FAILED + Seat AVAILABLE")
 	void failPayment_success() {
 
-		// 1. Draft 생성
-		Ticket draft = ticketService.createDraftTicket(event.getId(), seat.getId(), user.getId());
+		// 1. Draft 생성 및 좌석 할당
+		Ticket draft = ticketService.getOrCreateDraft(event.getId(), user.getId());
+		draft.assignSeat(seat);
+		ticketRepository.save(draft);
 
 		// 2. 좌석을 RESERVED 상태로 만듦
 		seat.markAsReserved();
@@ -182,7 +203,10 @@ class TicketServiceIntegrationTest {
 	void confirmPayment_unauthorizedUser_fail() {
 
 		User otherUser = userHelper.createUser(UserRole.NORMAL).user();
-		Ticket draft = ticketService.createDraftTicket(event.getId(), seat.getId(), user.getId());
+
+		Ticket draft = ticketService.getOrCreateDraft(event.getId(), user.getId());
+		draft.assignSeat(seat);
+		ticketRepository.save(draft);
 
 		seat.markAsReserved();
 		seatRepository.save(seat);
@@ -212,38 +236,25 @@ class TicketServiceIntegrationTest {
 
 	@Test
 	@DisplayName("존재하지 않는 이벤트로 Draft Ticket 생성 - 실패")
-	void createDraftTicket_notFoundEvent_fail() {
+	void getOrCreateDraft_notFoundEvent_fail() {
 
 		Long invalidEventId = 999999L;
 
 		assertThatThrownBy(() ->
-			ticketService.createDraftTicket(invalidEventId, seat.getId(), user.getId())
+			ticketService.getOrCreateDraft(invalidEventId, user.getId())
 		)
 			.isInstanceOf(ErrorException.class)
 			.hasMessageContaining("이벤트를 찾을 수 없습니다");
 	}
 
 	@Test
-	@DisplayName("존재하지 않는 좌석으로 Draft Ticket 생성 - 실패")
-	void createDraftTicket_notFoundSeat_fail() {
-
-		Long invalidSeatId = 999999L;
-
-		assertThatThrownBy(() ->
-			ticketService.createDraftTicket(event.getId(), invalidSeatId, user.getId())
-		)
-			.isInstanceOf(ErrorException.class)
-			.hasMessageContaining("좌석을 찾을 수 없습니다");
-	}
-
-	@Test
 	@DisplayName("존재하지 않는 사용자로 Draft Ticket 생성 - 실패")
-	void createDraftTicket_notFoundUser_fail() {
+	void getOrCreateDraft_notFoundUser_fail() {
 
 		Long invalidUserId = 999999L;
 
 		assertThatThrownBy(() ->
-			ticketService.createDraftTicket(event.getId(), seat.getId(), invalidUserId)
+			ticketService.getOrCreateDraft(event.getId(), invalidUserId)
 		)
 			.isInstanceOf(ErrorException.class)
 			.hasMessageContaining("유저를 찾을 수 없습니다");
@@ -275,40 +286,47 @@ class TicketServiceIntegrationTest {
 			.hasMessageContaining("티켓을 찾을 수 없습니다");
 	}
 
-	// ===== 좌석 상태 관련 테스트 =====
+	// ===== 좌석 할당 관련 테스트 =====
 
 	@Test
-	@DisplayName("이미 ISSUED 티켓이 있는 좌석으로 Draft Ticket 생성 - 실패")
-	void createDraftTicket_seatAlreadyIssued_fail() {
+	@DisplayName("Draft Ticket의 좌석 변경 - 성공")
+	void changeSeat_success() {
 
-		// 기존 사용자에게 ISSUED 티켓 생성
-		ticketHelper.createIssuedTicket(user, seat, event);
+		Seat seat2 = seatHelper.createSeat(event, "A2", SeatGrade.R);
 
-		// 다른 사용자가 같은 좌석으로 Draft Ticket 생성 시도
-		User anotherUser = userHelper.createUser(UserRole.NORMAL).user();
+		// Draft 생성 후 첫 번째 좌석 할당
+		Ticket draft = ticketService.getOrCreateDraft(event.getId(), user.getId());
+		draft.assignSeat(seat);
+		ticketRepository.save(draft);
 
-		assertThatThrownBy(() ->
-			ticketService.createDraftTicket(event.getId(), seat.getId(), anotherUser.getId())
-		)
-			.isInstanceOf(ErrorException.class)
-			.hasMessageContaining("이미 구매된 상태입니다");
+		assertThat(draft.getSeat().getId()).isEqualTo(seat.getId());
+
+		// 두 번째 좌석으로 변경
+		draft.clearSeat();
+		draft.assignSeat(seat2);
+		ticketRepository.save(draft);
+
+		Ticket updated = ticketRepository.findById(draft.getId()).get();
+		assertThat(updated.getSeat().getId()).isEqualTo(seat2.getId());
 	}
 
 	@Test
-	@DisplayName("이미 PAID 티켓이 있는 좌석으로 Draft Ticket 생성 - 실패")
-	void createDraftTicket_seatAlreadyPaid_fail() {
+	@DisplayName("Draft Ticket의 좌석 해제 - 성공")
+	void clearSeat_success() {
 
-		// 기존 사용자에게 PAID 티켓 생성
-		ticketHelper.createPaidTicket(user, seat, event);
+		// Draft 생성 후 좌석 할당
+		Ticket draft = ticketService.getOrCreateDraft(event.getId(), user.getId());
+		draft.assignSeat(seat);
+		ticketRepository.save(draft);
 
-		// 다른 사용자가 같은 좌석으로 Draft Ticket 생성 시도
-		User anotherUser = userHelper.createUser(UserRole.NORMAL).user();
+		assertThat(draft.getSeat()).isNotNull();
 
-		assertThatThrownBy(() ->
-			ticketService.createDraftTicket(event.getId(), seat.getId(), anotherUser.getId())
-		)
-			.isInstanceOf(ErrorException.class)
-			.hasMessageContaining("이미 구매된 상태입니다");
+		// 좌석 해제
+		draft.clearSeat();
+		ticketRepository.save(draft);
+
+		Ticket updated = ticketRepository.findById(draft.getId()).get();
+		assertThat(updated.getSeat()).isNull();
 	}
 
 	// ===== 잘못된 상태 전이 테스트 =====
@@ -345,8 +363,12 @@ class TicketServiceIntegrationTest {
 	@DisplayName("FAILED 상태 티켓을 결제 확정 시도 - 실패 (상태 전이 오류)")
 	void confirmPayment_failedTicket_fail() {
 
-		// DRAFT 티켓 생성 후 실패 처리
-		Ticket draft = ticketService.createDraftTicket(event.getId(), seat.getId(), user.getId());
+		// DRAFT 티켓 생성 후 좌석 할당
+		Ticket draft = ticketService.getOrCreateDraft(event.getId(), user.getId());
+		draft.assignSeat(seat);
+		ticketRepository.save(draft);
+
+		// 결제 실패 처리
 		seat.markAsReserved();
 		seatRepository.save(seat);
 		ticketService.failPayment(draft.getId());

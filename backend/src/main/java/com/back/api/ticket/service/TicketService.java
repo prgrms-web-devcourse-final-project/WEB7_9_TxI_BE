@@ -76,6 +76,33 @@ public class TicketService {
 	}
 
 	/**
+	 * Draft Ticket 조회 또는 생성 (유저+이벤트당 1개 유지)
+	 * - 기존 Draft가 있으면 반환
+	 * - 없으면 새로 생성 (좌석 없이)
+	 */
+	@Transactional
+	public Ticket getOrCreateDraft(Long eventId, Long userId) {
+		return ticketRepository
+			.findByEventIdAndOwnerIdAndTicketStatus(eventId, userId, TicketStatus.DRAFT)
+			.orElseGet(() -> {
+				User user = userRepository.findById(userId)
+					.orElseThrow(() -> new ErrorException(CommonErrorCode.NOT_FOUND_USER));
+
+				Event event = eventRepository.findById(eventId)
+					.orElseThrow(() -> new ErrorException(EventErrorCode.NOT_FOUND_EVENT));
+
+				Ticket ticket = Ticket.builder()
+					.owner(user)
+					.event(event)
+					.seat(null)  // 좌석 없이 생성
+					.ticketStatus(TicketStatus.DRAFT)
+					.build();
+
+				return ticketRepository.save(ticket);
+			});
+	}
+
+	/**
 	 * 진행 중인 Draft Ticket 조회
 	 */
 	@Transactional(readOnly = true)
@@ -152,17 +179,5 @@ public class TicketService {
 		}
 
 		return ticket;
-	}
-
-	/**
-	 * 사용자가 이미 해당 이벤트에 대해 좌석을 선택(임시/발급완료 된 티켓이 존재)했는지 확인
-	 */
-	@Transactional(readOnly = true)
-	public boolean hasUserAlreadySelectedSeat(Long eventId, Long userId) {
-		return ticketRepository.existsByEventIdAndOwnerIdAndTicketStatusIn(
-			eventId,
-			userId,
-			List.of(TicketStatus.DRAFT, TicketStatus.PAID, TicketStatus.ISSUED)
-		);
 	}
 }

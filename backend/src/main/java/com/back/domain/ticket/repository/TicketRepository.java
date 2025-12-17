@@ -24,4 +24,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 	List<Ticket> findExpiredDraftTickets(TicketStatus status, LocalDateTime time);
 
 	Optional<Ticket> findBySeatIdAndOwnerIdAndTicketStatus(Long seatId, Long userId, TicketStatus ticketStatus);
+
+	Optional<Ticket> findByEventIdAndOwnerIdAndTicketStatus(Long eventId, Long userId, TicketStatus ticketStatus);
 }

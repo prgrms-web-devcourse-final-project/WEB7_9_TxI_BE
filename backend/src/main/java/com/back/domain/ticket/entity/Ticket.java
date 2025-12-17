@@ -47,7 +47,7 @@ public class Ticket extends BaseEntity {
 	private User owner;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "seat_id", nullable = false)
+	@JoinColumn(name = "seat_id", nullable = true)
 	private Seat seat;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -128,5 +128,32 @@ public class Ticket extends BaseEntity {
 			throw new ErrorException(TicketErrorCode.INVALID_TICKET_STATE);
 		}
 		this.ticketStatus = TicketStatus.CANCELLED;
+	}
+
+	/**
+	 * 좌석 할당 (DRAFT 티켓에만 가능)
+	 */
+	public void assignSeat(Seat seat) {
+		if (this.ticketStatus != TicketStatus.DRAFT) {
+			throw new ErrorException(TicketErrorCode.INVALID_TICKET_STATE);
+		}
+		this.seat = seat;
+	}
+
+	/**
+	 * 좌석 해제 (DRAFT 티켓에만 가능)
+	 */
+	public void clearSeat() {
+		if (this.ticketStatus != TicketStatus.DRAFT) {
+			throw new ErrorException(TicketErrorCode.INVALID_TICKET_STATE);
+		}
+		this.seat = null;
+	}
+
+	/**
+	 * 좌석 할당 여부 확인
+	 */
+	public boolean hasSeat() {
+		return this.seat != null;
 	}
 }

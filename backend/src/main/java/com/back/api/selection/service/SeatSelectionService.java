@@ -25,7 +25,9 @@ public class SeatSelectionService {
 	private final QueueEntryReadService queueEntryReadService;
 
 	/**
-	 * 좌석 선택 + DraftTicket 생성
+	 * 좌석 선택 + DraftTicket 생성/업데이트
+	 * - 기존 Draft가 있으면 재사용 (좌석만 변경)
+	 * - 없으면 새로 생성
 	 */
 	@Transactional
 	public Ticket selectSeatAndCreateTicket(Long eventId, Long seatId, Long userId) {
@@ -33,15 +35,41 @@ public class SeatSelectionService {
 			throw new ErrorException(SeatErrorCode.NOT_IN_QUEUE);
 		}
 
-		// 좌석 여러개 선택 방어 로직
-		if (ticketService.hasUserAlreadySelectedSeat(eventId, userId)) {
-			throw new ErrorException(SeatErrorCode.SEAT_ALREADY_EXISTS);
+		// Draft Ticket 조회 또는 생성 (1개 보장)
+		Ticket ticket = ticketService.getOrCreateDraft(eventId, userId);
+
+		// 기존 좌석이 있으면 먼저 해제
+		if (ticket.hasSeat()) {
+			seatService.markSeatAsAvailable(ticket.getSeat());
 		}
 
-		Seat reservedSeat = seatService.reserveSeat(eventId, seatId, userId);
+		// 새 좌석 예약
+		Seat newSeat = seatService.reserveSeat(eventId, seatId, userId);
 
-		Ticket draftTicket = ticketService.createDraftTicket(eventId, seatId, userId);
+		// Ticket에 좌석 할당
+		ticket.assignSeat(newSeat);
 
-		return draftTicket;
+		return ticket;
+	}
+
+	/**
+	 * 좌석 선택 취소 (DraftTicket은 유지, 좌석만 해제)
+	 */
+	@Transactional
+	public void deselectSeatAndCancelTicket(Long eventId, Long seatId, Long userId) {
+		// Draft Ticket 조회
+		Ticket ticket = ticketService.getOrCreateDraft(eventId, userId);
+
+		// 좌석 검증
+		if (!ticket.hasSeat() || !ticket.getSeat().getId().equals(seatId)) {
+			throw new ErrorException(SeatErrorCode.SEAT_NOT_SELECTED);
+		}
+
+		// 좌석 해제
+		Seat seat = ticket.getSeat();
+		seatService.markSeatAsAvailable(seat);
+
+		// Ticket에서 좌석 제거 (티켓은 유지)
+		ticket.clearSeat();
 	}
 }

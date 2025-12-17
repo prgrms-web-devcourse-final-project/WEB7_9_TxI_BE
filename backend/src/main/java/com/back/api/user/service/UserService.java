@@ -32,6 +32,7 @@ public class UserService {
 		return UserProfileResponseMapper.from(user);
 	}
 
+	@Transactional
 	public UserProfileResponse updateProfile(Long userId, UpdateProfileRequest request) {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new ErrorException(UserErrorCode.NOT_FOUND));

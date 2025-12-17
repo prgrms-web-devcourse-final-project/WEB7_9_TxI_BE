@@ -119,8 +119,9 @@ public class HttpRequestContext {
 		}
 
 		boolean secureRequest = request.isSecure();
-		cookie.setSecure(secureRequest && !isLocalhostDomain);
-		cookie.setAttribute("SameSite", isLocalhostDomain ? "Lax" : "Strict");
+		// cookie.setSecure(secureRequest && !isLocalhostDomain); TODO 리팩토링
+		cookie.setSecure(true);
+		cookie.setAttribute("SameSite", "None");
 
 		if (value.isBlank()) {
 			cookie.setMaxAge(0);

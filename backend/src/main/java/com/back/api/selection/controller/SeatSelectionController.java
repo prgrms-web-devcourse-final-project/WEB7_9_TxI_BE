@@ -1,5 +1,6 @@
 package com.back.api.selection.controller;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,5 +40,21 @@ public class SeatSelectionController implements SeatSelectionApi {
 			"좌석을 선택했습니다.",
 			SeatSelectionResponse.from(draftTicket)
 		);
+	}
+
+	/**
+	 * 좌석 선택 취소
+	 * DELETE /api/v1/events/{eventId}/seats/{seatId}/deselect
+	 */
+	@Override
+	@DeleteMapping("/deselect")
+	public ApiResponse<Void> deselectSeat(
+		@PathVariable Long eventId, @PathVariable Long seatId
+	) {
+		Long userId = httpRequestContext.getUser().getId();
+
+		seatSelectionService.deselectSeatAndCancelTicket(eventId, seatId, userId);
+
+		return ApiResponse.noContent("좌석 선택이 취소되었습니다.");
 	}
 }

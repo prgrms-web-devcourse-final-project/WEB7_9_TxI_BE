@@ -27,4 +27,17 @@ public interface SeatSelectionApi {
 		@PathVariable Long eventId,
 		@PathVariable Long seatId
 	);
+
+	@Operation(summary = "좌석 선택 취소", description = "선택한 좌석을 취소하고 AVAILABLE 상태로 복구합니다. Draft Ticket은 유지됩니다.")
+	@ApiErrorCode(
+		{
+			"NOT_FOUND_SEAT",
+			"SEAT_NOT_SELECTED",
+			"NOT_FOUND_USER",
+		}
+	)
+	public ApiResponse<Void> deselectSeat(
+		@PathVariable Long eventId,
+		@PathVariable Long seatId
+	);
 }

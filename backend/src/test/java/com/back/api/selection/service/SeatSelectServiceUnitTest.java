@@ -83,12 +83,19 @@ class SeatSelectServiceUnitTest {
 	class SelectSeatAndCreateTicketTest {
 
 		@Test
-		@DisplayName("정상적으로 좌석을 선택하고 Draft Ticket을 생성한다")
+		@DisplayName("정상적으로 좌석을 선택하고 Draft Ticket을 생성/업데이트한다")
 		void selectSeatAndCreateTicket_Success() {
 			// given
+			Ticket draftTicket = Ticket.builder()
+				.owner(testUser)
+				.event(testEvent)
+				.seat(null)  // 좌석 없이 생성
+				.ticketStatus(TicketStatus.DRAFT)
+				.build();
+
 			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
+			given(ticketService.getOrCreateDraft(eventId, userId)).willReturn(draftTicket);
 			given(seatService.reserveSeat(eventId, seatId, userId)).willReturn(testSeat);
-			given(ticketService.createDraftTicket(eventId, seatId, userId)).willReturn(testTicket);
 
 			// when
 			Ticket result = seatSelectionService.selectSeatAndCreateTicket(eventId, seatId, userId);
@@ -101,8 +108,9 @@ class SeatSelectServiceUnitTest {
 			assertThat(result.getSeat()).isEqualTo(testSeat);
 
 			then(queueEntryReadService).should().isUserEntered(eventId, userId);
+			then(ticketService).should().getOrCreateDraft(eventId, userId);
 			then(seatService).should().reserveSeat(eventId, seatId, userId);
-			then(ticketService).should().createDraftTicket(eventId, seatId, userId);
+			then(seatService).should(never()).markSeatAsAvailable(any());  // 기존 좌석 없음
 		}
 
 		@Test
@@ -116,15 +124,23 @@ class SeatSelectServiceUnitTest {
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.NOT_IN_QUEUE);
 
+			then(ticketService).should(never()).getOrCreateDraft(any(), any());
 			then(seatService).should(never()).reserveSeat(any(), any(), any());
-			then(ticketService).should(never()).createDraftTicket(any(), any(), any());
 		}
 
 		@Test
-		@DisplayName("좌석 예약 실패 시 티켓 생성하지 않는다")
+		@DisplayName("좌석 예약 실패 시 예외가 발생한다")
 		void selectSeatAndCreateTicket_ReserveFail_DoesNotCreateTicket() {
 			// given
+			Ticket draftTicket = Ticket.builder()
+				.owner(testUser)
+				.event(testEvent)
+				.seat(null)
+				.ticketStatus(TicketStatus.DRAFT)
+				.build();
+
 			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
+			given(ticketService.getOrCreateDraft(eventId, userId)).willReturn(draftTicket);
 			given(seatService.reserveSeat(eventId, seatId, userId))
 				.willThrow(new ErrorException(SeatErrorCode.SEAT_ALREADY_RESERVED));
 
@@ -133,7 +149,7 @@ class SeatSelectServiceUnitTest {
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.SEAT_ALREADY_RESERVED);
 
-			then(ticketService).should(never()).createDraftTicket(any(), any(), any());
+			then(ticketService).should().getOrCreateDraft(eventId, userId);
 		}
 	}
 
@@ -145,11 +161,18 @@ class SeatSelectServiceUnitTest {
 		@DisplayName("좌석 선택 성공 시 좌석이 RESERVED 상태가 된다")
 		void selectSeat_SeatBecomesReserved() {
 			// given
+			Ticket draftTicket = Ticket.builder()
+				.owner(testUser)
+				.event(testEvent)
+				.seat(null)
+				.ticketStatus(TicketStatus.DRAFT)
+				.build();
+
 			testSeat.markAsReserved(); // 예약 상태로 변경
 
 			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
+			given(ticketService.getOrCreateDraft(eventId, userId)).willReturn(draftTicket);
 			given(seatService.reserveSeat(eventId, seatId, userId)).willReturn(testSeat);
-			given(ticketService.createDraftTicket(eventId, seatId, userId)).willReturn(testTicket);
 
 			// when
 			Ticket result = seatSelectionService.selectSeatAndCreateTicket(eventId, seatId, userId);
@@ -164,22 +187,29 @@ class SeatSelectServiceUnitTest {
 	class TransactionRollbackTest {
 
 		@Test
-		@DisplayName("티켓 생성 실패 시 예외가 발생한다")
+		@DisplayName("좌석 할당 중 예외 발생 시 예외가 전파된다")
 		void selectSeatAndCreateTicket_TicketCreationFail_ThrowsException() {
 			// given
+			Ticket draftTicket = Ticket.builder()
+				.owner(testUser)
+				.event(testEvent)
+				.seat(null)
+				.ticketStatus(TicketStatus.DRAFT)
+				.build();
+
 			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
-			given(seatService.reserveSeat(eventId, seatId, userId)).willReturn(testSeat);
-			given(ticketService.createDraftTicket(eventId, seatId, userId))
-				.willThrow(new RuntimeException("티켓 생성 실패"));
+			given(ticketService.getOrCreateDraft(eventId, userId)).willReturn(draftTicket);
+			given(seatService.reserveSeat(eventId, seatId, userId))
+				.willThrow(new RuntimeException("좌석 예약 실패"));
 
 			// when & then
 			assertThatThrownBy(() -> seatSelectionService.selectSeatAndCreateTicket(eventId, seatId, userId))
 				.isInstanceOf(RuntimeException.class)
-				.hasMessage("티켓 생성 실패");
+				.hasMessage("좌석 예약 실패");
 
-			// 좌석 예약까지는 호출되었지만 트랜잭션 롤백으로 인해 실제로는 반영되지 않음
+			// Draft Ticket은 조회되었지만, 좌석 예약 실패로 트랜잭션 롤백
+			then(ticketService).should().getOrCreateDraft(eventId, userId);
 			then(seatService).should().reserveSeat(eventId, seatId, userId);
-			then(ticketService).should().createDraftTicket(eventId, seatId, userId);
 		}
 	}
 }
