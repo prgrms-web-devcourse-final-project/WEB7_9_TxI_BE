@@ -73,7 +73,27 @@ cookie:
   secure: true
   same-site: None
   domain: ""
+
 #cookie:
 #  secure: true
 #  same-site: None
 #  domain: ".waitfair.shop"
+
+# 임시 운영환경용 스케줄러. redis 해결 후 삭제
+queue:
+  scheduler:
+    #입장 처리 스케줄러
+    entry:
+      cron: "0 0 3 * * *"  # 매일 새벽 3시
+      batch-size: 100
+      max-entered-limit: 100
+    shuffle:
+      cron: "0 0 4 * * *"  # 매일 새벽 4시
+      time-range-minutes: 1
+    expire:
+      cron: "0 0 5 * * *"  # 매일 새벽 5시
+
+event:
+  scheduler:
+    open:
+      cron: "0 0 2 * * *"  # 매일 새벽 2시
