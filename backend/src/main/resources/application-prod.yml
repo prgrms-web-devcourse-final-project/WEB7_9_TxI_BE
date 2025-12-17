@@ -71,7 +71,7 @@ management:
 # TODO: 프론트 완료 후 아래 주석처리 한 걸로 교체
 cookie:
   secure: false
-  same-site: Lax
+  same-site: None
   domain: ""
 #cookie:
 #  secure: true
