@@ -50,3 +50,9 @@ src/main/resources/application-local.yml
 src/main/resources/application-test.yml
 src/main/resources/application-perf.yml
 !src/main/resources/application-example.yml
+
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
