@@ -51,6 +51,7 @@ custom:
       - POST
       - PUT
       - DELETE
+      - PATCH
       - OPTIONS
     allowed-headers:
       - "Authorization"
