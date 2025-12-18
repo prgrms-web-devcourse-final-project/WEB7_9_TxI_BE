@@ -1,5 +1,7 @@
 package com.back.api.queue.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 
@@ -13,10 +15,8 @@ public record ProcessEntriesRequest(
 	@Min(value = 1, message = "최소 1명 이상이어야 합니다.")
 	Integer count
 ) {
-	public static ProcessEntriesRequest withDefault() {
-		return new ProcessEntriesRequest(1);
-	}
 
+	@JsonIgnore
 	public int getCountOrDefault() {
 		return count != null ? count : 1;
 	}

@@ -8,10 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.back.api.queue.dto.request.ProcessEntriesRequest;
 import com.back.api.queue.dto.request.ShuffleQueueRequest;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
-import com.back.api.queue.dto.response.ProcessEntriesResponse;
 import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.ShuffleQueueResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
@@ -82,21 +80,4 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 		return ApiResponse.ok("대기열이 초기화되었습니다.", null);
 	}
 
-	@Override
-	@PostMapping("/{eventId}/process-entry")
-	public ApiResponse<ProcessEntriesResponse> processTopEntries(
-		@PathVariable Long eventId,
-		@RequestBody(required = false) @Valid ProcessEntriesRequest request
-
-	) {
-
-		int entryCount = (request != null) ? request.getCountOrDefault() : 1;
-
-		ProcessEntriesResponse response = queueEntryProcessService.processTopEntriesForTest(
-			eventId,
-			entryCount
-		);
-
-		return ApiResponse.ok("입장 처리가 완료되었습니다.(테스트)", response);
-	}
 }

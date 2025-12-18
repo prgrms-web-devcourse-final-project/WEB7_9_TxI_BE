@@ -3,10 +3,8 @@ package com.back.api.queue.controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.back.api.queue.dto.request.ProcessEntriesRequest;
 import com.back.api.queue.dto.request.ShuffleQueueRequest;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
-import com.back.api.queue.dto.response.ProcessEntriesResponse;
 import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.ShuffleQueueResponse;
 import com.back.global.config.swagger.ApiErrorCode;
@@ -74,25 +72,6 @@ public interface AdminQueueEntryApi {
 	ApiResponse<Void> resetQueue(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId
-	);
-
-	@Operation(
-		summary = "[테스트용] 상위 N명 입장 처리",
-		description = "대기열 상위 N명을 즉시 입장 처리합니다."
-	)
-
-	@ApiErrorCode({
-		"NOT_FOUND_QUEUE_ENTRY",
-		"ALREADY_ENTERED",
-		"ALREADY_EXPIRED",
-		"ALREADY_COMPLETED",
-		"NOT_WAITING_STATUS"
-	})
-	ApiResponse<ProcessEntriesResponse> processTopEntries(
-		@Parameter(description = "이벤트 ID", example = "1")
-		@PathVariable Long eventId,
-
-		@RequestBody(required = false) @Valid ProcessEntriesRequest request
 	);
 
 }

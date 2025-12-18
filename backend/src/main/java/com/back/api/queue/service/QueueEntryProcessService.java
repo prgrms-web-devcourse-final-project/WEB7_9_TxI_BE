@@ -24,7 +24,6 @@ import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
-import com.back.global.error.code.EventErrorCode;
 import com.back.global.error.code.QueueEntryErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.global.event.EventPublisher;
@@ -159,11 +158,9 @@ public class QueueEntryProcessService {
 	}
 
 	/* ==================== 테스트용 상위 N명 입장 처리 ==================== */
+
 	@Transactional
 	public ProcessEntriesResponse processTopEntriesForTest(Long eventId, int count) {
-
-		Event event = eventRepository.findById(eventId)
-			.orElseThrow(() -> new ErrorException(EventErrorCode.NOT_FOUND_EVENT));
 
 		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
 
@@ -191,6 +188,54 @@ public class QueueEntryProcessService {
 		Long remainingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
 		return ProcessEntriesResponse.from(eventId, userIds.size(), remainingCount);
 	}
+
+	/* ==================== 테스트용 내 앞에 사람 모두 입장 처리 ==================== */
+
+	@Transactional
+	public ProcessEntriesResponse processTopEntriesUntilMeForTest(Long eventId, Long userId) {
+
+		QueueEntry myEntry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
+			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
+
+		if(myEntry.getQueueEntryStatus() != QueueEntryStatus.WAITING) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_WAITING_STATUS);
+		}
+
+		Long myRank = queueEntryRedisRepository.getMyRankInWaitingQueue(eventId, userId);
+
+		if (myRank == null || myRank <= 1) {
+			return ProcessEntriesResponse.from(eventId, 0,
+				queueEntryRedisRepository.getTotalWaitingCount(eventId));
+		}
+
+		int countToProcess = myRank.intValue() - 1;
+
+		Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, countToProcess);
+
+		if(topWaitingUsers.isEmpty()) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_INVALID_COUNT);
+		}
+
+		List<Long> userIds = new ArrayList<>();
+		for (Object userIdObj : topWaitingUsers) {
+			Long targetUserId = Long.parseLong(userIdObj.toString());
+			if (!targetUserId.equals(userId)) {
+				userIds.add(targetUserId);
+			}
+		}
+
+		if (userIds.isEmpty()) {
+			return ProcessEntriesResponse.from(eventId, 0,
+				queueEntryRedisRepository.getTotalWaitingCount(eventId));
+		}
+
+		processBatchEntry(eventId, userIds);
+		publishWaitingUpdateEvents(eventId);
+
+		Long remainingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
+		return ProcessEntriesResponse.from(eventId, userIds.size(), remainingCount);
+	}
+
 
 	/* ==================== 만료 처리 ==================== */
 
