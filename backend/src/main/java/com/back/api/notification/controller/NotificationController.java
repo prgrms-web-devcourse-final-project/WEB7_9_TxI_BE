@@ -59,7 +59,7 @@ public class NotificationController implements NotificationApi {
 		Long userId = httpRequestContext.getUserId();
 		notificationService.markAsRead(notificationId, userId);
 
-		return ApiResponse.noContent("개별 알림을 읽음 처리 하였습니다.");
+		return ApiResponse.ok("개별 알림을 읽음 처리 하였습니다.",null);
 	}
 
 	/**
@@ -70,6 +70,6 @@ public class NotificationController implements NotificationApi {
 	public ApiResponse<Void> markAllAsRead() {
 		Long userId = httpRequestContext.getUserId();
 		notificationService.markAllAsRead(userId);
-		return ApiResponse.noContent("모든 알림을 읽음 처리 하였습니다.");
+		return ApiResponse.ok("모든 알림을 읽음 처리 하였습니다.",null);
 	}
 }
