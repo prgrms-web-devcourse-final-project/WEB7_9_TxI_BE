@@ -21,10 +21,10 @@ public class JwtProvider {
 	private String secret;
 
 	@Value("${custom.jwt.access-token-duration}")
-	private long accessTokenDurationMillis;
+	private long accessTokenDurationSeconds;
 
 	@Value("${custom.jwt.refresh-token-duration}")
-	private long refreshTokenDurationMillis;
+	private long refreshTokenDurationSeconds;
 
 	private static final String CLAIM_ID = "id";
 	private static final String CLAIM_NICKNAME = "nickname";
@@ -39,7 +39,7 @@ public class JwtProvider {
 
 		return JwtUtil.toString(
 			secret,
-			accessTokenDurationMillis,
+			accessTokenDurationSeconds,
 			claims
 		);
 	}
@@ -51,7 +51,7 @@ public class JwtProvider {
 
 		return JwtUtil.toString(
 			secret,
-			refreshTokenDurationMillis,
+			refreshTokenDurationSeconds,
 			claims
 		);
 	}
@@ -65,13 +65,13 @@ public class JwtProvider {
 	}
 
 	/** access token 유효 기간 (ms 단위) */
-	public long getAccessTokenValidityMillis() {
-		return accessTokenDurationMillis;
+	public long getAccessTokenValiditySeconds() {
+		return accessTokenDurationSeconds;
 	}
 
 	/** refresh token 유효 기간 (ms 단위) */
-	public long getRefreshTokenValidityMillis() {
-		return refreshTokenDurationMillis;
+	public long getRefreshTokenValiditySeconds() {
+		return refreshTokenDurationSeconds;
 	}
 
 	public Map<String, Object> payloadOrNull(String jwt) {

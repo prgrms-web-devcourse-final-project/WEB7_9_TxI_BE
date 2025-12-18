@@ -61,8 +61,7 @@ public class UserService {
 		refreshTokenRepository.revokeAllByUserId(userId);
 
 		// 현재 요청의 쿠키 삭제 (현재 기기 즉시 로그아웃 UX)
-		requestContext.deleteCookie("accessToken");
-		requestContext.deleteCookie("refreshToken");
+		requestContext.deleteAuthCookies();
 
 		user.softDelete();
 	}

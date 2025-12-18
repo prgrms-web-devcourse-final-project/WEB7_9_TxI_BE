@@ -24,6 +24,7 @@ spring:
     redis:
       host: localhost
       port: 6379
+      password: ${REDIS_PASSWORD:}
 
 logging:
   level:
@@ -50,6 +51,7 @@ custom:
       - POST
       - PUT
       - DELETE
+      - PATCH
       - OPTIONS
     allowed-headers:
       - "Authorization"

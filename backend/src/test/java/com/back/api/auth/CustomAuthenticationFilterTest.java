@@ -69,12 +69,12 @@ public class CustomAuthenticationFilterTest {
 		);
 
 		// 이미 만료된 accessToken (유효기간을 음수로 줘서 발급 시점부터 만료 상태)
-		String expiredAccessToken = JwtUtil.toString(secret, -1_000L, payload);
+		String expiredAccessToken = JwtUtil.toString(secret, -1L, payload);
 
 		// 아직 유효한 refreshToken
 		String validRefreshToken = JwtUtil.toString(
 			secret,
-			jwtProvider.getRefreshTokenValidityMillis(),
+			jwtProvider.getRefreshTokenValiditySeconds(),
 			payload
 		);
 
@@ -129,8 +129,8 @@ public class CustomAuthenticationFilterTest {
 			"role", user.getRole()
 		);
 
-		String expiredAccessToken = JwtUtil.toString(secret, -1_000L, payload);
-		String expiredRefreshToken = JwtUtil.toString(secret, -1_000L, payload);
+		String expiredAccessToken = JwtUtil.toString(secret, -1L, payload);
+		String expiredRefreshToken = JwtUtil.toString(secret, -1L, payload);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/some-resource");
 		request.setCookies(

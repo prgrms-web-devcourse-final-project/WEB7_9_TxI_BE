@@ -26,6 +26,7 @@ public class TestRedisConfig {
 		// Spring Boot Redis 설정에 반영
 		System.setProperty("spring.data.redis.host", "localhost");
 		System.setProperty("spring.data.redis.port", String.valueOf(redisPort));
+		System.setProperty("spring.data.redis.password", "");
 
 		System.out.printf("Embedded Redis 서버 시작 (port: %d)%n", redisPort);
 	}

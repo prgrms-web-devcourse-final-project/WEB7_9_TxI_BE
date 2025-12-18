@@ -25,8 +25,9 @@ public enum QueueEntryErrorCode implements ErrorCode {
 
 	ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "이미 결제가 완료되었습니다."),
 	NOT_ENTERED_STATUS(HttpStatus.BAD_REQUEST, "입장 완료 상태가 아닙니다."),
-	CANNOT_COMPLETE_PAYMENT(HttpStatus.BAD_REQUEST, "결제 완료 처리를 할 수 없는 상태입니다.");
+	CANNOT_COMPLETE_PAYMENT(HttpStatus.BAD_REQUEST, "결제 완료 처리를 할 수 없는 상태입니다."),
 
+	NOT_INVALID_COUNT(HttpStatus.BAD_REQUEST, "입장시킬 사용자가 없습니다.");
 	private final HttpStatus httpStatus;
 	private final String message;
 }

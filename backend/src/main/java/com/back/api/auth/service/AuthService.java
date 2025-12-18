@@ -75,8 +75,8 @@ public class AuthService {
 
 		JwtDto tokens = authTokenService.generateTokens(user);
 
-		requestContext.setCookie("accessToken", tokens.accessToken());
-		requestContext.setCookie("refreshToken", tokens.refreshToken());
+		requestContext.setAccessTokenCookie(tokens.accessToken());
+		requestContext.setRefreshTokenCookie(tokens.refreshToken());
 
 		return buildAuthResponse(user, tokens);
 	}
@@ -96,8 +96,7 @@ public class AuthService {
 
 		refreshToken.revoke();
 
-		requestContext.deleteCookie("accessToken");
-		requestContext.deleteCookie("refreshToken");
+		requestContext.deleteAuthCookies();
 	}
 
 	@Transactional

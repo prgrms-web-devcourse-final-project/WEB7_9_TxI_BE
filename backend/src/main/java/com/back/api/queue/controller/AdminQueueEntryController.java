@@ -79,4 +79,5 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 		queueEntryRedisRepository.clearAll(eventId);
 		return ApiResponse.ok("대기열이 초기화되었습니다.", null);
 	}
+
 }

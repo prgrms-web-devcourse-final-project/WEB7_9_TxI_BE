@@ -73,4 +73,5 @@ public interface AdminQueueEntryApi {
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId
 	);
+
 }

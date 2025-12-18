@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -160,6 +161,211 @@ public class QueueEntryControllerTest {
 			mockMvc.perform(get("/api/v1/queues/{eventId}/exists", testEvent.getId()))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data").value(false))
+				.andDo(print());
+		}
+	}
+
+	@Nested
+	@DisplayName("상위 N명 입장 처리 API (/api/v1/queues/{eventId}/process-entries")
+	class ProcessTopEntriesTest  {
+		@Test
+		@DisplayName("상위 1명 입장 처리 - 기본값")
+		void processTopEntries_Default_Success() throws Exception {
+			// given
+			for (int i = 1; i <= 5; i++) {
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				userRepository.save(user);
+				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
+			}
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-entries", testEvent.getId())
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("{}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("입장 처리가 완료되었습니다."))
+				.andExpect(jsonPath("$.data.eventId").value(testEvent.getId()))
+				.andExpect(jsonPath("$.data.processedCount").value(1))
+				.andExpect(jsonPath("$.data.remainingWaitingCount").value(4))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("상위 5명 입장 처리")
+		void processTopEntries_Count5_Success() throws Exception {
+			// given
+			for (int i = 1; i <= 10; i++) {
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				userRepository.save(user);
+				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
+			}
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-entries", testEvent.getId())
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("{\"count\": 5}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.processedCount").value(5))
+				.andExpect(jsonPath("$.data.remainingWaitingCount").value(5))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("대기 인원보다 많은 수 요청")
+		void processTopEntries_CountExceedsWaiting() throws Exception {
+			// given
+			for (int i = 1; i <= 3; i++) {
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				userRepository.save(user);
+				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
+			}
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-entries", testEvent.getId())
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("{\"count\": 10}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.processedCount").value(3))
+				.andExpect(jsonPath("$.data.remainingWaitingCount").value(0))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("대기 인원이 없을 때 - 0명 처리")
+		void processTopEntries_NoWaiting_ProcessZero() throws Exception {
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-entries", testEvent.getId())
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("{\"count\": 5}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.processedCount").value(0))
+				.andExpect(jsonPath("$.data.remainingWaitingCount").value(0))
+				.andDo(print());
+		}
+	}
+
+	@Nested
+	@DisplayName("내 앞 사용자 모두 입장 처리 API (/api/v1/queues/{eventId}/process-until-me")
+	class ProcessUntilMeTest  {
+		@Test
+		@DisplayName("70번째 사용자 - 앞의 69명 입장 처리")
+		void processUntilMe_Rank77_Process76Users() throws Exception {
+			// given
+			for (int i = 1; i <= 69; i++) {
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				userRepository.save(user);
+				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
+			}
+
+
+			queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 70);
+
+			for (int i = 71; i <= 100; i++) {
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				userRepository.save(user);
+				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
+			}
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-until-me", testEvent.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("내 앞 사용들이 모두 입장 처리가 완료되었습니다."))
+				.andExpect(jsonPath("$.data.eventId").value(testEvent.getId()))
+				.andExpect(jsonPath("$.data.processedCount").value(69))
+				.andExpect(jsonPath("$.data.remainingWaitingCount").value(31))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("1순위 사용자 - 처리할 사용자 없음")
+		void processUntilMe_Rank1_ProcessZero() throws Exception {
+			// given
+			queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 1);
+
+
+			for (int i = 2; i <= 10; i++) {
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				userRepository.save(user);
+				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
+			}
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-until-me", testEvent.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.processedCount").value(0))
+				.andExpect(jsonPath("$.data.remainingWaitingCount").value(10))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("5순위 사용자 - 앞의 4명 입장 처리")
+		void processUntilMe_Rank5_Process4Users() throws Exception {
+			// given
+			for (int i = 1; i <= 4; i++) {
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				userRepository.save(user);
+				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
+			}
+
+			queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 5);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-until-me", testEvent.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.processedCount").value(4))
+				.andExpect(jsonPath("$.data.remainingWaitingCount").value(1))  // 나만 남음
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("대기열에 없는 사용자 - 실패")
+		void processUntilMe_NotInQueue_Fail() throws Exception {
+			// given
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-until-me", testEvent.getId()))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value("큐 대기열 항목을 찾을 수 없습니다."))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("이미 입장한 사용자 - 실패")
+		void processUntilMe_AlreadyEntered_Fail() throws Exception {
+			// given
+			queueEntryHelper.createEnteredQueueEntryWithRedis(testEvent, testUser);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-until-me", testEvent.getId()))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("대기중 상태가 아닙니다."))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("만료된 사용자 - 실패")
+		void processUntilMe_Expired_Fail() throws Exception {
+			// given
+			queueEntryHelper.createExpiredQueueEntry(testEvent, testUser);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-until-me", testEvent.getId()))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("대기중 상태가 아닙니다."))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("결제 완료된 사용자 - 실패")
+		void processUntilMe_Completed_Fail() throws Exception {
+			// given
+			queueEntryHelper.createCompletedQueueEntry(testEvent, testUser);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/process-until-me", testEvent.getId()))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("대기중 상태가 아닙니다."))
 				.andDo(print());
 		}
 	}

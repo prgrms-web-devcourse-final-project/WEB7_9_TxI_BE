@@ -7,3 +7,15 @@ GET {{BASE_URL}}/api/v1/queues/{{EVENT_ID}}/status
 
 ### 대기열 진입 여부 조회
 GET {{BASE_URL}}/api/v1/queues/{{EVENT_ID}}/exists
+
+### 상위 10명 입장 처리
+POST {{BASE_URL}}/api/v1/queues/{{EVENT_ID}}/process-entries
+Content-Type: application/json
+
+{
+  "count": 10
+}
+
+### 본인 앞 순서 모두 입장 처리
+POST {{BASE_URL}}/api/v1/queues/{{EVENT_ID}}/process-until-me
+
