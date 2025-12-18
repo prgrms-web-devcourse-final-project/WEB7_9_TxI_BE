@@ -45,4 +45,6 @@ public interface TicketApi {
 		description = "현재 로그인한 사용자의 모든 티켓 목록을 조회합니다."
 	)
 	ApiResponse<List<TicketResponse>> getMyTickets();
+
+	// TODO: API 설명츄가
 }

@@ -13,15 +13,27 @@ export const options = {
 };
 
 /**
- * 좌석 선택 부하 테스트
- * - 인증 필요 (JWT 토큰)
- * - Event #3 (OPEN 상태, 500석)을 타겟으로 좌석 선택 경쟁 시뮬레이션
- * - 좌석 범위: 1~500 (VIP: A1~A50, R: C1~C100, S: B1~B150, A: D1~D200)
+ * 좌석 선택 부하 테스트 (원본 시나리오 - 혼합형)
  *
- * 주의:
+ * 목적:
+ * - 실제 티켓팅 상황에 가장 가까운 시나리오
+ * - 전체 좌석 풀에서 랜덤 선택 (500석)
+ * - 시스템 전반적인 병목 지점 파악
+ *
+ * 방법:
+ * - Event #3 (OPEN 상태, 500석) 타겟
+ * - 좌석 범위: 1~500 (VIP: A1~A50, R: C1~C100, S: B1~B150, A: D1~D200)
+ * - 사용자별 랜덤 좌석 선택
+ *
+ * 특징:
  * - 동일한 좌석을 여러 사용자가 동시에 선택하면 409 Conflict 발생 가능
  * - 이미 선택된 좌석을 선택하면 실패
- * - 실제 티켓팅 경쟁 상황을 시뮬레이션
+ * - 시나리오 A (Non-Competitive)와 B (Competitive)의 중간 형태
+ *
+ * 비교:
+ * - selectSeat_A.test.js: VU별 고유 좌석 할당 (경합 없음, 순수 로직 성능)
+ * - selectSeat_B.test.js: 제한된 좌석으로 경합 (경쟁 비용 측정)
+ * - selectSeat.test.js: 실제 티켓팅 혼합 시나리오 (본 파일)
  */
 export function setup() {
   const secret = __ENV.JWT_SECRET;
@@ -69,6 +81,7 @@ export default function (data) {
 
   selectSeat(baseUrl, jwt, data.testId, eventId, seatId);
 
-  // 사용자가 좌석을 선택한 후 다음 행동까지 대기하는 시간
-  sleep(1);
+  // 사용자 반응 시간 랜덤화 (0.5~2.0초)
+  // 실제 사용자처럼 행동하여 Pending Thread 과장 방지
+  sleep(Math.random() * 1.5 + 0.5);
 }
