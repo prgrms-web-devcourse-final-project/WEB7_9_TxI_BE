@@ -21,8 +21,7 @@ export const options = {
  * - 실제 티켓팅에 가까운 경쟁 상황 재현
  *
  * 방법:
- * - 제한된 좌석 풀만 사용 (HOT_SEATS 환경변수로 조절)
- * - 기본값: 50석 (VIP석 수준의 경쟁)
+ * - 제한된 좌석 풀만 사용 (50석 고정)
  * - 여러 VU가 동일한 좌석을 동시에 선택 시도
  *
  * 관찰 포인트:
@@ -36,11 +35,11 @@ export const options = {
  * - 시나리오 A 대비 TPS 감소
  * - 경합 비용 정량화
  *
- * 환경변수:
- * - HOT_SEATS: 경쟁 대상 좌석 수 (기본 50)
- *   - 50: VIP석 수준 경쟁 (높은 경합)
- *   - 100: 일반석 수준 경쟁 (중간 경합)
- *   - 200: 낮은 경합
+ * 경쟁 좌석 수 조정:
+ * - 50석: VIP석 수준 경쟁 (높은 경합) ← 현재 설정
+ * - 100석: 일반석 수준 경쟁 (중간 경합)
+ * - 200석: 낮은 경합
+ * 변경이 필요하면 setup() 함수 내 hotSeats 값을 직접 수정하세요.
  */
 export function setup() {
   const secret = __ENV.JWT_SECRET;
@@ -66,7 +65,7 @@ export function setup() {
     );
   });
 
-  const hotSeats = parseInt(__ENV.HOT_SEATS || "50", 10);
+  const hotSeats = 50; 
 
   console.log(`🔥 Competitive Test - HOT_SEATS: ${hotSeats} (경쟁 대상 좌석 수)`);
   console.log(`👥 Max VUs: ${maxVus} (최대 동시 사용자 수)`);
