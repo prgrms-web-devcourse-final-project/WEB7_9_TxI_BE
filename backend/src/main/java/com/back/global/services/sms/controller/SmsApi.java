@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
-@Tag(name = "SMS API", description = "SMS 인증번호 발송 및 검증 API")
+@Tag(name = "SMS API", description = "SMS 인증번호 발송 및 검증 API (현 시점에서는 사용하지 않는 API 입니다.)")
 public interface SmsApi {
 	@Operation(
 		summary = "SMS 인증번호 발송",
