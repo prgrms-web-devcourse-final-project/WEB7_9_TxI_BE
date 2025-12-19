@@ -1,6 +1,7 @@
 package com.back.api.preregister.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -156,9 +157,11 @@ public class PreRegisterService {
 			.orElse(false);
 	}
 
-	public PreRegisterResponse getMyPreRegister(Long eventId, Long userId) {
-		PreRegister preRegister = findPreRegister(eventId, userId);
-		return PreRegisterResponse.from(preRegister);
+	public List<PreRegisterResponse> getMyPreRegister(Long userId) {
+		List<PreRegister> preRegisters = preRegisterRepository.findByUser_Id(userId);
+		return preRegisters.stream()
+			.map(PreRegisterResponse::from)
+			.toList();
 	}
 
 	public Long getRegistrationCount(Long eventId) {

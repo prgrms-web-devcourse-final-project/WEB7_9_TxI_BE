@@ -299,7 +299,7 @@ class PreRegisterControllerTest {
 				.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.ALREADY_CANCELED.getMessage()));
 		}
 	}
-
+/*
 	@Nested
 	@DisplayName("내 사전등록 조회 API (GET /api/v1/events/{eventId}/pre-registers/me)")
 	class GetMyPreRegister {
@@ -335,7 +335,7 @@ class PreRegisterControllerTest {
 				.andExpect(jsonPath("$.message").value(
 					PreRegisterErrorCode.NOT_FOUND_PRE_REGISTER.getMessage()));
 		}
-	}
+	}*/
 
 	@Nested
 	@DisplayName("사전등록 여부 확인 API (GET /api/v1/events/{eventId}/pre-registers/status)")

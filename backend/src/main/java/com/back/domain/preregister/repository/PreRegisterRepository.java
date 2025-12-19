@@ -24,4 +24,6 @@ public interface PreRegisterRepository extends JpaRepository<PreRegister, Long> 
 	Optional<PreRegister> findByEvent_IdAndUser_Id(Long eventId, Long userId);
 
 	Long countByEvent_IdAndPreRegisterStatus(Long eventId, PreRegisterStatus status);
+
+	List<PreRegister> findByUser_Id(Long userId);
 }
