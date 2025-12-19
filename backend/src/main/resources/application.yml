@@ -3,6 +3,7 @@ spring:
     import: optional:file:.env.properties
   profiles:
     active: dev
+    include: secret
   output:
     ansi:
       enabled: always
@@ -70,7 +71,7 @@ custom:
   dev:
     domain: localhost
     back-url: "http://${custom.dev.domain}:8080"
-    front-url: "http://${custom.dev.domain}:5173"
+    front-url: "http://${custom.dev.domain}:3000"
   prod:
     domain: ${API_BASE_URL}
     back-url: "https://api.${custom.prod.domain}"
