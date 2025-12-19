@@ -2,9 +2,7 @@ package com.back.api.ticket.dto.response;
 
 import java.time.LocalDateTime;
 
-import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.ticket.entity.Ticket;
-import com.back.domain.ticket.entity.TicketStatus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

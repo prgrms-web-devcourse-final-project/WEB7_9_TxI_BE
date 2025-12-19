@@ -164,7 +164,7 @@ public class QueueEntryProcessService {
 
 		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
 
-		if(totalWaitingCount == 0) {
+		if (totalWaitingCount == 0) {
 			return ProcessEntriesResponse.from(eventId, 0, 0L);
 		}
 
@@ -172,13 +172,13 @@ public class QueueEntryProcessService {
 
 		Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, actualCount);
 
-		if(topWaitingUsers.isEmpty()) {
+		if (topWaitingUsers.isEmpty()) {
 			throw new ErrorException(QueueEntryErrorCode.NOT_INVALID_COUNT);
 		}
 
 		List<Long> userIds = new ArrayList<>();
 
-		for(Object userId : topWaitingUsers) {
+		for (Object userId : topWaitingUsers) {
 			userIds.add(Long.parseLong(userId.toString()));
 		}
 
@@ -197,7 +197,7 @@ public class QueueEntryProcessService {
 		QueueEntry myEntry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
 			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
 
-		if(myEntry.getQueueEntryStatus() != QueueEntryStatus.WAITING) {
+		if (myEntry.getQueueEntryStatus() != QueueEntryStatus.WAITING) {
 			throw new ErrorException(QueueEntryErrorCode.NOT_WAITING_STATUS);
 		}
 
@@ -212,7 +212,7 @@ public class QueueEntryProcessService {
 
 		Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, countToProcess);
 
-		if(topWaitingUsers.isEmpty()) {
+		if (topWaitingUsers.isEmpty()) {
 			throw new ErrorException(QueueEntryErrorCode.NOT_INVALID_COUNT);
 		}
 
