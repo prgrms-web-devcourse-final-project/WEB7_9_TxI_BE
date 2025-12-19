@@ -33,5 +33,7 @@ security:
   password:
     bcrypt-strength: 4
 
-
-
+sms:
+  test:
+    enabled: true
+    fixed-code: "123456"
