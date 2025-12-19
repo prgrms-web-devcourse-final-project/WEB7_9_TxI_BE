@@ -56,3 +56,6 @@ src/main/resources/application-perf.yml
 .AppleDouble
 .LSOverride
 ._*
+
+### querydsl ###
+src/main/generated/
