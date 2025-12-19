@@ -36,6 +36,7 @@ public class TicketController implements TicketApi {
 		);
 	}
 
+	@Override
 	@GetMapping("/my/{ticketId}/details")
 	public ApiResponse<TicketResponse> getMyTicketDetails(
 		@PathVariable Long ticketId
@@ -49,30 +50,4 @@ public class TicketController implements TicketApi {
 			TicketResponse.from(ticket)
 		);
 	}
-
-	/* 외부 노출이 필요 없는 엔드포인트, 보관 차원에서 주석 처리
-	@Override
-	@PostMapping("/{ticketId}/payment/success")
-	public ApiResponse<TicketResponse> confirmPayment(
-		@PathVariable Long ticketId
-	) {
-		Long userId = httpRequestContext.getUser().getId();
-
-		Ticket ticket = ticketService.confirmPayment(ticketId, userId);
-
-		return ApiResponse.ok(
-			"결제가 완료되었습니다.",
-			TicketResponse.from(ticket)
-		);
-	}
-
-	@Override
-	@PostMapping("/{ticketId}/payment/fail")
-	public ApiResponse<Void> failPayment(
-		@PathVariable Long ticketId
-	) {
-		ticketService.failPayment(ticketId);
-		return ApiResponse.noContent("결제 실패 처리 완료");
-	}
-	*/
 }
