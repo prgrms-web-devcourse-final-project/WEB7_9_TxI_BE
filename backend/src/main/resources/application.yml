@@ -3,7 +3,6 @@ spring:
     import: optional:file:.env.properties
   profiles:
     active: dev
-    include: secret
   output:
     ansi:
       enabled: always
@@ -25,6 +24,7 @@ spring:
     redis:
       host: localhost
       port: 6379
+      password: ${REDIS_PASSWORD:}
 
 logging:
   level:
@@ -43,15 +43,24 @@ springdoc:
 custom:
   cors:
     allowed-origins:
+      - https://www.waitfair.shop
       - http://localhost:3000
-      - http://localhost:8080
+      - http://localhost:5173
     allowed-methods:
       - GET
       - POST
       - PUT
       - DELETE
+      - PATCH
+      - OPTIONS
     allowed-headers:
-      - "*"
+      - "Authorization"
+      - "Content-Type"
+      - "Accept"
+      - "Origin"
+      - "X-Requested-With"
+      - "Cache-Control"
+      - "Pragma"
 
   jwt:
     secret: ${JWT_SECRET}
@@ -61,7 +70,7 @@ custom:
   dev:
     domain: localhost
     back-url: "http://${custom.dev.domain}:8080"
-    front-url: "http://${custom.dev.domain}:3000"
+    front-url: "http://${custom.dev.domain}:5173"
   prod:
     domain: ${API_BASE_URL}
     back-url: "https://api.${custom.prod.domain}"
