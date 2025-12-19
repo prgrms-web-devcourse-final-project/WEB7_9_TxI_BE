@@ -94,6 +94,49 @@ public class PreRegisterService {
 		return PreRegisterResponse.from(savedPreRegister);
 	}
 
+	// 인증 제외한 사전 등록
+	@Transactional
+	public PreRegisterResponse quickPreRegister(Long eventId, Long userId) {
+		Event event = findEventById(eventId);
+		User user = findUserById(userId);
+
+		// 기존 사전등록 확인 (CANCELED 상태면 재활용)
+		Optional<PreRegister> existingPreRegister = preRegisterRepository.findByEvent_IdAndUser_Id(eventId, userId);
+
+		if (existingPreRegister.isPresent()) {
+			PreRegister preRegister = existingPreRegister.get();
+
+			// REGISTERED 상태면 중복 등록 예외
+			if (preRegister.isRegistered()) {
+				throw new ErrorException(PreRegisterErrorCode.ALREADY_PRE_REGISTERED);
+			}
+
+			// CANCELED 상태면 재등록 (상태만 변경)
+			preRegister.reRegister();
+			return PreRegisterResponse.from(preRegister);
+		}
+
+		// 새로운 사전등록 생성
+		PreRegister preRegister = PreRegister.builder()
+			.event(event)
+			.user(user)
+			.preRegisterAgreeTerms(true)
+			.preRegisterAgreePrivacy(true)
+			.build();
+
+		PreRegister savedPreRegister = preRegisterRepository.save(preRegister);
+
+		eventPublisher.publishEvent(
+			new PreRegisterDoneMessage(
+				userId,
+				savedPreRegister.getId(),
+				event.getTitle()
+			)
+		);
+
+		return PreRegisterResponse.from(savedPreRegister);
+	}
+
 	@Transactional
 	public void cancel(Long eventId, Long userId) {
 		PreRegister preRegister = findPreRegister(eventId, userId);
