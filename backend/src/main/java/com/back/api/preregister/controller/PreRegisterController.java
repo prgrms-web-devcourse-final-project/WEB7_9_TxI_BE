@@ -63,9 +63,6 @@ public class PreRegisterController implements PreRegisterApi {
 		return ApiResponse.ok("사전등록 정보를 조회했습니다.", response);
 	}
 
-	/**
-	 * 내 사전등록 정보 다건 조회
-	 */
 	@Override
 	@GetMapping("/events/{eventId}/pre-registers/count")
 	public ApiResponse<Long> getRegistrationCount(

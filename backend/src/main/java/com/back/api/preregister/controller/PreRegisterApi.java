@@ -85,8 +85,8 @@ public interface PreRegisterApi {
 	ApiResponse<List<PreRegisterResponse>> getMyPreRegister();
 
 	@Operation(
-		summary = "사전등록 현황 조회",
-		description = "특정 이벤트의 사전등록 수를 조회합니다."
+		summary = "현재 사전등록 인원 수 조회",
+		description = "특정 이벤트의 현재 등록한 사전등록 인원 현황을 조회합니다."
 	)
 	@ApiErrorCode("NOT_FOUND_EVENT")
 	ApiResponse<Long> getRegistrationCount(
@@ -95,8 +95,8 @@ public interface PreRegisterApi {
 	);
 
 	@Operation(
-		summary = "사전등록 여부 확인",
-		description = "특정 이벤트에 사전등록했는지 여부를 확인합니다. JWT 토큰을 통해 사용자를 인증합니다.",
+		summary = "내 사전등록 신청여부",
+		description = "사용자가 특정 이벤트에 사전등록했는지 여부를 확인합니다.",
 		security = @SecurityRequirement(name = "bearerAuth")
 	)
 	@ApiErrorCode("UNAUTHORIZED")
