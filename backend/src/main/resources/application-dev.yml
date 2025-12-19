@@ -12,6 +12,11 @@ security:
   password:
     bcrypt-strength: 4
 
+cookie:
+  secure: false
+  same-site: Lax
+  domain: ""
+
 sms:
   test:
     enabled: true        # 고정 인증번호 활성화

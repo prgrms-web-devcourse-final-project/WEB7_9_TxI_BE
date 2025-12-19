@@ -37,3 +37,4 @@ sms:
   test:
     enabled: true
     fixed-code: "123456"
+
