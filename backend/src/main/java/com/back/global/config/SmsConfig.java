@@ -30,7 +30,6 @@ public class SmsConfig {
 	@Bean
 	@Primary
 	@Profile({"dev", "test", "perf"})
-	@ConditionalOnProperty(name = "sms.test.enabled", havingValue = "true")
 	public SmsService testSmsService(
 		SmsUtilInterface smsUtil,
 		StringRedisTemplate redisTemplate
