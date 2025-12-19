@@ -1,5 +1,6 @@
 package com.back.global.error.handler;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
 	// 커스텀 예외 처리
 	@ExceptionHandler(ErrorException.class)
 	protected ResponseEntity<ApiResponse<?>> handleCustomException(ErrorException ex) {
@@ -35,6 +37,7 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
+			.contentType(MediaType.APPLICATION_JSON)
 			.body(ApiResponse.fail(code.getHttpStatus(), ex.getMessage()));
 	}
 
@@ -56,6 +59,7 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
+			.contentType(MediaType.APPLICATION_JSON)
 			.body(ApiResponse.fail(code.getHttpStatus(), message));
 	}
 
@@ -67,6 +71,7 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
+			.contentType(MediaType.APPLICATION_JSON)
 			.body(ApiResponse.fail(code));
 	}
 
@@ -78,6 +83,7 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
+			.contentType(MediaType.APPLICATION_JSON)
 			.body(ApiResponse.fail(code));
 	}
 
@@ -89,6 +95,7 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
+			.contentType(MediaType.APPLICATION_JSON)
 			.body(ApiResponse.fail(code));
 	}
 
@@ -100,6 +107,7 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
+			.contentType(MediaType.APPLICATION_JSON)
 			.body(ApiResponse.fail(code));
 	}
 
@@ -122,6 +130,7 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
+			.contentType(MediaType.APPLICATION_JSON)
 			.body(ApiResponse.fail(code));
 	}
 
@@ -133,6 +142,7 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
+			.contentType(MediaType.APPLICATION_JSON)
 			.body(ApiResponse.fail(code.getHttpStatus(), ex.getMessage()));
 	}
 
@@ -144,6 +154,7 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
+			.contentType(MediaType.APPLICATION_JSON)
 			.body(ApiResponse.fail(code));
 	}
 }
