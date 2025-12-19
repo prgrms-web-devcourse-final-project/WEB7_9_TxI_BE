@@ -308,3 +308,8 @@ tasks.named("clean") {
         file(querydslDir).deleteRecursively()
     }
 }
+
+//checkstyleMain은 compileTestJava 이후에 실행
+tasks.named<org.gradle.api.plugins.quality.Checkstyle>("checkstyleMain") {
+    dependsOn(tasks.named("compileTestJava"))
+}
