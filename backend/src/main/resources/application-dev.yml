@@ -16,3 +16,8 @@ cookie:
   secure: false
   same-site: Lax
   domain: ""
+
+sms:
+  test:
+    enabled: true        # 고정 인증번호 활성화
+    fixed-code: "123456" # HTTP 파일에서 123456 사용
