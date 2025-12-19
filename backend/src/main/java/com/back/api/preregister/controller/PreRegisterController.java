@@ -4,17 +4,14 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.back.api.preregister.dto.request.PreRegisterCreateRequest;
 import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.api.preregister.service.PreRegisterService;
 import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -25,13 +22,22 @@ public class PreRegisterController implements PreRegisterApi {
 	private final PreRegisterService preRegisterService;
 	private final HttpRequestContext httpRequestContext;
 
+	// 인증 있는 사전 등록 -> v2에서 사용 예정
+	// @Override
+	// @PostMapping
+	// public ApiResponse<PreRegisterResponse> register(
+	// 	@PathVariable Long eventId,
+	// 	@Valid @RequestBody PreRegisterCreateRequest request) {
+	// 	Long userId = httpRequestContext.getUserId();
+	// 	PreRegisterResponse response = preRegisterService.register(eventId, userId, request);
+	// 	return ApiResponse.created("사전등록이 완료되었습니다.", response);
+	// }
+
 	@Override
 	@PostMapping
-	public ApiResponse<PreRegisterResponse> register(
-		@PathVariable Long eventId,
-		@Valid @RequestBody PreRegisterCreateRequest request) {
+	public ApiResponse<PreRegisterResponse> register(@PathVariable Long eventId) {
 		Long userId = httpRequestContext.getUserId();
-		PreRegisterResponse response = preRegisterService.register(eventId, userId, request);
+		PreRegisterResponse response = preRegisterService.quickPreRegister(eventId, userId);
 		return ApiResponse.created("사전등록이 완료되었습니다.", response);
 	}
 

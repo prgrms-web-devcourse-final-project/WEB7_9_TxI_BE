@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +30,6 @@ import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
-import com.back.global.error.code.CommonErrorCode;
 import com.back.global.error.code.EventErrorCode;
 import com.back.global.error.code.PreRegisterErrorCode;
 import com.back.support.data.TestUser;
@@ -135,65 +133,66 @@ class PreRegisterControllerTest {
 			assertThat(savedPreRegister.getPreRegisterAgreePrivacy()).isTrue();
 		}
 
-		@Test
-		@DisplayName("생년월일이 일치하지 않으면 400 에러 (본인 인증 실패)")
-		void register_Fail_InvalidBirthDate() throws Exception {
-			// given: 잘못된 생년월일
-			testAuthHelper.authenticate(testUser.user());
-			setSmsVerified(DEFAULT_PHONE_NUMBER);
-
-			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
-				LocalDate.of(2000, 1, 1)  // 실제 생년월일과 다름
-			);
-
-			// when & then
-			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(request)))
-				.andDo(print())
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.INVALID_USER_INFO.getMessage()));
-		}
-
-		@Test
-		@DisplayName("이용약관 미동의 시 400 에러")
-		void register_Fail_TermsNotAgreed() throws Exception {
-			// given: 이용약관 미동의
-			testAuthHelper.authenticate(testUser.user());
-			setSmsVerified(DEFAULT_PHONE_NUMBER);
-
-			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutTerms(
-				testUser.user().getBirthDate()
-			);
-
-			// when & then
-			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(request)))
-				.andDo(print())
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.TERMS_NOT_AGREED.getMessage()));
-		}
-
-		@Test
-		@DisplayName("개인정보 수집 미동의 시 400 에러")
-		void register_Fail_PrivacyNotAgreed() throws Exception {
-			// given: 개인정보 수집 미동의
-			testAuthHelper.authenticate(testUser.user());
-			setSmsVerified(DEFAULT_PHONE_NUMBER);
-
-			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutPrivacy(
-				testUser.user().getBirthDate()
-			);
-
-			// when & then
-			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(request)))
-				.andDo(print())
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.PRIVACY_NOT_AGREED.getMessage()));
-		}
+		// 인증 없는 사전 등록을 위해 임시 주석 처리
+		// @Test
+		// @DisplayName("생년월일이 일치하지 않으면 400 에러 (본인 인증 실패)")
+		// void register_Fail_InvalidBirthDate() throws Exception {
+		// 	// given: 잘못된 생년월일
+		// 	testAuthHelper.authenticate(testUser.user());
+		// 	setSmsVerified(DEFAULT_PHONE_NUMBER);
+		//
+		// 	PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+		// 		LocalDate.of(2000, 1, 1)  // 실제 생년월일과 다름
+		// 	);
+		//
+		// 	// when & then
+		// 	mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+		// 			.contentType(MediaType.APPLICATION_JSON)
+		// 			.content(objectMapper.writeValueAsString(request)))
+		// 		.andDo(print())
+		// 		.andExpect(status().isBadRequest())
+		// 		.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.INVALID_USER_INFO.getMessage()));
+		// }
+		//
+		// @Test
+		// @DisplayName("이용약관 미동의 시 400 에러")
+		// void register_Fail_TermsNotAgreed() throws Exception {
+		// 	// given: 이용약관 미동의
+		// 	testAuthHelper.authenticate(testUser.user());
+		// 	setSmsVerified(DEFAULT_PHONE_NUMBER);
+		//
+		// 	PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutTerms(
+		// 		testUser.user().getBirthDate()
+		// 	);
+		//
+		// 	// when & then
+		// 	mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+		// 			.contentType(MediaType.APPLICATION_JSON)
+		// 			.content(objectMapper.writeValueAsString(request)))
+		// 		.andDo(print())
+		// 		.andExpect(status().isBadRequest())
+		// 		.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.TERMS_NOT_AGREED.getMessage()));
+		// }
+		//
+		// @Test
+		// @DisplayName("개인정보 수집 미동의 시 400 에러")
+		// void register_Fail_PrivacyNotAgreed() throws Exception {
+		// 	// given: 개인정보 수집 미동의
+		// 	testAuthHelper.authenticate(testUser.user());
+		// 	setSmsVerified(DEFAULT_PHONE_NUMBER);
+		//
+		// 	PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutPrivacy(
+		// 		testUser.user().getBirthDate()
+		// 	);
+		//
+		// 	// when & then
+		// 	mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+		// 			.contentType(MediaType.APPLICATION_JSON)
+		// 			.content(objectMapper.writeValueAsString(request)))
+		// 		.andDo(print())
+		// 		.andExpect(status().isBadRequest())
+		// 		.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.PRIVACY_NOT_AGREED.getMessage()));
+		// }
 
 		@Test
 		@DisplayName("중복 등록 시 400 에러")
