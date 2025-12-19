@@ -39,32 +39,6 @@ public record TicketResponse(
 	@Schema(description = "사용 시간", example = "2024-01-01T18:00:00")
 	LocalDateTime usedAt
 ) {
-	public TicketResponse(
-		Long ticketId,
-		Long eventId,
-		String eventTitle,
-		String seatCode,
-		String seatGrade,
-		int seatPrice,
-		SeatStatus seatStatus,
-		TicketStatus ticketStatus,
-		LocalDateTime issuedAt,
-		LocalDateTime usedAt
-	) {
-		this(
-			ticketId,
-			eventId,
-			eventTitle,
-			seatCode,
-			seatGrade,
-			seatPrice,
-			seatStatus != null ? seatStatus.name() : null,
-			ticketStatus.name(),
-			issuedAt,
-			usedAt
-		);
-	}
-
 	public static TicketResponse from(Ticket ticket) {
 		return new TicketResponse(
 			ticket.getId(),
