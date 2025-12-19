@@ -2,6 +2,7 @@ package com.back.api.auth.service;
 
 import java.time.LocalDate;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +13,9 @@ import com.back.api.auth.dto.request.SignupRequest;
 import com.back.api.auth.dto.response.AuthResponse;
 import com.back.api.auth.dto.response.TokenResponse;
 import com.back.api.auth.dto.response.UserResponse;
+import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.auth.entity.RefreshToken;
+import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.auth.repository.RefreshTokenRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
@@ -33,6 +36,7 @@ public class AuthService {
 	private final AuthTokenService authTokenService;
 	private final HttpRequestContext requestContext;
 	private final RefreshTokenRepository refreshTokenRepository;
+	private final ActiveSessionRepository activeSessionRepository;
 
 	@Transactional
 	public AuthResponse signup(SignupRequest request) {
@@ -59,7 +63,7 @@ public class AuthService {
 
 		User savedUser = userRepository.save(user);
 
-		JwtDto tokens = authTokenService.generateTokens(savedUser);
+		JwtDto tokens = setSessionAndCookie(savedUser);
 
 		return buildAuthResponse(savedUser, tokens);
 	}
@@ -73,10 +77,7 @@ public class AuthService {
 			throw new ErrorException(AuthErrorCode.LOGIN_FAILED);
 		}
 
-		JwtDto tokens = authTokenService.generateTokens(user);
-
-		requestContext.setAccessTokenCookie(tokens.accessToken());
-		requestContext.setRefreshTokenCookie(tokens.refreshToken());
+		JwtDto tokens = setSessionAndCookie(user);
 
 		return buildAuthResponse(user, tokens);
 	}
@@ -84,14 +85,12 @@ public class AuthService {
 	@Transactional
 	public void logout() {
 		String refreshTokenStr = requestContext.getCookieValue("refreshToken", null);
-		if (refreshTokenStr == null || refreshTokenStr.isBlank()) {
+		if (StringUtils.isBlank(refreshTokenStr)) {
 			throw new ErrorException(AuthErrorCode.REFRESH_TOKEN_REQUIRED);
 		}
 
-		User currentUser = requestContext.getUser();
-
 		RefreshToken refreshToken = refreshTokenRepository
-			.findByTokenAndUserIdAndRevokedFalse(refreshTokenStr, currentUser.getId())
+			.findByTokenAndUserIdAndRevokedFalse(refreshTokenStr, requestContext.getUserId())
 			.orElseThrow(() -> new ErrorException(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
 		refreshToken.revoke();
@@ -106,6 +105,22 @@ public class AuthService {
 		if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
 			throw new ErrorException(AuthErrorCode.PASSWORD_MISMATCH);
 		}
+	}
+
+	private JwtDto setSessionAndCookie(User user) {
+		ActiveSession session = activeSessionRepository.findByUserIdForUpdate(user.getId())
+			.orElseGet(() -> activeSessionRepository.save(ActiveSession.create(user)));
+
+		session.rotate();
+
+		refreshTokenRepository.revokeAllActiveByUserId(user.getId());
+
+		JwtDto tokens = authTokenService.issueTokens(user, session.getSessionId(), session.getTokenVersion());
+
+		requestContext.setAccessTokenCookie(tokens.accessToken());
+		requestContext.setRefreshTokenCookie(tokens.refreshToken());
+
+		return tokens;
 	}
 
 	private AuthResponse buildAuthResponse(User user, JwtDto tokens) {

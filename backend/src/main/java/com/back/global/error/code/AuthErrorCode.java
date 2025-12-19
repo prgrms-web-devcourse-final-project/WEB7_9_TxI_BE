@@ -12,6 +12,7 @@ public enum AuthErrorCode implements ErrorCode {
 	ALREADY_EXIST_NICKNAME(HttpStatus.BAD_REQUEST, "이미 존재하는 닉네임입니다."),
 
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요."),
+	ACCESS_OTHER_DEVICE(HttpStatus.UNAUTHORIZED, "다른 환경에서 로그인했습니다."),
 
 	FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
 	ADMIN_ONLY(HttpStatus.FORBIDDEN, "관리자 계정만 접근 가능합니다."),
