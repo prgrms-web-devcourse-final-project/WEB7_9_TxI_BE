@@ -40,7 +40,7 @@ public class PerfSeatDataInitializer {
 			log.info("Seat 초기 데이터 생성 중: Event #3 ({}) - 500석 (VIP-A 50석, R-C 100석, S-B 150석, A-D 200석)",
 				event3.getTitle());
 
-			List<Seat> seats3 = createSeatsForEvent3(event3);
+			List<Seat> seats3 = createSeatsForEvent3and4(event3);
 			seatRepository.saveAll(seats3);
 			totalSeats += seats3.size();
 
@@ -55,7 +55,7 @@ public class PerfSeatDataInitializer {
 			log.info("Seat 초기 데이터 생성 중: Event #4 ({}) - 100석 (VIP-E 20석, R-G 30석, S-F 30석, A-H 20석)",
 				event4.getTitle());
 
-			List<Seat> seats4 = createSeatsForEvent4(event4);
+			List<Seat> seats4 = createSeatsForEvent3and4(event4);
 			seatRepository.saveAll(seats4);
 			totalSeats += seats4.size();
 
@@ -73,7 +73,7 @@ public class PerfSeatDataInitializer {
 	 * - S: B1~B150 (150석)
 	 * - A: D1~D200 (200석)
 	 */
-	private List<Seat> createSeatsForEvent3(Event event) {
+	private List<Seat> createSeatsForEvent3and4(Event event) {
 		List<Seat> seats = new ArrayList<>();
 
 		// VIP: A1 ~ A50 (50석)
@@ -94,40 +94,6 @@ public class PerfSeatDataInitializer {
 		// A: D1 ~ D200 (200석)
 		for (int i = 1; i <= 200; i++) {
 			seats.add(Seat.createSeat(event, "D" + i, SeatGrade.A, event.getMinPrice()));
-		}
-
-		return seats;
-	}
-
-	/**
-	 * Event #4용 좌석 생성
-	 * - 총 100석
-	 * - VIP: E1~E20 (20석)
-	 * - R: G1~G30 (30석)
-	 * - S: F1~F30 (30석)
-	 * - A: H1~H20 (20석)
-	 */
-	private List<Seat> createSeatsForEvent4(Event event) {
-		List<Seat> seats = new ArrayList<>();
-
-		// VIP: E1 ~ E20 (20석)
-		for (int i = 1; i <= 20; i++) {
-			seats.add(Seat.createSeat(event, "E" + i, SeatGrade.VIP, event.getMaxPrice()));
-		}
-
-		// R: G1 ~ G30 (30석)
-		for (int i = 1; i <= 30; i++) {
-			seats.add(Seat.createSeat(event, "G" + i, SeatGrade.R, event.getMaxPrice() - 20000));
-		}
-
-		// S: F1 ~ F30 (30석)
-		for (int i = 1; i <= 30; i++) {
-			seats.add(Seat.createSeat(event, "F" + i, SeatGrade.S, event.getMinPrice() + 30000));
-		}
-
-		// A: H1 ~ H20 (20석)
-		for (int i = 1; i <= 20; i++) {
-			seats.add(Seat.createSeat(event, "H" + i, SeatGrade.A, event.getMinPrice()));
 		}
 
 		return seats;

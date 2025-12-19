@@ -22,15 +22,15 @@ export const options = {
  *
  * 테스트 데이터 구조 (Event #4 기준):
  * - 총 사용자: 500명 (test1@test.com ~ test500@test.com)
- * - Event #4: CLOSED 상태, 100석 (모두 ISSUED 티켓)
+ * - Event #4: CLOSED 상태, 500석 (모두 ISSUED 티켓)
  * - 티켓 배정: 순환 배정
  *   → ticketId 1: userId 1
  *   → ticketId 2: userId 2
  *   → ...
- *   → ticketId 100: userId 100
+ *   → ticketId 500: userId 500
  *
  * 시나리오:
- * - VU 1~100만 활성화 (티켓을 가진 사용자만 테스트)
+ * - VU 1~500만 활성화 (티켓을 가진 사용자만 테스트)
  * - 각 VU는 자신의 티켓 ID로 상세 조회
  * - VU 1 → ticketId 1, VU 2 → ticketId 2, ...
  *
@@ -40,8 +40,8 @@ export const options = {
  * - DB 단건 조회 성능 확인
  *
  * 주의:
- * - PEAK_VUS는 100 이하로 설정 권장 (티켓이 100장만 존재)
- * - 100 초과 시 존재하지 않는 ticketId 조회로 404 에러 발생
+ * - PEAK_VUS는 500 이하로 설정 권장 (티켓이 500장만 존재)
+ * - 500 초과 시 존재하지 않는 ticketId 조회로 404 에러 발생
  */
 export function setup() {
   const secret = __ENV.JWT_SECRET;
@@ -54,13 +54,13 @@ export function setup() {
     parseInt(__ENV.PEAK_VUS || "100", 10)
   );
 
-  // 티켓이 있는 사용자(1~100)만 토큰 생성
-  const ticketOwnerCount = 100;
+  // 티켓이 있는 사용자(1~500)만 토큰 생성
+  const ticketOwnerCount = 500;
   const effectiveVus = Math.min(maxVus, ticketOwnerCount);
 
   // VU당 JWT 토큰 생성
   const tokens = Array.from({ length: effectiveVus }, (_, i) => {
-    const userId = i + 1; // userId 1~100
+    const userId = i + 1; // userId 1~500
     return generateJWT(
       {
         id: userId,
