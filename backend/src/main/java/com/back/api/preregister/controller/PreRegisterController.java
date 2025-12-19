@@ -1,5 +1,7 @@
 package com.back.api.preregister.controller;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +17,7 @@ import com.back.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/events/{eventId}/pre-registers")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class PreRegisterController implements PreRegisterApi {
 
@@ -34,7 +36,7 @@ public class PreRegisterController implements PreRegisterApi {
 	// }
 
 	@Override
-	@PostMapping
+	@PostMapping("/events/{eventId}/pre-registers")
 	public ApiResponse<PreRegisterResponse> register(@PathVariable Long eventId) {
 		Long userId = httpRequestContext.getUserId();
 		PreRegisterResponse response = preRegisterService.quickPreRegister(eventId, userId);
@@ -42,7 +44,7 @@ public class PreRegisterController implements PreRegisterApi {
 	}
 
 	@Override
-	@DeleteMapping
+	@DeleteMapping("/events/{eventId}/pre-registers")
 	public ApiResponse<Void> cancel(
 		@PathVariable Long eventId) {
 		Long userId = httpRequestContext.getUserId();
@@ -50,17 +52,22 @@ public class PreRegisterController implements PreRegisterApi {
 		return ApiResponse.noContent("사전등록이 취소되었습니다.");
 	}
 
+	/**
+	 * 내 사전등록 정보 다건 조회
+	 */
 	@Override
-	@GetMapping("/me")
-	public ApiResponse<PreRegisterResponse> getMyPreRegister(
-		@PathVariable Long eventId) {
+	@GetMapping("/pre-registers/me")
+	public ApiResponse<List<PreRegisterResponse>> getMyPreRegister() {
 		Long userId = httpRequestContext.getUserId();
-		PreRegisterResponse response = preRegisterService.getMyPreRegister(eventId, userId);
+		List<PreRegisterResponse> response = preRegisterService.getMyPreRegister(userId);
 		return ApiResponse.ok("사전등록 정보를 조회했습니다.", response);
 	}
 
+	/**
+	 * 내 사전등록 정보 다건 조회
+	 */
 	@Override
-	@GetMapping("/count")
+	@GetMapping("/events/{eventId}/pre-registers/count")
 	public ApiResponse<Long> getRegistrationCount(
 		@PathVariable Long eventId) {
 		Long count = preRegisterService.getRegistrationCount(eventId);
@@ -68,7 +75,7 @@ public class PreRegisterController implements PreRegisterApi {
 	}
 
 	@Override
-	@GetMapping("/status")
+	@GetMapping("/events/{eventId}/pre-registers/status")
 	public ApiResponse<Boolean> isRegistered(
 		@PathVariable Long eventId) {
 		Long userId = httpRequestContext.getUserId();

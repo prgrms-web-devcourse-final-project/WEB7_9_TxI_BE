@@ -1,5 +1,7 @@
 package com.back.api.preregister.controller;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.PathVariable;
 
 import com.back.api.preregister.dto.response.PreRegisterResponse;
@@ -72,18 +74,15 @@ public interface PreRegisterApi {
 	);
 
 	@Operation(
-		summary = "내 사전등록 조회",
-		description = "특정 이벤트에 대한 내 사전등록 정보를 조회합니다. JWT 토큰을 통해 사용자를 인증합니다.",
+		summary = "내 사전 등록 리스트 조회",
+		description = "특정 이벤트에 대한 내 사전등록 리스트 정보를 조회합니다.",
 		security = @SecurityRequirement(name = "bearerAuth")
 	)
 	@ApiErrorCode({
 		"NOT_FOUND_PRE_REGISTER",
 		"UNAUTHORIZED"
 	})
-	ApiResponse<PreRegisterResponse> getMyPreRegister(
-		@Parameter(description = "이벤트 ID", example = "1")
-		@PathVariable Long eventId
-	);
+	ApiResponse<List<PreRegisterResponse>> getMyPreRegister();
 
 	@Operation(
 		summary = "사전등록 현황 조회",

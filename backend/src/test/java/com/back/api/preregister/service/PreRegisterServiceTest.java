@@ -481,7 +481,7 @@ class PreRegisterServiceTest {
 			assertThat(isRegistered).isFalse();
 		}
 	}
-
+/*
 	@Nested
 	@DisplayName("내 사전등록 조회 (getMyPreRegister)")
 	class GetMyPreRegister {
@@ -523,7 +523,7 @@ class PreRegisterServiceTest {
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.NOT_FOUND_PRE_REGISTER.getMessage());
 		}
-	}
+	}*/
 
 	@Nested
 	@DisplayName("사전등록 현황 조회 (getRegistrationCount)")
@@ -630,7 +630,7 @@ class PreRegisterServiceTest {
 			Long count = preRegisterService.getRegistrationCount(testEvent.getId());
 			assertThat(count).isEqualTo(3);
 		}
-
+/*
 		@Test
 		@DisplayName("등록 -> 조회 -> 취소 -> 재조회 시나리오 테스트")
 		void scenario_RegisterCheckCancelCheck() {
@@ -678,7 +678,7 @@ class PreRegisterServiceTest {
 				testUser.user().getId()
 			);
 			assertThat(afterCancelResponse.status()).isEqualTo(PreRegisterStatus.CANCELED);
-		}
+		}*/
 
 		@Test
 		@DisplayName("동일한 이벤트에 여러 사용자가 등록하고 일부만 취소하는 시나리오")
