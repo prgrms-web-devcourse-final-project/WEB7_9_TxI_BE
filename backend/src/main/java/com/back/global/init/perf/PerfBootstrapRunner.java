@@ -26,6 +26,7 @@ public class PerfBootstrapRunner implements ApplicationRunner {
 	private final PerfPreregisterDataInitializer preregisterInit;
 	private final PerfQueueDataInitializer queueInit;
 	private final PerfTicketDataInitializer ticketInit;
+	private final PerfNotificationDataInitializer notificationInit;
 
 	@Override
 	public void run(ApplicationArguments args) {
@@ -75,8 +76,11 @@ public class PerfBootstrapRunner implements ApplicationRunner {
 		log.info("6️⃣  Ticket 데이터 생성 중...");
 		ticketInit.init(ticketRatio);
 
+		log.info("7️⃣  Notification 데이터 생성 중...");
+		notificationInit.init();
+
 		log.info("""
-			
+
 			=====================================
 			✅ 부하테스트 데이터 초기화 완료
 			=====================================
