@@ -100,6 +100,8 @@ public class PreRegisterService {
 		Event event = findEventById(eventId);
 		User user = findUserById(userId);
 
+		validatePreRegistrationPeriod(event);
+
 		// 기존 사전등록 확인 (CANCELED 상태면 재활용)
 		Optional<PreRegister> existingPreRegister = preRegisterRepository.findByEvent_IdAndUser_Id(eventId, userId);
 
