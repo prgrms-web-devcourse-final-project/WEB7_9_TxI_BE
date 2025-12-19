@@ -2,6 +2,8 @@ package com.back.domain.payment.order.entity;
 
 import static com.back.domain.payment.order.entity.OrderStatus.*;
 
+import java.util.UUID;
+
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.entity.BaseEntity;
 
@@ -30,7 +32,7 @@ import lombok.NoArgsConstructor;
 public class Order extends BaseEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long id;
+	private UUID orderId;
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "ticket_id", nullable = false)

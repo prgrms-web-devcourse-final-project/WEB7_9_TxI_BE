@@ -18,7 +18,7 @@ public class OrderController implements OrderApi {
 	private final OrderService orderService;
 	private final HttpRequestContext httpRequestContext;
 
-	@PostMapping("/api/v1/order")
+	@PostMapping("/api/v1/orders/prepare")
 	public ApiResponse<OrderResponseDto> createOrder(@RequestBody OrderRequestDto orderRequestDto) {
 
 		Long userId = httpRequestContext.getUser().getId();

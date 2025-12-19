@@ -7,15 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.payment.order.dto.request.OrderRequestDto;
 import com.back.api.payment.order.dto.response.OrderResponseDto;
-import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
-import com.back.domain.event.repository.EventRepository;
 import com.back.domain.payment.order.entity.Order;
 import com.back.domain.payment.order.entity.OrderStatus;
 import com.back.domain.payment.order.repository.OrderRepository;
-import com.back.domain.seat.repository.SeatRepository;
 import com.back.domain.ticket.entity.Ticket;
-import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.OrderErrorCode;
 import com.back.global.error.code.PaymentErrorCode;
 import com.back.global.error.exception.ErrorException;
@@ -26,11 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OrderService {
 	private final OrderRepository orderRepository;
-	private final EventRepository eventRepository;
-	private final UserRepository userRepository;
-	private final SeatRepository seatRepository;
 	private final TicketService ticketService;
-	private final QueueEntryProcessService queueEntryProcessService;
 
 	/**
 	 * 주문 생성
@@ -51,19 +43,18 @@ public class OrderService {
 		// 주문 생성
 		Order newOrder = Order.builder()
 			.ticket(draft)
-			.amount(orderRequestDto.amount())
+			.amount(actualAmount.longValue())
 			.status(OrderStatus.PENDING)
-			.orderKey(UUID.randomUUID().toString())
 			.build();
 
 		Order savedOrder = orderRepository.save(newOrder);
 
-		return OrderResponseDto.from(savedOrder, savedOrder.getTicket());
+		return OrderResponseDto.from(savedOrder);
 	}
 
 	// 결제 가능한 Order 조회 및 검증 -> 결제 서비스에 보장
 	@Transactional(readOnly = true)
-	public Order getOrderForPayment(Long orderId, Long userId, Long clientAmount) {
+	public Order getOrderForPayment(UUID orderId, Long userId, Long clientAmount) {
 
 		Order order = orderRepository.findById(orderId)
 			.orElseThrow(() -> new ErrorException(OrderErrorCode.ORDER_NOT_FOUND));

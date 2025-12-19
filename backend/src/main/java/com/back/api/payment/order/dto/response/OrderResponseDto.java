@@ -1,20 +1,20 @@
 package com.back.api.payment.order.dto.response;
 
+import java.util.UUID;
+
 import com.back.domain.payment.order.entity.Order;
-import com.back.domain.ticket.entity.Ticket;
 
 public record OrderResponseDto(
-	Long orderId,
-	String orderKey,
-	Long ticketId,
-	Long amount
+	UUID orderId,
+	Long amount,
+	String orderName
 ) {
-	public static OrderResponseDto from(Order order, Ticket ticket) {
+	public static OrderResponseDto from(Order order) {
 		return new OrderResponseDto(
-			order.getId(),
-			order.getOrderKey(),
-			ticket.getId(),
-			order.getAmount()
+			order.getOrderId(),
+			order.getAmount(),
+			order.getTicket().getEvent().getTitle()
+
 		);
 	}
 }
