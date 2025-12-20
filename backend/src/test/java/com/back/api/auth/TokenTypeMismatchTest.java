@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import com.back.support.helper.UserHelper;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@AutoConfigureMockMvc
 class TokenTypeMismatchTest {
 
 	@Autowired

@@ -312,4 +312,6 @@ tasks.named("clean") {
 //checkstyleMain은 compileTestJava 이후에 실행
 tasks.named<org.gradle.api.plugins.quality.Checkstyle>("checkstyleMain") {
     dependsOn(tasks.named("compileTestJava"))
+    // QueryDSL generated 폴더 제외
+    exclude("**/generated/**")
 }
