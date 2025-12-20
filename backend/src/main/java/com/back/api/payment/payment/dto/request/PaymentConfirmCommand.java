@@ -1,8 +1,9 @@
 package com.back.api.payment.payment.dto.request;
 
+import java.util.UUID;
+
 public record PaymentConfirmCommand(
-	Long orderId,
-	String orderKey,
+	String orderId,
 	Long amount
 ) {
 }

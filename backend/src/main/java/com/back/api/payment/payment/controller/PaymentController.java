@@ -16,16 +16,17 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/payments")
+@RequestMapping("/api")
 public class PaymentController {
 
 	private final PaymentService paymentService;
 	private final HttpRequestContext httpRequestContext;
 
-	@PostMapping("/confirm")
+	@PostMapping("/v2/payments/confirm")
 	public ApiResponse<PaymentConfirmResponse> confirmPayment(
 		@Valid @RequestBody PaymentConfirmRequest request
 	) {
+
 		Long userId = httpRequestContext.getUser().getId();
 
 		PaymentConfirmResponse response = paymentService.confirmPayment(

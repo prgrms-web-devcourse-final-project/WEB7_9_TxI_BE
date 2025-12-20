@@ -54,7 +54,7 @@ public class OrderService {
 
 	// 결제 가능한 Order 조회 및 검증 -> 결제 서비스에 보장
 	@Transactional(readOnly = true)
-	public Order getOrderForPayment(UUID orderId, Long userId, Long clientAmount) {
+	public Order getOrderForPayment(String orderId, Long userId, Long clientAmount) {
 
 		Order order = orderRepository.findById(orderId)
 			.orElseThrow(() -> new ErrorException(OrderErrorCode.ORDER_NOT_FOUND));
@@ -68,6 +68,7 @@ public class OrderService {
 		}
 
 		if (!order.getAmount().equals(clientAmount)) {
+			//TODO 금액 불일치 로직 : paymentService.amountNotEqual()
 			throw new ErrorException(PaymentErrorCode.AMOUNT_VERIFICATION_FAILED);
 		}
 

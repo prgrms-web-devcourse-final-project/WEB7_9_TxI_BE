@@ -71,7 +71,7 @@ class OrderServiceTest {
 		);
 
 		// then
-		assertThat(response.orderKey()).isNotNull();
+		assertThat(response.orderId()).isNotNull();
 		assertThat(response.amount()).isEqualTo(amount);
 	}
 

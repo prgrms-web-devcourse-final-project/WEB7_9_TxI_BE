@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.entity.BaseEntity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -16,6 +17,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -31,15 +33,15 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Order extends BaseEntity {
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private UUID orderId;
+	@Column(name = "order_id", length = 36)
+	private String orderId;
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "ticket_id", nullable = false)
 	private Ticket ticket; // 주문과 1:1 매핑, 반드시 필요
 
 	//private String pg_order_id
-
+	@JoinColumn(name = "amount", nullable = false)
 	private Long amount; // 일단 클라이언트로부터 받고, 추후 서버가 재가공하여 저장
 
 	@Enumerated(EnumType.STRING)
@@ -59,10 +61,15 @@ public class Order extends BaseEntity {
 	 // @JoinColumn(name = "seat_id", nullable = false)
 	 // private Seat seat; //클라이언트로부터 받아야함
 	 * */
-
-	private String paymentKey; // Toss paymentKey
+	@JoinColumn(name = "paymentKey", nullable = true)
+	private String paymentKey; // TossPaymentKey
 	
-	private String orderKey;   // merchant_uid(UUID)
+	@PrePersist
+	public void generateOrderId() {
+		if (this.orderId == null) {
+			this.orderId = UUID.randomUUID().toString();
+		}
+	}
 
 	public void markPaid(String paymentKey) {
 		this.status = OrderStatus.PAID;

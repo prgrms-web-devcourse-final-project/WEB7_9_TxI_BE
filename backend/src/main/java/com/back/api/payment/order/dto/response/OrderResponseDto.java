@@ -5,7 +5,7 @@ import java.util.UUID;
 import com.back.domain.payment.order.entity.Order;
 
 public record OrderResponseDto(
-	UUID orderId,
+	String orderId,
 	Long amount,
 	String orderName
 ) {
