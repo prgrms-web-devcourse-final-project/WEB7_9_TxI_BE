@@ -76,6 +76,9 @@ dependencies {
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
+    // logstash logback encoder
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+
 
 }
 

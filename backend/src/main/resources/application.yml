@@ -29,10 +29,12 @@ spring:
 
 logging:
   level:
-    org.hibernate.orm.jdbc.bind: TRACE
-    org.hibernate.orm.jdbc.extract: TRACE
-    org.springframework.transaction.interceptor: TRACE
+    root: INFO
     com.back: DEBUG
+    org.hibernate.orm.jdbc.bind: OFF
+    org.hibernate.orm.jdbc.extract: OFF
+    org.springframework.transaction.interceptor: INFO
+
 
 springdoc:
   swagger-ui:
