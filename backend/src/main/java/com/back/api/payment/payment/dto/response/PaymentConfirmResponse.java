@@ -1,28 +1,18 @@
 package com.back.api.payment.payment.dto.response;
 
+import java.util.UUID;
+
 import com.back.domain.payment.order.entity.Order;
 import com.back.domain.payment.order.entity.OrderStatus;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 
 public record PaymentConfirmResponse(
-	Long orderId,
-	String orderKey,
-	String paymentKey,
-	OrderStatus orderStatus,
-	Long amount,
-	Long ticketId,
-	TicketStatus ticketStatus
+	String orderId,
+	boolean success
 ) {
-	public static PaymentConfirmResponse from(Order order, Ticket ticket) {
-		return new PaymentConfirmResponse(
-			order.getId(),
-			order.getOrderKey(),
-			order.getPaymentKey(),
-			order.getStatus(),
-			order.getAmount(),
-			ticket.getId(),
-			ticket.getTicketStatus()
-		);
+	public PaymentConfirmResponse(String orderId, boolean success) {
+		this.orderId = orderId;
+		this.success = success;
 	}
 }

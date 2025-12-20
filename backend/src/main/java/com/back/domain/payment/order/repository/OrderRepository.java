@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 import com.back.domain.payment.order.entity.Order;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, UUID> {
+public interface OrderRepository extends JpaRepository<Order, String> {
 }
