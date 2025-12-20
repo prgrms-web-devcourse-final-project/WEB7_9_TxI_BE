@@ -1,7 +1,5 @@
 package com.back.global.websocket.auth;
 
-import java.util.Map;
-
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -10,6 +8,7 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 
+import com.back.global.security.JwtClaims;
 import com.back.global.security.JwtProvider;
 
 import lombok.RequiredArgsConstructor;
@@ -50,13 +49,13 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 			}
 
 			// JWT 파싱 및 userId 추출
-			Map<String, Object> payload = jwtProvider.payloadOrNull(token);
-			if (payload == null) {
+			JwtClaims claims = jwtProvider.payloadOrNull(token);
+			if (claims == null) {
 				log.warn("웹소켓 연결 거부 - JWT 파싱 실패");
 				throw new IllegalArgumentException("유효하지 않은 토큰입니다");
 			}
 
-			Long userId = ((Number) payload.get("id")).longValue();
+			Long userId = claims.userId();
 
 			// Principal 설정 (convertAndSendToUser에서 사용)
 			accessor.setUser(new UserPrincipal(userId));

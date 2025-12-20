@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -31,37 +32,34 @@ public class JwtProvider {
 	private static final String CLAIM_ROLE = "role";
 	private static final String CLAIM_TOKEN_TYPE = "tokenType";
 	private static final String CLAIM_JTI = "jti";
+	private static final String CLAIM_SESSION_ID = "sid";
+	private static final String CLAIM_TOKEN_VERSION = "tokenVersion";
 
-	public String generateAccessToken(User user) {
-		Map<String, Object> claims = createBaseClaims(user);
-		claims.put(CLAIM_TOKEN_TYPE, "access");
-		claims.put(CLAIM_JTI, UUID.randomUUID().toString());
-
-		return JwtUtil.toString(
-			secret,
-			accessTokenDurationSeconds,
-			claims
-		);
+	public String generateAccessToken(User user, String sessionId, long tokenVersion) {
+		return generateToken(user, "access", accessTokenDurationSeconds, sessionId, tokenVersion);
 	}
 
-	public String generateRefreshToken(User user) {
-		Map<String, Object> claims = createBaseClaims(user);
-		claims.put(CLAIM_TOKEN_TYPE, "refresh");
-		claims.put(CLAIM_JTI, UUID.randomUUID().toString());
-
-		return JwtUtil.toString(
-			secret,
-			refreshTokenDurationSeconds,
-			claims
-		);
+	public String generateRefreshToken(User user, String sessionId, long tokenVersion) {
+		return generateToken(user, "refresh", refreshTokenDurationSeconds, sessionId, tokenVersion);
 	}
 
-	private Map<String, Object> createBaseClaims(User user) {
+	private String generateToken(
+		User user,
+		String tokenType,
+		long durationSeconds,
+		String sessionId,
+		long tokenVersion
+	) {
 		Map<String, Object> claims = new HashMap<>();
 		claims.put(CLAIM_ID, user.getId());
 		claims.put(CLAIM_NICKNAME, user.getNickname());
 		claims.put(CLAIM_ROLE, user.getRole().name());
-		return claims;
+		claims.put(CLAIM_TOKEN_TYPE, tokenType);
+		claims.put(CLAIM_JTI, UUID.randomUUID().toString());
+		claims.put(CLAIM_SESSION_ID, sessionId);
+		claims.put(CLAIM_TOKEN_VERSION, tokenVersion);
+
+		return JwtUtil.sign(secret, durationSeconds, claims);
 	}
 
 	/** access token 유효 기간 (ms 단위) */
@@ -74,7 +72,7 @@ public class JwtProvider {
 		return refreshTokenDurationSeconds;
 	}
 
-	public Map<String, Object> payloadOrNull(String jwt) {
+	public JwtClaims payloadOrNull(String jwt) {
 		Map<String, Object> payload = JwtUtil.payloadOrNull(jwt, secret);
 
 		if (payload == null) {
@@ -86,24 +84,43 @@ public class JwtProvider {
 			return null;
 		}
 
-		long id = idNo.longValue();
+		String nickname = (String)payload.getOrDefault(CLAIM_NICKNAME, "");
+		String tokenType = (String)payload.getOrDefault(CLAIM_TOKEN_TYPE, null);
+		String jti = (String)payload.getOrDefault(CLAIM_JTI, null);
+		String sid = (String)payload.getOrDefault(CLAIM_SESSION_ID, null);
 
-		String nickname = (String)payload.get("nickname");
-		Object roleObj = payload.get("role");
+		if (StringUtils.isBlank(sid) || StringUtils.isBlank(tokenType)) {
+			return null;
+		}
 
-		UserRole role = switch (roleObj) {
-			case UserRole r -> r;
-			case String s -> UserRole.valueOf(s); // "NORMAL" -> UserRole.NORMAL
-			case null -> UserRole.NORMAL;
-			default -> throw new IllegalStateException(
-				"Unsupported role type in JWT payload: " + roleObj.getClass()
-			);
-		};
+		long tokenVersion = 0L;
+		Object tokenVersionObj = payload.get(CLAIM_TOKEN_VERSION);
+		if (tokenVersionObj instanceof Number tokenVersionNo) {
+			tokenVersion = tokenVersionNo.longValue();
+		}
 
-		return Map.of(
-			CLAIM_ID, id,
-			CLAIM_NICKNAME, nickname,
-			CLAIM_ROLE, role
+		UserRole role = UserRole.NORMAL;
+		Object roleObj = payload.get(CLAIM_ROLE);
+		if (roleObj instanceof String roleStr) {
+			try {
+				role = UserRole.valueOf(roleStr);
+			} catch (Exception ignored) {
+				return null;
+			}
+		} else if (roleObj instanceof UserRole userRole) {
+			role = userRole;
+		} else if (roleObj != null) {
+			return null;
+		}
+
+		return new JwtClaims(
+			idNo.longValue(),
+			nickname == null ? "" : nickname,
+			role,
+			tokenType,
+			jti,
+			sid,
+			tokenVersion
 		);
 	}
 

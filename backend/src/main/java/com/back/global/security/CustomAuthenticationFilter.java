@@ -2,9 +2,9 @@ package com.back.global.security;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,9 +15,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.back.api.auth.dto.JwtDto;
 import com.back.api.auth.service.AuthTokenService;
-import com.back.domain.user.entity.User;
+import com.back.domain.auth.entity.ActiveSession;
+import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.user.entity.UserRole;
-import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.global.http.CookieManager;
@@ -41,8 +41,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtProvider jwtProvider;
 	private final AuthTokenService tokenService;
-	private final UserRepository userRepository;
 	private final CookieManager cookieManager;
+	private final ActiveSessionRepository activeSessionRepository;
 
 	@Value("${jwt.access-token-duration:3600}")
 	private long accessTokenDurationSeconds;
@@ -84,20 +84,23 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 		String validAccessToken = ensureValidAccessToken(accessToken, request, response);
 
-		Map<String, Object> payload = tokenService.payloadOrNull(validAccessToken);
-		if (payload == null) {
+		JwtClaims claims = jwtProvider.payloadOrNull(validAccessToken);
+		if (claims == null || !"access".equals(claims.tokenType())) {
 			throw new ErrorException(AuthErrorCode.INVALID_TOKEN);
 		}
 
-		long userId = ((Number)payload.get("id")).longValue();
-		String nickname = (String)payload.getOrDefault("nickname", "");
-		Object roleObj = payload.get("role");
-		UserRole role = UserRole.NORMAL;
+		long userId = claims.userId();
+		String nickname = claims.nickname();
+		UserRole role = claims.role();
+		String sid = claims.sessionId();
+		long tokenVersion = claims.tokenVersion();
 
-		if (roleObj instanceof String roleStr) {
-			role = UserRole.valueOf(roleStr);
-		} else if (roleObj instanceof UserRole userRole) {
-			role = userRole;
+		ActiveSession active = activeSessionRepository.findByUserId(userId)
+			.orElseThrow(() -> new ErrorException(AuthErrorCode.UNAUTHORIZED));
+
+		if (!active.getSessionId().equals(sid) || active.getTokenVersion() != tokenVersion) {
+			cookieManager.deleteAuthCookies(request, response);
+			throw new ErrorException(AuthErrorCode.ACCESS_OTHER_DEVICE);
 		}
 
 		SecurityUser securityUser = new SecurityUser(
@@ -121,8 +124,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 	private String resolveAccessToken(HttpServletRequest request) {
 		String headerAuthorization = request.getHeader("Authorization");
-		if (headerAuthorization != null
-			&& !headerAuthorization.isBlank()
+		if (!StringUtils.isBlank(headerAuthorization)
 			&& headerAuthorization.startsWith(BEARER_PREFIX)
 		) {
 			return headerAuthorization.substring(BEARER_PREFIX.length());
@@ -154,28 +156,27 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			return accessToken;
 		}
 
-		String refreshToken = resolveCookie(request, CookieManager.REFRESH_TOKEN_COOKIE);
+		String refreshTokenStr = resolveCookie(request, CookieManager.REFRESH_TOKEN_COOKIE);
 
-		if (refreshToken == null || refreshToken.isBlank() || jwtProvider.isExpired(refreshToken)) {
+		if (StringUtils.isBlank(refreshTokenStr) || jwtProvider.isExpired(refreshTokenStr)) {
 			// refreshToken도 없거나 만료 > 세션 종료 > 재로그인 필요
 			throw new ErrorException(AuthErrorCode.TOKEN_EXPIRED);
 		}
 
-		Map<String, Object> refreshPayload = jwtProvider.payloadOrNull(refreshToken);
-		if (refreshPayload == null) {
-			throw new ErrorException(AuthErrorCode.INVALID_TOKEN);
+		try {
+			JwtDto newTokens = tokenService.rotateTokenByRefreshToken(refreshTokenStr);
+
+			cookieManager.set(request, response, "accessToken", newTokens.accessToken(), accessTokenDurationSeconds);
+			cookieManager.set(request, response, "refreshToken", newTokens.refreshToken(), refreshTokenDurationSeconds);
+
+			return newTokens.accessToken();
+		} catch (ErrorException e) {
+			// 다른 기기 로그인/세션 불일치인 경우 쿠키 삭제
+			if (e.getErrorCode() == AuthErrorCode.ACCESS_OTHER_DEVICE
+				|| e.getErrorCode() == AuthErrorCode.REFRESH_TOKEN_NOT_FOUND) {
+				cookieManager.deleteAuthCookies(request, response);
+			}
+			throw e;
 		}
-
-		long userIdFromRefresh = ((Number)refreshPayload.get("id")).longValue();
-
-		User user = userRepository.findById(userIdFromRefresh)
-			.orElseThrow(() -> new ErrorException(AuthErrorCode.UNAUTHORIZED));
-
-		JwtDto newTokens = tokenService.generateTokens(user);
-
-		cookieManager.set(request, response, "accessToken", newTokens.accessToken(), accessTokenDurationSeconds);
-		cookieManager.set(request, response, "refreshToken", newTokens.refreshToken(), refreshTokenDurationSeconds);
-
-		return newTokens.accessToken();
 	}
 }

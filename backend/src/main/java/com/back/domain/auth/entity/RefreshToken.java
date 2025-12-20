@@ -49,6 +49,12 @@ public class RefreshToken extends BaseEntity {
 	@Column(name = "expires_at")
 	private LocalDateTime expiresAt;
 
+	@Column(name = "session_id", length = 36)
+	private String sessionId;
+
+	@Column(name = "token_version")
+	private Long tokenVersion;
+
 	private boolean revoked; // 기기 로그아웃 확인
 
 	private String userAgent;
@@ -61,6 +67,8 @@ public class RefreshToken extends BaseEntity {
 		String token,
 		LocalDateTime issuedAt,
 		LocalDateTime expiresAt,
+		String sessionId,
+		long tokenVersion,
 		boolean revoked,
 		String userAgent,
 		String ipAddress
@@ -69,6 +77,8 @@ public class RefreshToken extends BaseEntity {
 		this.token = token;
 		this.issuedAt = issuedAt;
 		this.expiresAt = expiresAt;
+		this.sessionId = sessionId;
+		this.tokenVersion = tokenVersion;
 		this.revoked = revoked;
 		this.userAgent = userAgent;
 		this.ipAddress = ipAddress;
@@ -76,15 +86,5 @@ public class RefreshToken extends BaseEntity {
 
 	public void revoke() {
 		this.revoked = true;
-	}
-
-	public void updateRefreshToken(
-		String newToken,
-		LocalDateTime newIssuedAt,
-		LocalDateTime newExpiresAt
-	) {
-		this.token = newToken;
-		this.issuedAt = newIssuedAt;
-		this.expiresAt = newExpiresAt;
 	}
 }
