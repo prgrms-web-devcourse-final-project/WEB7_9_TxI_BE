@@ -105,7 +105,7 @@ jobs:
           echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
           echo $INSTANCE_ID
 
-      - name: AWS SSM Send-Command
+      - name: AWS SSM Send-Command (Blue-Green Deployment)
         uses: peterkimzz/aws-ssm-send-command@master
         id: ssm
         with:
@@ -116,10 +116,75 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
-            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
-            docker stop app1 2>/dev/null || true && \
-            docker rm app1 2>/dev/null || true && \
-             docker run -d --name app1 --network common -p 8080:8080 \
+            set -e
+
+            IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest"
+            HAPROXY_CFG="/usr/local/etc/haproxy/haproxy.cfg"
+
+            echo "=== Blue-Green Deploy Start ==="
+
+            # 현재 활성 backend 확인
+            CURRENT_BACKEND=$(docker exec ha_proxy_1 grep "use_backend" $HAPROXY_CFG | awk '{print $2}')
+            echo "Current backend: $CURRENT_BACKEND"
+
+            if [ "$CURRENT_BACKEND" = "blue_backend" ]; then
+              NEW_CONTAINER="app1_temp"
+              OLD_CONTAINER="app1"
+              TARGET_BACKEND="green_backend"
+            else
+              NEW_CONTAINER="app1"
+              OLD_CONTAINER="app1_temp"
+              TARGET_BACKEND="blue_backend"
+            fi
+
+            echo "New container: $NEW_CONTAINER"
+            echo "Old container: $OLD_CONTAINER"
+            echo "Target backend: $TARGET_BACKEND"
+
+            # 이미지 pull
+            docker pull $IMAGE
+
+            # 신규 컨테이너 정리
+            docker stop $NEW_CONTAINER 2>/dev/null || true
+            docker rm $NEW_CONTAINER 2>/dev/null || true
+
+            # 신규 컨테이너 실행
+            docker run -d \
+              --name $NEW_CONTAINER \
+              --network common \
               -e DOPPLER_TOKEN=${{ secrets.DOPPLER_TOKEN }} \
-              ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
-            docker image prune -f          
+              $IMAGE
+
+            # Health check (최대 60초)
+            for i in {1..30}; do
+              if docker exec $NEW_CONTAINER curl -fs http://localhost:8080/actuator/health > /dev/null; then
+                echo "✅ Health check passed"
+                break
+              fi
+
+              if [ "$i" -eq 30 ]; then
+                echo "❌ Health check failed"
+                docker logs $NEW_CONTAINER
+                docker stop $NEW_CONTAINER
+                docker rm $NEW_CONTAINER
+                exit 1
+              fi
+
+              sleep 2
+            done
+
+            # HAProxy backend 전환
+            sed -i "s/use_backend .*/use_backend $TARGET_BACKEND if host_api/" $HAPROXY_CFG
+            docker kill -s HUP ha_proxy_1
+            echo "✅ HAProxy switched to $TARGET_BACKEND"
+
+            # 안정화 대기
+            sleep 20
+
+            # 이전 컨테이너 정리
+            docker stop $OLD_CONTAINER 2>/dev/null || true
+            docker rm $OLD_CONTAINER 2>/dev/null || true
+
+            docker image prune -f
+
+            echo "=== Blue-Green Deploy Completed ==="
