@@ -18,6 +18,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.code.ErrorCode;
+import com.back.global.logging.RequestIdFilter;
 import com.back.global.properties.CorsProperties;
 import com.back.global.response.ApiResponse;
 import com.back.global.security.CustomAuthenticationFilter;
@@ -37,7 +38,12 @@ public class SecurityConfig {
 	private final ObjectMapper objectMapper;
 
 	@Bean
-	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	public RequestIdFilter requestIdFilter() {
+		return new RequestIdFilter();
+	}
+
+	@Bean
+	SecurityFilterChain filterChain(HttpSecurity http, RequestIdFilter requestIdFilter) throws Exception {
 		http
 
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -77,7 +83,10 @@ public class SecurityConfig {
 				})
 			);
 
-		http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
+		// MDC RequestId로깅용 필터 클래스 순서보장
+		http.addFilterBefore(requestIdFilter, UsernamePasswordAuthenticationFilter.class);
+		// MDC에서 requestId식별 후에 authenticationFilter적용
+		http.addFilterAfter(authenticationFilter, RequestIdFilter.class);
 
 		return http.build();
 	}
