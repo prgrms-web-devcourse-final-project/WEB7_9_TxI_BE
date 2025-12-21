@@ -30,13 +30,23 @@ public class DraftTicketExpirationScheduler {
 		List<Ticket> expiredTickets =
 			ticketRepository.findExpiredDraftTickets(TicketStatus.DRAFT, expiredBefore);
 
+		int totalCount = expiredTickets.size();
+		int successCount = 0;
+		int failCount = 0;
+
+		log.info("Draft 티켓 만료 스케줄러 시작 - 대상 티켓 수: {}", totalCount);
+
 		for (Ticket ticket : expiredTickets) {
 			try {
 				ticketService.failPayment(ticket.getId());
+				successCount++;
 				log.debug("만료된 Draft Ticket 처리 완료: ticketId={}", ticket.getId());
 			} catch (Exception ex) {
-				log.debug("Draft 티켓 만료 처리 실패 - ticketId={}", ticket.getId(), ex);
+				failCount++;
+				log.error("Draft 티켓 만료 처리 실패 - ticketId={}", ticket.getId(), ex);
 			}
 		}
+
+		log.info("Draft 티켓 만료 스케줄러 완료 - 총: {}, 성공: {}, 실패: {}", totalCount, successCount, failCount);
 	}
 }

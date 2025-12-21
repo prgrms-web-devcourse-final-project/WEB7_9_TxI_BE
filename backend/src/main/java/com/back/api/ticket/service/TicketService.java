@@ -124,6 +124,7 @@ public class TicketService {
 	/**
 	 * 결제 완료 → Ticket 확정 발급
 	 */
+	@Transactional
 	public Ticket confirmPayment(Long ticketId, Long userId) {
 
 		Ticket ticket = ticketRepository.findById(ticketId)
@@ -145,6 +146,7 @@ public class TicketService {
 	/**
 	 * 결제 실패 → DRAFT 티켓 폐기 + 좌석 AVAILABLE 복구
 	 */
+	@Transactional
 	public void failPayment(Long ticketId) {
 
 		Ticket ticket = ticketRepository.findById(ticketId)
@@ -154,7 +156,9 @@ public class TicketService {
 		ticket.fail();
 
 		// 좌석 해제
-		seatService.markSeatAsAvailable(ticket.getSeat());
+		if (ticket.getSeat() != null) {
+			seatService.markSeatAsAvailable(ticket.getSeat());
+		}
 	}
 
 	/**

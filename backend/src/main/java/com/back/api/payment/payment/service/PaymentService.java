@@ -21,7 +21,15 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Payment 관련 비즈니스 로직 처리
- * 큐,좌석,티켓의 상태변화 과도하게 책임 -> 추후 리팩토링 필요
+ * TODO: PG 연동 시 트랜잭션 경계 재설정 필요
+ *
+ * [설계 방향]
+ * 1. PG API 호출: 트랜잭션 밖으로 이동
+ * 2. 핵심 DB 변경만 @Transactional
+ * 3. Queue/Notification: @TransactionalEventListener(AFTER_COMMIT)
+ *
+ * [리팩토링 시점]
+ * - 실제 PG 연동 구현 시 (TossPaymentClient 등)
  */
 @Service
 @RequiredArgsConstructor
