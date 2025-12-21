@@ -124,6 +124,13 @@ resource "aws_security_group" "sg_1" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 8090
+    to_port     = 8090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # Prometheus
   ingress {
     from_port   = 9090
@@ -262,11 +269,10 @@ cat > /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy/haproxy.cfg <<'EO
 global
     log stdout format raw local0
     maxconn 4096
+    stats socket /var/run/haproxy.sock mode 600 level admin
 
 defaults
-    log global
     mode http
-    option httplog
     timeout connect 5s
     timeout client 60s
     timeout server 60s
@@ -274,21 +280,14 @@ defaults
 frontend http_front
     bind *:80
     acl host_api hdr(host) -i api.waitfair.shop
-    use_backend blue_backend if host_api
+    use_backend app_backend if host_api
 
-# Blue 백엔드
-backend blue_backend
+backend app_backend
     option httpchk GET /actuator/health
     http-check expect status 200
-    default-server inter 2s rise 2 fall 3
-    server blue app1:8080 check
 
-# Green 백엔드
-backend green_backend
-    option httpchk GET /actuator/health
-    http-check expect status 200
-    default-server inter 2s rise 2 fall 3
-    server green app1_temp:8080 check
+    server blue  app1:8080 check
+    server green app1_temp:8080 check disabled
 EOF
 
 docker run -d \
