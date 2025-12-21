@@ -1,0 +1,76 @@
+<configuration>
+
+    <!-- =========================
+         공통 설정
+         ========================= -->
+    <springProperty scope="context"
+                    name="APP_NAME"
+                    source="spring.application.name"
+                    defaultValue="waitfair"/>
+
+    <!-- =========================
+         LOCAL / DEV
+         - Spring Boot 기본 콘솔 로그 그대로
+         - 파일로만 rolling
+         ========================= -->
+    <springProfile name="local,dev">
+
+        <!-- Spring Boot 기본 console appender 그대로 사용 -->
+        <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+        <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+        <!-- 로컬 디버깅용 파일 로그 -->
+        <appender name="FILE"
+                  class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>logs/dev.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>logs/dev.%d{yyyy-MM-dd}.log</fileNamePattern>
+                <maxHistory>7</maxHistory>
+            </rollingPolicy>
+            <encoder>
+                <pattern>
+                    %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n
+                </pattern>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- =========================
+         PERF / PROD
+         - JSON stdout only
+         ========================= -->
+    <springProfile name="perf,prod">
+
+        <appender name="JSON_CONSOLE"
+                  class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <!-- 고정 필드 -->
+                <customFields>
+                    {"app":"${APP_NAME}"}
+                </customFields>
+
+                <!-- MDC에서 가져올 필드 -->
+                <includeMdcKeyName>requestId</includeMdcKeyName>
+                <includeMdcKeyName>userId</includeMdcKeyName>
+                <includeMdcKeyName>eventId</includeMdcKeyName>
+                <includeMdcKeyName>seatId</includeMdcKeyName>
+                <includeMdcKeyName>orderId</includeMdcKeyName>
+            </encoder>
+        </appender>
+
+        <!-- 불필요한 로그 줄이기 -->
+        <logger name="org.hibernate.SQL" level="WARN"/>
+        <logger name="org.hibernate.orm.jdbc.bind" level="WARN"/>
+        <logger name="org.springframework.web" level="INFO"/>
+
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>

@@ -7,11 +7,6 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: create-drop
-
-logging:
-  file:
-    name: logs/dev.log
-
 security:
   password:
     bcrypt-strength: 4

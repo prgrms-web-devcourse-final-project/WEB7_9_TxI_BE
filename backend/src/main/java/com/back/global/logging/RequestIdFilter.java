@@ -35,7 +35,7 @@ public class RequestIdFilter extends OncePerRequestFilter {
 		try {
 			filterChain.doFilter(request, response);
 		} finally {
-			MDC.clear(); // 중요: 스레드 재사용 대비
+			MDC.remove("requestId");
 		}
 	}
 }
