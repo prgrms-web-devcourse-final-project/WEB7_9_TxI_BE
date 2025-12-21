@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
@@ -26,4 +27,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, TicketRep
 	Optional<Ticket> findBySeatIdAndOwnerIdAndTicketStatus(Long seatId, Long userId, TicketStatus ticketStatus);
 
 	Optional<Ticket> findByEventIdAndOwnerIdAndTicketStatus(Long eventId, Long userId, TicketStatus ticketStatus);
+
+	@Query("SELECT t FROM Ticket t "
+		+ "LEFT JOIN FETCH t.event e "
+		+ "LEFT JOIN FETCH t.seat s "
+		+ "WHERE t.id = :ticketId")
+	Optional <Ticket> findByIdWithDetails(@Param("ticketId") Long ticketId);
 }

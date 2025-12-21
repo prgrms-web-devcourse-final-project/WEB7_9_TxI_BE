@@ -176,7 +176,7 @@ public class TicketService {
 	@Transactional(readOnly = true)
 	public Ticket getTicketDetail(Long ticketId, Long userId) {
 
-		Ticket ticket = ticketRepository.findById(ticketId)
+		Ticket ticket = ticketRepository.findByIdWithDetails(ticketId)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));
 
 		if (!ticket.getOwner().getId().equals(userId)) {
