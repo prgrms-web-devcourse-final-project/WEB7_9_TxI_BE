@@ -1,0 +1,174 @@
+package com.back.api.event.service;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.back.api.event.dto.request.EventCreateRequest;
+import com.back.api.event.dto.request.EventUpdateRequest;
+import com.back.api.event.dto.response.AdminEventDashboardResponse;
+import com.back.api.event.dto.response.EventResponse;
+import com.back.domain.event.entity.Event;
+import com.back.domain.event.entity.EventCategory;
+import com.back.domain.event.entity.EventStatus;
+import com.back.domain.event.repository.EventRepository;
+import com.back.domain.preregister.entity.PreRegisterStatus;
+import com.back.domain.preregister.repository.PreRegisterRepository;
+import com.back.domain.seat.entity.SeatStatus;
+import com.back.domain.seat.repository.SeatRepository;
+import com.back.global.error.exception.ErrorException;
+import com.back.support.factory.EventFactory;
+
+@ExtendWith(MockitoExtension.class)
+@DisplayName("AdminEventService 단위 테스트")
+class AdminEventServiceTest {
+
+	@InjectMocks
+	private AdminEventService adminEventService;
+
+	@Mock
+	private EventService eventService;
+
+	@Mock
+	private EventRepository eventRepository;
+
+	@Mock
+	private PreRegisterRepository preRegisterRepository;
+
+	@Mock
+	private SeatRepository seatRepository;
+
+	@Nested
+	@DisplayName("이벤트 생성")
+	class CreateEvent {
+
+		@Test
+		@DisplayName("EventService를 호출하여 이벤트를 생성한다")
+		void createEvent_Success() {
+			// given
+			EventCreateRequest request = mock(EventCreateRequest.class);
+			EventResponse expectedResponse = mock(EventResponse.class);
+
+			given(eventService.createEvent(request)).willReturn(expectedResponse);
+
+			// when
+			EventResponse result = adminEventService.createEvent(request);
+
+			// then
+			assertThat(result).isEqualTo(expectedResponse);
+			verify(eventService).createEvent(request);
+		}
+	}
+
+	@Nested
+	@DisplayName("이벤트 수정")
+	class UpdateEvent {
+
+		@Test
+		@DisplayName("EventService를 호출하여 이벤트를 수정한다")
+		void updateEvent_Success() {
+			// given
+			Long eventId = 1L;
+			EventUpdateRequest request = mock(EventUpdateRequest.class);
+			EventResponse expectedResponse = mock(EventResponse.class);
+
+			given(eventService.updateEvent(eventId, request)).willReturn(expectedResponse);
+
+			// when
+			EventResponse result = adminEventService.updateEvent(eventId, request);
+
+			// then
+			assertThat(result).isEqualTo(expectedResponse);
+			verify(eventService).updateEvent(eventId, request);
+		}
+	}
+
+	@Nested
+	@DisplayName("이벤트 삭제")
+	class DeleteEvent {
+
+		@Test
+		@DisplayName("EventService를 호출하여 이벤트를 삭제한다")
+		void deleteEvent_Success() {
+			// given
+			Long eventId = 1L;
+
+			// when
+			adminEventService.deleteEvent(eventId);
+
+			// then
+			verify(eventService).deleteEvent(eventId);
+		}
+	}
+
+	@Nested
+	@DisplayName("전체 이벤트 대시보드 조회")
+	class GetAllEventsDashboard {
+
+		@Test
+		@DisplayName("모든 이벤트의 대시보드 정보를 조회한다")
+		void getAllEventsDashboard_Success() {
+			// given
+			Event event1 = EventFactory.fakeEvent("이벤트1");
+			Event event2 = EventFactory.fakeEvent("이벤트2");
+			List<Event> events = List.of(event1, event2);
+
+			given(eventRepository.findAll()).willReturn(events);
+			given(preRegisterRepository.countByEvent_IdAndPreRegisterStatus(
+				any(), eq(PreRegisterStatus.REGISTERED))).willReturn(10L);
+			given(seatRepository.countByEventIdAndSeatStatus(any(), eq(SeatStatus.SOLD))).willReturn(5L);
+			given(seatRepository.sumPriceByEventIdAndSeatStatus(any(), eq(SeatStatus.SOLD))).willReturn(50000L);
+
+			// when
+			List<AdminEventDashboardResponse> results = adminEventService.getAllEventsDashboard();
+
+			// then
+			assertThat(results).hasSize(2);
+			assertThat(results.get(0).preRegisterCount()).isEqualTo(10L);
+			assertThat(results.get(0).totalSoldSeats()).isEqualTo(5L);
+			assertThat(results.get(0).totalSalesAmount()).isEqualTo(50000L);
+		}
+
+		@Test
+		@DisplayName("이벤트가 없으면 빈 리스트를 반환한다")
+		void getAllEventsDashboard_EmptyList() {
+			// given
+			given(eventRepository.findAll()).willReturn(List.of());
+
+			// when
+			List<AdminEventDashboardResponse> results = adminEventService.getAllEventsDashboard();
+
+			// then
+			assertThat(results).isEmpty();
+		}
+
+		@Test
+		@DisplayName("총 판매 금액이 null이면 0을 반환한다")
+		void getAllEventsDashboard_NullSalesAmount() {
+			// given
+			Event event = EventFactory.fakeEvent("이벤트");
+			given(eventRepository.findAll()).willReturn(List.of(event));
+			given(preRegisterRepository.countByEvent_IdAndPreRegisterStatus(
+				any(), eq(PreRegisterStatus.REGISTERED))).willReturn(0L);
+			given(seatRepository.countByEventIdAndSeatStatus(any(), eq(SeatStatus.SOLD))).willReturn(0L);
+			given(seatRepository.sumPriceByEventIdAndSeatStatus(any(), eq(SeatStatus.SOLD))).willReturn(null);
+
+			// when
+			List<AdminEventDashboardResponse> results = adminEventService.getAllEventsDashboard();
+
+			// then
+			assertThat(results).hasSize(1);
+			assertThat(results.get(0).totalSalesAmount()).isEqualTo(0L);
+		}
+	}
+}

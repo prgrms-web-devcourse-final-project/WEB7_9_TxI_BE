@@ -40,6 +40,9 @@ public record EventListResponse(
 	@Schema(description = "티켓팅 시작일시", example = "2026-01-25T10:00:00")
 	LocalDateTime ticketOpenAt,
 
+	@Schema(description = "티켓팅 종료일시", example = "2026-01-30T23:59:59")
+	LocalDateTime ticketCloseAt,
+
 	@Schema(description = "이벤트 상태 (READY: 준비중, PRE_OPEN: 사전등록중, QUEUE_READY: 대기열 준비, OPEN: 티켓팅 진행중, CLOSED: 마감)",
 		example = "PRE_OPEN")
 	EventStatus status,
@@ -59,6 +62,7 @@ public record EventListResponse(
 			event.getPreOpenAt(),
 			event.getPreCloseAt(),
 			event.getTicketOpenAt(),
+			event.getTicketCloseAt(),
 			event.getStatus(),
 			event.getCreateAt()
 		);
