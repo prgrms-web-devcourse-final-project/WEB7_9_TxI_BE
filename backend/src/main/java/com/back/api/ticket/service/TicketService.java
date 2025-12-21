@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.seat.service.SeatService;
+import com.back.api.ticket.dto.response.TicketResponse;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.seat.entity.Seat;
@@ -165,8 +166,8 @@ public class TicketService {
 	 * 내 티켓 목록 조회
 	 */
 	@Transactional(readOnly = true)
-	public List<Ticket> getMyTickets(Long userId) {
-		return ticketRepository.findByOwnerId(userId);
+	public List<TicketResponse> getMyTickets(Long userId) {
+		return ticketRepository.findMyTicketDto(userId);
 	}
 
 	/**

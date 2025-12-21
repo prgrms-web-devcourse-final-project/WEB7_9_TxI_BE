@@ -28,12 +28,9 @@ public class TicketController implements TicketApi {
 	public ApiResponse<List<TicketResponse>> getMyTickets() {
 		Long userId = httpRequestContext.getUser().getId();
 
-		List<Ticket> tickets = ticketService.getMyTickets(userId);
+		List<TicketResponse> responses = ticketService.getMyTickets(userId);
 
-		return ApiResponse.ok(
-			"사용자의 티켓 목록 조회 성공",
-			tickets.stream().map(TicketResponse::from).toList()
-		);
+		return ApiResponse.ok("사용자의 티켓 목록 조회 성공", responses);
 	}
 
 	@Override
