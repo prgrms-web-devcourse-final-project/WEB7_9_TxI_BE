@@ -76,9 +76,4 @@ public class AdminEventService {
 			})
 			.collect(Collectors.toList());
 	}
-
-	private Event findEventById(Long eventId) {
-		return eventRepository.findById(eventId)
-			.orElseThrow(() -> new ErrorException(EventErrorCode.NOT_FOUND_EVENT));
-	}
 }
