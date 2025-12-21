@@ -6,7 +6,9 @@ import org.springframework.stereotype.Service;
 import com.back.api.seat.dto.response.SeatStatusMessage;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SeatWebSocketPublisher {
@@ -14,9 +16,10 @@ public class SeatWebSocketPublisher {
 	private final SimpMessagingTemplate messagingTemplate;
 
 	public void publish(SeatStatusMessage msg) {
-		messagingTemplate.convertAndSend(
-			"/topic/events/" + msg.eventId() + "/seats",
-			msg
-		);
+		String destination = "/topic/events/" + msg.eventId() + "/seats";
+		log.debug("WS_PUBLISH destination={} eventId={} seatId={} status={}", destination, msg.eventId(), msg.seatId(),
+			msg.status());
+		messagingTemplate.convertAndSend(destination, msg);
+		log.debug("WS_PUBLISH_COMPLETE destination={}", destination);
 	}
 }
