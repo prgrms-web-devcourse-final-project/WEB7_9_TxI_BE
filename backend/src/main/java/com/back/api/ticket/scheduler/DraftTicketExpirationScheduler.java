@@ -42,7 +42,10 @@ public class DraftTicketExpirationScheduler {
 	}
 
 	/**
-	 * 테스트용: Lock 없이 실행 가능한 internal 메서드
+	 *  NOTE:
+	 *  ShedLock AOP가 테스트 환경에서 스케줄러 실행을 막기 때문에
+	 *  테스트에서는 expireDraftTicketsInternal()을 직접 호출한다.
+	 *  운영 환경에서는 반드시 expireDraftTickets()만 사용해야 한다.
 	 */
 	public void expireDraftTicketsInternal() {
 		String runId = UUID.randomUUID().toString();
