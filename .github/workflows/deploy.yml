@@ -116,71 +116,10 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
-            set -e
-
-            IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest"
-            CFG="/dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy/haproxy.cfg"
-
-            echo "=== Blue-Green Deploy Start ==="
-
-            # 현재 활성 컨테이너 판단
-            if docker ps --format '{{.Names}}' | grep -q "^app1$"; then
-              OLD="app1"
-              NEW="app1_temp"
-              OLD_SERVER="blue"
-              NEW_SERVER="green"
-            else
-              OLD="app1_temp"
-              NEW="app1"
-              OLD_SERVER="green"
-              NEW_SERVER="blue"
-            fi
-
-            echo "OLD: $OLD ($OLD_SERVER)"
-            echo "NEW: $NEW ($NEW_SERVER)"
-
-            # 이미지 pull
-            docker pull $IMAGE
-
-            # 새 컨테이너 정리
-            docker stop $NEW 2>/dev/null || true
-            docker rm   $NEW 2>/dev/null || true
-
-            # 새 컨테이너 실행
-            docker run -d \
-              --name $NEW \
-              --network common \
+            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            docker stop app1 2>/dev/null || true && \
+            docker rm app1 2>/dev/null || true && \
+             docker run -d --name app1 --network common -p 8080:8080 \
               -e DOPPLER_TOKEN=${{ secrets.DOPPLER_TOKEN }} \
-              $IMAGE
-
-            # Health Check
-            for i in {1..30}; do
-              if docker exec $NEW curl -fs http://localhost:8080/actuator/health > /dev/null; then
-                echo "✅ Health check passed"
-                break
-              fi
-
-              if [ "$i" -eq 30 ]; then
-                echo "❌ Health check failed"
-                docker logs $NEW
-                exit 1
-              fi
-              sleep 2
-            done
-
-            # HAProxy 설정 스위칭
-            sed -i "s/server $NEW_SERVER .* disabled/server $NEW_SERVER app1_temp:8080 check/" $CFG
-            sed -i "s/server $OLD_SERVER .* check/server $OLD_SERVER app1:8080 check disabled/" $CFG
-
-            docker kill -s HUP ha_proxy_1
-            echo "✅ HAProxy reloaded"
-
-            sleep 20
-
-            # 이전 컨테이너 제거
-            docker stop $OLD 2>/dev/null || true
-            docker rm   $OLD 2>/dev/null || true
-
-            docker image prune -f
-
-            echo "=== Blue-Green Deploy Completed ==="
+              ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
+            docker image prune -f          
