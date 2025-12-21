@@ -26,7 +26,17 @@ spring:
       host: localhost
       port: 6379
       password: ${REDIS_PASSWORD:}
-
+server:
+  tomcat:
+    basedir: .
+    accesslog:
+      enabled: true
+      directory: logs
+      prefix: access
+      suffix: .log
+      file-date-format: .yyyy-MM-dd
+      max-days: 14
+      pattern: '%h %t "%r" %s %b %D %{X-Request-Id}o "%{User-Agent}i"'
 logging:
   level:
     root: INFO

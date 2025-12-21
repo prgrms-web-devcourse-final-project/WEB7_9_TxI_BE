@@ -33,9 +33,9 @@ public class DraftTicketExpirationScheduler {
 		for (Ticket ticket : expiredTickets) {
 			try {
 				ticketService.failPayment(ticket.getId());
-				log.info("만료된 Draft Ticket 처리 완료: ticketId={}", ticket.getId());
+				log.debug("만료된 Draft Ticket 처리 완료: ticketId={}", ticket.getId());
 			} catch (Exception ex) {
-				log.error("Draft 티켓 만료 처리 실패 - ticketId={}", ticket.getId(), ex);
+				log.debug("Draft 티켓 만료 처리 실패 - ticketId={}", ticket.getId(), ex);
 			}
 		}
 	}

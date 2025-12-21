@@ -13,6 +13,18 @@ public final class MdcContext {
 		}
 	}
 
+	public static void putEventId(Long eventId) {
+		if (eventId != null) {
+			MDC.put("eventId", String.valueOf(eventId));
+		}
+	}
+
+	public static void putSeatId(Long seatId) {
+		if (seatId != null) {
+			MDC.put("seatId", String.valueOf(seatId));
+		}
+	}
+
 	public static void removeUserId() {
 		MDC.remove("userId");
 	}
