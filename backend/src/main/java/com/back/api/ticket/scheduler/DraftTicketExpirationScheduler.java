@@ -15,6 +15,7 @@ import com.back.api.ticket.service.TicketService;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 import com.back.domain.ticket.repository.TicketRepository;
+import com.back.global.logging.MdcContext;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,15 +38,23 @@ public class DraftTicketExpirationScheduler {
 		lockAtLeastFor = "10s"
 	)
 	public void expireDraftTickets() {
+		expireDraftTicketsInternal();
+	}
+
+	/**
+	 * 테스트용: Lock 없이 실행 가능한 internal 메서드
+	 */
+	public void expireDraftTicketsInternal() {
 		String runId = UUID.randomUUID().toString();
 		long startAt = System.currentTimeMillis();
 
 		try {
+			MdcContext.putRunId(runId);
 			LocalDateTime expiredBefore = LocalDateTime.now().minusMinutes(15);
 
 			log.info(
-				"SCHED_START job=DraftTicketExpiration runId={} expiredBefore={}",
-				runId, expiredBefore
+				"SCHED_START job=DraftTicketExpiration expiredBefore={}",
+				expiredBefore
 			);
 
 			int total = 0;
@@ -66,7 +75,7 @@ public class DraftTicketExpirationScheduler {
 
 				for (Ticket ticket : ticketPage.getContent()) {
 					try {
-						ticketService.failPayment(ticket.getId());
+						ticketService.expireDraftTicket(ticket.getId());
 						success++;
 						log.debug(
 							"SCHED_ITEM_SUCCESS job=DraftTicketExpiration runId={} ticketId={}",
@@ -95,16 +104,18 @@ public class DraftTicketExpirationScheduler {
 
 			long durationMs = System.currentTimeMillis() - startAt;
 			log.info(
-				"SCHED_END job=DraftTicketExpiration runId={} total={} success={} fail={} durationMs={}",
-				runId, total, success, fail, durationMs
+				"SCHED_END job=DraftTicketExpiration total={} success={} fail={} durationMs={}",
+				total, success, fail, durationMs
 			);
 
 		} catch (Exception ex) {
 			long durationMs = System.currentTimeMillis() - startAt;
 			log.error(
-				"SCHED_FAIL job=DraftTicketExpiration runId={} durationMs={} error={}",
-				runId, durationMs, ex.toString(), ex
+				"SCHED_FAIL job=DraftTicketExpiration durationMs={} error={}",
+				durationMs, ex.toString(), ex
 			);
+		} finally {
+			MdcContext.removeRunId();
 		}
 	}
 }

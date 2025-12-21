@@ -184,4 +184,21 @@ public class TicketService {
 
 		return ticket;
 	}
+
+	/**
+	 * Draft만료 전용 스케줄러 사용하는 메소드
+	 */
+	@Transactional
+	public void expireDraftTicket(Long ticketId) {
+		Ticket ticket = ticketRepository.findById(ticketId)
+			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));
+
+		// 핵심 책임: 상태 변경은 무조건
+		ticket.fail();
+
+		// 부가 책임: 좌석이 있으면 해제
+		if (ticket.getSeat() != null) {
+			seatService.markSeatAsAvailable(ticket.getSeat());
+		}
+	}
 }

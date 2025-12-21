@@ -60,6 +60,7 @@
                 <includeMdcKeyName>eventId</includeMdcKeyName>
                 <includeMdcKeyName>seatId</includeMdcKeyName>
                 <includeMdcKeyName>orderId</includeMdcKeyName>
+                <includeMdcKeyName>runId</includeMdcKeyName>
             </encoder>
         </appender>
 
