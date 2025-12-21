@@ -21,6 +21,7 @@ import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.global.http.CookieManager;
+import com.back.global.logging.MdcContext;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -119,7 +120,14 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
-		filterChain.doFilter(request, response);
+		// 인증 성공 이후에 MDC 로그 컨텍스트에 userId추가, SecurityContext와 별개
+		MdcContext.putUserId(userId);
+
+		try {
+			filterChain.doFilter(request, response);
+		} finally {
+			MdcContext.removeUserId(); // 다음 스레드 재사용을 위해 반드시 제거
+		}
 	}
 
 	private String resolveAccessToken(HttpServletRequest request) {
