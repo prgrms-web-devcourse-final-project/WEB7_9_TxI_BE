@@ -2,6 +2,7 @@ package com.back.api.queue.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,6 +14,7 @@ import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRepository;
+import com.back.global.logging.MdcContext;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +35,11 @@ public class QueueExpireScheduler {
 		lockAtLeastFor = "10s"
 	)
 	public void autoExpireEntries() {
+		String runId = UUID.randomUUID().toString();
+
 		try {
+			MdcContext.putRunId(runId);
+
 			LocalDateTime now = LocalDateTime.now();
 
 			List<QueueEntry> expiredEntries = queueEntryRepository.findExpiredEntries(
@@ -52,6 +58,8 @@ public class QueueExpireScheduler {
 			log.info("만료 처리 완료 : {}명", expiredEntries.size());
 		} catch (Exception e) {
 			log.error("자동 만료 스케줄러 실패", e);
+		} finally {
+			MdcContext.removeRunId();
 		}
 
 	}

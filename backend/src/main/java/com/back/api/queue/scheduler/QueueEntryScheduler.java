@@ -1,6 +1,7 @@
 package com.back.api.queue.scheduler;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,6 +13,7 @@ import com.back.api.event.service.EventService;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
+import com.back.global.logging.MdcContext;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +40,11 @@ public class QueueEntryScheduler {
 		lockAtLeastFor = "5s"
 	)
 	public void autoQueueEntries() {
+		String runId = UUID.randomUUID().toString();
+
 		try {
+			MdcContext.putRunId(runId);
+
 			List<Event> openEvents = eventService.findEventsByStatus((EventStatus.OPEN));
 
 			if (openEvents.isEmpty()) {
@@ -50,6 +56,8 @@ public class QueueEntryScheduler {
 			}
 		} catch (Exception e) {
 			log.error("자동 입장 스케줄러 실패", e);
+		} finally {
+			MdcContext.removeRunId();
 		}
 	}
 

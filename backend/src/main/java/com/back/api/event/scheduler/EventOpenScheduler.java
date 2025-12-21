@@ -2,6 +2,7 @@ package com.back.api.event.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,6 +13,7 @@ import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.global.logging.MdcContext;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +33,11 @@ public class EventOpenScheduler {
 		lockAtLeastFor = "10s"
 	)
 	public void openTicketing() {
+		String runId = UUID.randomUUID().toString();
+
 		try {
+			MdcContext.putRunId(runId);
+
 			LocalDateTime now = LocalDateTime.now();
 
 			// QUEUE_READY 상태이면서 ticketOpenAt이 지난 이벤트 조회
@@ -56,6 +62,8 @@ public class EventOpenScheduler {
 
 		} catch (Exception e) {
 			log.error("티켓팅 오픈 스케줄러 실행 실패", e);
+		} finally {
+			MdcContext.removeRunId();
 		}
 	}
 }
