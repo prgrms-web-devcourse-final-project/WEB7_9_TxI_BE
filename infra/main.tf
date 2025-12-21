@@ -295,7 +295,7 @@ docker run -d \
   --name ha_proxy_1 \
   --restart unless-stopped \
   --network common \
-  -p 80:80 \
+  -p 8090:80 \
   -e TZ=Asia/Seoul \
   -v /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy:/usr/local/etc/haproxy:ro \
   haproxy:2.9-alpine
