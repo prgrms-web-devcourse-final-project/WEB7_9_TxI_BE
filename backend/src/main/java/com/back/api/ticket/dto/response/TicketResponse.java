@@ -2,7 +2,10 @@ package com.back.api.ticket.dto.response;
 
 import java.time.LocalDateTime;
 
+import com.back.domain.seat.entity.SeatGrade;
+import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.ticket.entity.Ticket;
+import com.back.domain.ticket.entity.TicketStatus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -37,6 +40,32 @@ public record TicketResponse(
 	@Schema(description = "사용 시간", example = "2024-01-01T18:00:00")
 	LocalDateTime usedAt
 ) {
+	public TicketResponse(
+		Long ticketId,
+		Long eventId,
+		String eventTitle,
+		String seatCode,
+		SeatGrade seatGrade,
+		Integer seatPrice,
+		SeatStatus seatStatus,
+		TicketStatus ticketStatus,
+		LocalDateTime issuedAt,
+		LocalDateTime usedAt
+	) {
+		this(
+			ticketId,
+			eventId,
+			eventTitle,
+			seatCode,
+			seatGrade != null ? seatGrade.getDisplayName() : null,
+			seatPrice != null ? seatPrice : 0,
+			seatStatus != null ? seatStatus.name() : null,
+			ticketStatus.name(),
+			issuedAt,
+			usedAt
+		);
+	}
+
 	public static TicketResponse from(Ticket ticket) {
 		return new TicketResponse(
 			ticket.getId(),

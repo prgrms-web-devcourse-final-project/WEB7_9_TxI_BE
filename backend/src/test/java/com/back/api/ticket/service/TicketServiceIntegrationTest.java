@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.ticket.dto.response.TicketResponse;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.seat.entity.Seat;
@@ -180,7 +181,7 @@ class TicketServiceIntegrationTest {
 		ticketHelper.createIssuedTicket(user, seat, event);
 		ticketHelper.createIssuedTicket(user, seat2, event);
 
-		List<Ticket> myTickets = ticketService.getMyTickets(user.getId());
+		List<TicketResponse> myTickets = ticketService.getMyTickets(user.getId());
 
 		assertThat(myTickets).hasSize(2);
 	}

@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 
-public interface TicketRepository extends JpaRepository<Ticket, Long> {
+public interface TicketRepository extends JpaRepository<Ticket, Long>, TicketRepositoryCustom {
 
 	List<Ticket> findByOwnerId(Long userId);
 
