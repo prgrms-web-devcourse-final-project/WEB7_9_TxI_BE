@@ -1,8 +1,11 @@
 package com.back.api.ticket.scheduler;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -19,34 +22,82 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DraftTicketExpirationScheduler {
 
+	private static final int PAGE_SIZE = 500;
+	private static final int MAX_PER_RUN = 2000;
+
 	private final TicketRepository ticketRepository;
 	private final TicketService ticketService;
 
-	@Scheduled(fixedRate = 60_000) // 1분마다 실행
+	@Scheduled(fixedRate = 60_000)
 	public void expireDraftTickets() {
+		String runId = UUID.randomUUID().toString();
+		long startAt = System.currentTimeMillis();
 
-		LocalDateTime expiredBefore = LocalDateTime.now().minusMinutes(15);
+		try {
+			LocalDateTime expiredBefore = LocalDateTime.now().minusMinutes(15);
 
-		List<Ticket> expiredTickets =
-			ticketRepository.findExpiredDraftTickets(TicketStatus.DRAFT, expiredBefore);
+			log.info(
+				"SCHED_START job=DraftTicketExpiration runId={} expiredBefore={}",
+				runId, expiredBefore
+			);
 
-		int totalCount = expiredTickets.size();
-		int successCount = 0;
-		int failCount = 0;
+			int total = 0;
+			int success = 0;
+			int fail = 0;
+			int page = 0;
 
-		log.info("Draft 티켓 만료 스케줄러 시작 - 대상 티켓 수: {}", totalCount);
+			while (total < MAX_PER_RUN) {
+				Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+				Page<Ticket> ticketPage =
+					ticketRepository.findExpiredDraftTickets(
+						TicketStatus.DRAFT, expiredBefore, pageable
+					);
 
-		for (Ticket ticket : expiredTickets) {
-			try {
-				ticketService.failPayment(ticket.getId());
-				successCount++;
-				log.debug("만료된 Draft Ticket 처리 완료: ticketId={}", ticket.getId());
-			} catch (Exception ex) {
-				failCount++;
-				log.error("Draft 티켓 만료 처리 실패 - ticketId={}", ticket.getId(), ex);
+				if (ticketPage.isEmpty()) {
+					break;
+				}
+
+				for (Ticket ticket : ticketPage.getContent()) {
+					try {
+						ticketService.failPayment(ticket.getId());
+						success++;
+						log.debug(
+							"SCHED_ITEM_SUCCESS job=DraftTicketExpiration runId={} ticketId={}",
+							runId, ticket.getId()
+						);
+					} catch (Exception ex) {
+						fail++;
+						log.error(
+							"SCHED_ITEM_FAIL job=DraftTicketExpiration runId={} ticketId={} error={}",
+							runId, ticket.getId(), ex.toString(), ex
+						);
+					}
+				}
+
+				total += ticketPage.getNumberOfElements();
+				page++;
+
+				if (total >= MAX_PER_RUN) {
+					log.warn(
+						"SCHED_LIMIT_REACHED job=DraftTicketExpiration runId={} limit={}",
+						runId, MAX_PER_RUN
+					);
+					break;
+				}
 			}
-		}
 
-		log.info("Draft 티켓 만료 스케줄러 완료 - 총: {}, 성공: {}, 실패: {}", totalCount, successCount, failCount);
+			long durationMs = System.currentTimeMillis() - startAt;
+			log.info(
+				"SCHED_END job=DraftTicketExpiration runId={} total={} success={} fail={} durationMs={}",
+				runId, total, success, fail, durationMs
+			);
+
+		} catch (Exception ex) {
+			long durationMs = System.currentTimeMillis() - startAt;
+			log.error(
+				"SCHED_FAIL job=DraftTicketExpiration runId={} durationMs={} error={}",
+				runId, durationMs, ex.toString(), ex
+			);
+		}
 	}
 }
