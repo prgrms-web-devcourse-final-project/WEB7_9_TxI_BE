@@ -269,7 +269,12 @@ cat > /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy/haproxy.cfg <<'EO
 global
     log stdout format raw local0
     maxconn 4096
-    stats socket /var/run/haproxy.sock mode 600 level admin
+
+resolvers docker
+    nameserver dns 127.0.0.11:53
+    resolve_retries 3
+    timeout retry 1s
+    hold valid 10s
 
 defaults
     mode http
@@ -285,9 +290,11 @@ frontend http_front
 backend app_backend
     option httpchk GET /actuator/health
     http-check expect status 200
+    default-server init-addr none resolvers docker
 
-    server blue  app1:8080 check
+    server blue  app1:8080      check
     server green app1_temp:8080 check disabled
+~
 EOF
 
 docker run -d \
@@ -296,7 +303,7 @@ docker run -d \
   --network common \
   -p 8090:80 \
   -e TZ=Asia/Seoul \
-  -v /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy:/usr/local/etc/haproxy:ro \
+  -v /dockerProjects/ha_proxy_1/volumes/usr/local/etc/haproxy:/usr/local/etc/haproxy \
   haproxy:2.9-alpine
 
 
