@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
@@ -25,6 +27,11 @@ public class QueueExpireScheduler {
 	private final QueueEntryProcessService queueEntryProcessService;
 
 	@Scheduled(cron = "${queue.scheduler.expire.cron}", zone = "Asia/Seoul")
+	@SchedulerLock(
+		name = "QueueExpire",
+		lockAtMostFor = "5m",
+		lockAtLeastFor = "10s"
+	)
 	public void autoExpireEntries() {
 		try {
 			LocalDateTime now = LocalDateTime.now();

@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+
 import com.back.api.event.service.EventService;
 import com.back.api.queue.service.QueueShuffleService;
 import com.back.domain.event.entity.Event;
@@ -35,6 +37,11 @@ public class QueueShuffleScheduler {
 	private final QueueSchedulerProperties properties;
 
 	@Scheduled(cron = "${queue.scheduler.shuffle.cron}", zone = "Asia/Seoul")
+	@SchedulerLock(
+		name = "QueueShuffle",
+		lockAtMostFor = "10m",
+		lockAtLeastFor = "30s"
+	)
 	public void autoShuffleQueue() {
 		try {
 			LocalDateTime now = LocalDateTime.now();

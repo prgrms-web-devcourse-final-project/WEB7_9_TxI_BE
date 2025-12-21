@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
@@ -29,6 +31,11 @@ public class DraftTicketExpirationScheduler {
 	private final TicketService ticketService;
 
 	@Scheduled(fixedRate = 60_000)
+	@SchedulerLock(
+		name = "DraftTicketExpiration",
+		lockAtMostFor = "5m",
+		lockAtLeastFor = "10s"
+	)
 	public void expireDraftTickets() {
 		String runId = UUID.randomUUID().toString();
 		long startAt = System.currentTimeMillis();
