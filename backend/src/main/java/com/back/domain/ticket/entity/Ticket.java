@@ -47,7 +47,7 @@ public class Ticket extends BaseEntity {
 	private User owner;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "seat_id", nullable = true)
+	@JoinColumn(name = "seat_id", nullable = false)
 	private Seat seat;
 
 	@ManyToOne(fetch = FetchType.LAZY)

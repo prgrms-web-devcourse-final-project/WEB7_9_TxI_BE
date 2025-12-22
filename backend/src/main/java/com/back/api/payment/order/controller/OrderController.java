@@ -1,5 +1,7 @@
 package com.back.api.payment.order.controller;
 
+import com.back.domain.payment.order.entity.Order;
+import com.back.domain.payment.order.repository.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,18 +28,11 @@ public class OrderController implements OrderApi {
 
 	@PostMapping("/v2/orders/prepare")
 	public ApiResponse<OrderResponseDto> createOrder(@RequestBody OrderRequestDto orderRequestDto) {
-		log.info("Create order ing~~~~");
+
 		Long userId = httpRequestContext.getUser().getId();
-		log.info("%d 번 유저가 주문을 시작하였습니다",userId);
 
 		OrderResponseDto orderResponseDto = orderService.createOrder(orderRequestDto, userId);
+
 		return ApiResponse.ok(orderResponseDto);
 	}
-
-	@GetMapping("/v2/orders/test")
-	public ApiResponse<String> test(){
-		log.info("test");
-		return ApiResponse.ok("okok");
-	}
-
 }
