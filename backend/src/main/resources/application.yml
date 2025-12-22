@@ -16,7 +16,7 @@ spring:
         default_batch_fetch_size: 100
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
   mvc:
     hiddenmethod:
       filter:

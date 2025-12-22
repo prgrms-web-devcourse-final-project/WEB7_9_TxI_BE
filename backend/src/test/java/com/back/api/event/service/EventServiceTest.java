@@ -168,73 +168,15 @@ class EventServiceTest {
 				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.INVALID_EVENT_DATE);
 		}
 
-		@Test
-		@DisplayName("사전등록 시작일이 과거이면 예외 발생")
-		void createEventFailWhenPreOpenAtIsBeforeNow() {
-			// given
-			EventCreateRequest request = new EventCreateRequest(
-				"테스트 이벤트",
-				EventCategory.CONCERT,
-				"테스트 설명",
-				"테스트 장소",
-				"https://example.com/image.jpg",
-				10000,
-				50000,
-				now.minusDays(1), // 과거 날짜
-				preCloseAt,
-				ticketOpenAt,
-				ticketCloseAt,
-				100
-			);
+		// 과거 날짜 이벤트 생성 허용으로 인해 테스트 제거됨
+		// @Test
+		// @DisplayName("사전등록 시작일이 과거이면 예외 발생")
+		// void createEventFailWhenPreOpenAtIsBeforeNow() { ... }
 
-			// when & then
-			assertThatThrownBy(() -> eventService.createEvent(request))
-				.isInstanceOf(ErrorException.class)
-				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.INVALID_EVENT_DATE);
-		}
-
-		@Test
-		@DisplayName("중복된 이벤트 생성 시 예외 발생")
-		void createEventFailWhenDuplicateEvent() {
-			// given
-			// 먼저 이벤트 생성
-			EventCreateRequest firstRequest = new EventCreateRequest(
-				"중복 테스트 이벤트",
-				EventCategory.CONCERT,
-				"테스트 설명",
-				"중복 테스트 장소",
-				"https://example.com/image.jpg",
-				10000,
-				50000,
-				preOpenAt,
-				preCloseAt,
-				ticketOpenAt,
-				ticketCloseAt,
-				100
-			);
-			eventService.createEvent(firstRequest);
-
-			// 동일한 title, place, ticketOpenAt로 두 번째 이벤트 생성 시도
-			EventCreateRequest duplicateRequest = new EventCreateRequest(
-				"중복 테스트 이벤트",
-				EventCategory.CONCERT,
-				"다른 설명",
-				"중복 테스트 장소",
-				"https://example.com/image2.jpg",
-				20000,
-				60000,
-				preOpenAt,
-				preCloseAt,
-				ticketOpenAt, // 동일한 ticketOpenAt
-				ticketCloseAt,
-				200
-			);
-
-			// when & then
-			assertThatThrownBy(() -> eventService.createEvent(duplicateRequest))
-				.isInstanceOf(ErrorException.class)
-				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.DUPLICATE_EVENT);
-		}
+		// 중복 체크 비활성화로 인해 테스트 제거됨
+		// @Test
+		// @DisplayName("중복된 이벤트 생성 시 예외 발생")
+		// void createEventFailWhenDuplicateEvent() { ... }
 	}
 
 	@Nested
@@ -373,9 +315,9 @@ class EventServiceTest {
 			);
 
 			// when & then
-			assertThatThrownBy(() -> eventService.updateEvent(secondEvent.getId(), request))
-				.isInstanceOf(ErrorException.class)
-				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.DUPLICATE_EVENT);
+			// 중복 체크 비활성화로 인해 이제 성공해야 함
+			EventResponse response = eventService.updateEvent(secondEvent.getId(), request);
+			assertThat(response.title()).isEqualTo("첫 번째 이벤트");
 		}
 
 		@Test

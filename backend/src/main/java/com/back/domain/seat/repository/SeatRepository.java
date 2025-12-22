@@ -47,4 +47,11 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 			AND s.id <> :seatId
 		""")
 	List<String> findExistingSeatCodesExceptSelf(Long eventId, SeatGrade grade, String seatCode, Long seatId);
+
+	// 관리자 대시보드용 - 이벤트별 특정 상태 좌석 수 조회
+	Long countByEventIdAndSeatStatus(Long eventId, SeatStatus seatStatus);
+
+	// 관리자 대시보드용 - 이벤트별 특정 상태 좌석의 총 판매 금액 조회
+	@Query("SELECT COALESCE(SUM(s.price), 0) FROM Seat s WHERE s.event.id = :eventId AND s.seatStatus = :seatStatus")
+	Long sumPriceByEventIdAndSeatStatus(@Param("eventId") Long eventId, @Param("seatStatus") SeatStatus seatStatus);
 }

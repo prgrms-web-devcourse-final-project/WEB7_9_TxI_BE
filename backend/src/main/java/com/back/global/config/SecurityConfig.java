@@ -57,7 +57,7 @@ public class SecurityConfig {
 				.requestMatchers("/api/v1/auth/login").permitAll()
 				.requestMatchers("/api/v1/admin/auth/**").permitAll()
 				.requestMatchers("/ws/**").permitAll()  // WebSocket 핸드셰이크 허용
-				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+				// .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")  // TODO: 프론트 개발 완료 후 권한 활성화
 				.requestMatchers("/actuator/**").permitAll()    // 모니터링/Actuator 관련
 				// .requestMatchers("/api/v1/**").authenticated() // TODO: 개발 후 인증 활성화
 				.anyRequest().permitAll() // TODO: 보안 인증 설정 시 제거, 현재는 모든 API 요청을 인증없이 허용

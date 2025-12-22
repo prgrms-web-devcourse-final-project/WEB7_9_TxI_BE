@@ -26,7 +26,7 @@ public class TicketController implements TicketApi {
 	@Override
 	@GetMapping("/my")
 	public ApiResponse<List<TicketResponse>> getMyTickets() {
-		Long userId = httpRequestContext.getUser().getId();
+		Long userId = httpRequestContext.getUserId();
 
 		List<TicketResponse> responses = ticketService.getMyTickets(userId);
 
@@ -38,7 +38,7 @@ public class TicketController implements TicketApi {
 	public ApiResponse<TicketResponse> getMyTicketDetails(
 		@PathVariable Long ticketId
 	) {
-		Long userId = httpRequestContext.getUser().getId();
+		Long userId = httpRequestContext.getUserId();
 
 		Ticket ticket = ticketService.getTicketDetail(ticketId, userId);
 
