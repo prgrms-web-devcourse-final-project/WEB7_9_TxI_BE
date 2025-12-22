@@ -2,6 +2,7 @@ package com.back.api.payment.payment.service;
 
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
  * Payment 관련 비즈니스 로직 처리 ( 클라이언트 <-> 백엔드 )
  * 큐,좌석,티켓의 상태변화 과도하게 책임 -> 추후 리팩토링 필요
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -37,6 +39,7 @@ public class PaymentService {
 	private final TossPaymentService tossPaymentService;
 	private final PaymentRepository paymentRepository;
 
+
 	@Transactional
 	public PaymentConfirmResponse confirmPayment(
 		String orderId,
@@ -47,7 +50,10 @@ public class PaymentService {
 
 		// OrderService가 order의 정합성(주문자/주문상태/amount) 보장
 		Order order = orderService.getOrderForPayment(orderId, userId, clientAmount);
-
+		log.info("결제 승인 메서드: 결제 서비스 로그");
+		log.info("orderId : {}", orderId);
+		log.info("paymentKey : {}", paymentKey);
+		log.info("userId : {}", userId);
 		PaymentConfirmRequest request = new PaymentConfirmRequest(orderId, paymentKey, order.getAmount());
 
 		TossPaymentResponse result = tossPaymentService.confirmPayment(request);

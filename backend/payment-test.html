@@ -231,6 +231,7 @@
         let accessToken = localStorage.getItem('accessToken');
         let orderData = null;
         let paymentWidget = null;
+        let tossPayments = null;
 
         // 페이지 로드 시 로그인 상태 확인
         window.onload = function() {
@@ -320,33 +321,48 @@
             }
         }
 
-        // 토스페이먼츠 위젯 초기화
+        // 토스페이먼츠 위젯 초기화 (공식 방식)
         async function initializePaymentWidget() {
             try {
-                paymentWidget = await window.TossPayments(TOSS_CLIENT_KEY).payment({
-                    customerKey: 'customer_' + Date.now() // 고객 고유 키
+                console.log('결제 위젯 초기화 시작...');
+                console.log('orderData:', orderData);
+
+                // TossPayments 객체 생성
+                tossPayments = TossPayments(TOSS_CLIENT_KEY);
+
+                // 위젯 생성 (비회원)
+                paymentWidget = tossPayments.widgets({
+                    customerKey: TossPayments.ANONYMOUS
                 });
 
-                await paymentWidget.requestPayment({
-                    method: 'CARD',
-                    amount: {
-                        currency: 'KRW',
-                        value: orderData.amount
-                    },
-                    orderId: orderData.orderId,
-                    orderName: orderData.orderName,
-                    successUrl: window.location.origin + '/payment-success.html',
-                    failUrl: window.location.origin + '/payment-test.html',
-                    customerEmail: localStorage.getItem('userEmail'),
-                    customerName: '테스트유저',
+                console.log('위젯 생성 완료');
+
+                // 결제 금액 설정
+                await paymentWidget.setAmount({
+                    currency: 'KRW',
+                    value: orderData.amount
                 });
+
+                console.log('금액 설정 완료');
+
+                // 결제 수단 UI 렌더링
+                await paymentWidget.renderPaymentMethods({
+                    selector: '#payment-widget',
+                    variantKey: 'DEFAULT'
+                });
+
+                console.log('결제 수단 렌더링 완료');
+
+                // 결제 섹션 표시
+                document.getElementById('payment-section').style.display = 'block';
 
             } catch (error) {
                 console.error('결제 위젯 초기화 실패:', error);
+                alert('결제 위젯 오류: ' + error.message);
             }
         }
 
-        // 결제 요청 (위에서 자동으로 처리하므로 이 함수는 사용되지 않을 수 있음)
+        // 결제 요청
         async function requestPayment() {
             if (!paymentWidget || !orderData) {
                 alert('먼저 주문을 생성해주세요.');
@@ -354,22 +370,22 @@
             }
 
             try {
+                console.log('결제 요청 시작...');
+
                 await paymentWidget.requestPayment({
-                    method: 'CARD',
-                    amount: {
-                        currency: 'KRW',
-                        value: orderData.amount
-                    },
                     orderId: orderData.orderId,
                     orderName: orderData.orderName,
-                    successUrl: window.location.origin + '/payment-success.html',
-                    failUrl: window.location.origin + '/payment-test.html',
+                    successUrl: window.location.origin + '/payment-success',  // .html 제거
+                    failUrl: window.location.origin + '/payment-test',
                     customerEmail: localStorage.getItem('userEmail'),
                     customerName: '테스트유저',
                 });
+
+                console.log('결제 요청 완료');
+
             } catch (error) {
                 console.error('결제 요청 실패:', error);
-                alert('결제 요청 중 오류가 발생했습니다.');
+                alert('결제 요청 중 오류가 발생했습니다: ' + error.message);
             }
         }
     </script>

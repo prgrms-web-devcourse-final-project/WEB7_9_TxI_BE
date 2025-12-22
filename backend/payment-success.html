@@ -228,22 +228,36 @@
 
         // 페이지 로드 시 결제 확인 API 호출
         window.onload = async function() {
+            // 디버깅: URL과 파라미터 확인
+            console.log('현재 URL:', window.location.href);
+            console.log('URL 파라미터:', {
+                paymentKey: paymentKey,
+                orderId: orderId,
+                amount: amount
+            });
+
             // JWT 토큰 확인
             const accessToken = localStorage.getItem('accessToken');
 
             if (!accessToken) {
                 showError('로그인 정보가 없습니다. 다시 로그인해주세요.');
+                displayErrorParams();
                 return;
             }
 
             if (!paymentKey || !orderId || !amount) {
                 showError('결제 정보가 올바르지 않습니다.');
+                console.error('누락된 파라미터:', {
+                    paymentKey: paymentKey || 'MISSING',
+                    orderId: orderId || 'MISSING',
+                    amount: amount || 'MISSING'
+                });
                 displayErrorParams();
                 return;
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/v2/payments/confirm`, {
+                const response = await fetch(`${API_BASE_URL}/api/v2/payments/confirm`, { //
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
