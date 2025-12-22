@@ -1,6 +1,7 @@
 package com.back.api.event.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,12 +16,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.event.dto.request.EventCreateRequest;
 import com.back.api.event.dto.request.EventUpdateRequest;
 import com.back.api.event.dto.response.EventListResponse;
 import com.back.api.event.dto.response.EventResponse;
+import com.back.api.s3.service.S3MoveService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
@@ -40,6 +43,9 @@ class EventServiceTest {
 	@Autowired
 	private EventRepository eventRepository;
 
+	@MockitoBean
+	private S3MoveService s3MoveService;
+
 	private LocalDateTime now;
 	private LocalDateTime preOpenAt;
 	private LocalDateTime preCloseAt;
@@ -56,6 +62,9 @@ class EventServiceTest {
 		ticketOpenAt = now.plusDays(6);
 		ticketCloseAt = now.plusDays(10);
 		eventDate = now.plusDays(15);
+		when(s3MoveService.moveImage(anyLong(), anyString()))
+			.thenReturn("events/1/main.jpg");
+
 	}
 
 	@Nested
