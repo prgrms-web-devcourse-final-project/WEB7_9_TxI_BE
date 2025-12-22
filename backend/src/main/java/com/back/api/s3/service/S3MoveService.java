@@ -20,7 +20,7 @@ public class S3MoveService {
 	//temp 이미지 -> 영구 이미지로 이동
 	public String moveImage(Long eventId, String tempKey) {
 
-		String targetKey = "events/" + eventId + "/" + "/main.jpa";
+		String targetKey = "events/" + eventId + "/" + "main.jpa";
 
 		s3Client.copyObject(CopyObjectRequest.builder()
 			.sourceBucket(bucket)

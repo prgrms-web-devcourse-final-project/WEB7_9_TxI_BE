@@ -12,7 +12,6 @@ import com.back.api.event.dto.request.EventCreateRequest;
 import com.back.api.event.dto.request.EventUpdateRequest;
 import com.back.api.event.dto.response.EventListResponse;
 import com.back.api.event.dto.response.EventResponse;
-import com.back.api.s3.service.S3MoveService;
 import com.back.api.s3.service.S3PresignedService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
@@ -29,37 +28,15 @@ import lombok.RequiredArgsConstructor;
 public class EventService {
 
 	private final EventRepository eventRepository;
-	private final S3PresignedService s3PresignedService;
-	private final S3MoveService s3MoveService;
 
 	@Transactional
 	public EventResponse createEvent(EventCreateRequest request) {
-		validateEventDates(
-			request.preOpenAt(),
-			request.preCloseAt(),
-			request.ticketOpenAt(),
-			request.ticketCloseAt()
-		);
+		validateEventDates(request.preOpenAt(), request.preCloseAt(),
+			request.ticketOpenAt(), request.ticketCloseAt());
 		validateDuplicateEvent(request.title(), request.place(), request.ticketOpenAt());
 
 		Event event = request.toEntity();
 		Event savedEvent = eventRepository.save(event);
-
-		// 이미지 임시 저장소에서 실제 저장소로 이동
-		if (savedEvent.getImageUrl() != null && !savedEvent.getImageUrl().isBlank()) {
-
-			String tempKey = savedEvent.getImageUrl();
-
-			String finalKey = s3MoveService.moveImage(savedEvent.getId(), tempKey);
-
-			savedEvent.changeBasicInfo(
-				savedEvent.getTitle(),
-				savedEvent.getCategory(),
-				savedEvent.getDescription(),
-				savedEvent.getPlace(),
-				finalKey
-			);
-		}
 
 		return EventResponse.from(savedEvent);
 	}
@@ -68,37 +45,17 @@ public class EventService {
 	public EventResponse updateEvent(Long eventId, EventUpdateRequest request) {
 		Event event = findEventById(eventId);
 
-		validateEventDates(request.preOpenAt(),
-			request.preCloseAt(),
-			request.ticketOpenAt(),
-			request.ticketCloseAt()
-		);
+		validateEventDates(request.preOpenAt(), request.preCloseAt(),
+			request.ticketOpenAt(), request.ticketCloseAt());
 		validateDuplicateEventForUpdate(eventId, request.title(), request.place(), request.ticketOpenAt());
 
-		// 이미지가 변경된 경우만 이동
-		if (request.imageUrl() != null &&
-			!request.imageUrl().equals(event.getImageUrl())) {
-
-			String finalKey =
-				s3MoveService.moveImage(event.getId(), request.imageUrl());
-
-			event.changeBasicInfo(
-				request.title(),
-				request.category(),
-				request.description(),
-				request.place(),
-				finalKey
-			);
-		} else {
-			event.changeBasicInfo(
-				request.title(),
-				request.category(),
-				request.description(),
-				request.place(),
-				event.getImageUrl()
-			);
-		}
-
+		event.changeBasicInfo(
+			request.title(),
+			request.category(),
+			request.description(),
+			request.place(),
+			request.imageUrl()
+		);
 		event.changePriceInfo(
 			request.minPrice(),
 			request.maxPrice(),
