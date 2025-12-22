@@ -83,6 +83,7 @@ class SeatServiceUnitTest {
 			.preCloseAt(LocalDateTime.now().plusDays(2))
 			.ticketOpenAt(LocalDateTime.now().plusDays(3))
 			.ticketCloseAt(LocalDateTime.now().plusDays(4))
+			.eventDate(LocalDateTime.now().plusDays(10))
 			.maxTicketAmount(100)
 			.status(EventStatus.READY)
 			.build();

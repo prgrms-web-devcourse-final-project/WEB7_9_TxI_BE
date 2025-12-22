@@ -52,6 +52,7 @@ class AdminEventControllerTest {
 	private LocalDateTime preCloseAt;
 	private LocalDateTime ticketOpenAt;
 	private LocalDateTime ticketCloseAt;
+	private LocalDateTime eventDate;
 
 	@BeforeEach
 	void setUp() {
@@ -61,6 +62,7 @@ class AdminEventControllerTest {
 		preCloseAt = now.plusDays(5);
 		ticketOpenAt = now.plusDays(6);
 		ticketCloseAt = now.plusDays(10);
+		eventDate = now.plusDays(15);
 	}
 
 	@Nested
@@ -83,6 +85,7 @@ class AdminEventControllerTest {
 				preCloseAt,
 				ticketOpenAt,
 				ticketCloseAt,
+				eventDate,
 				100
 			);
 
@@ -113,7 +116,7 @@ class AdminEventControllerTest {
 				"",
 				EventCategory.CONCERT,
 				"설명", "장소", "url", 1000, 2000,
-				preOpenAt, preCloseAt, ticketOpenAt, ticketCloseAt, 100
+				preOpenAt, preCloseAt, ticketOpenAt, ticketCloseAt, eventDate, 100
 			);
 
 			// when & then
@@ -134,6 +137,7 @@ class AdminEventControllerTest {
 				preOpenAt, preCloseAt,
 				ticketCloseAt.plusDays(1),
 				ticketCloseAt,
+				eventDate,
 				100
 			);
 
@@ -170,6 +174,7 @@ class AdminEventControllerTest {
 				preCloseAt,
 				ticketOpenAt,
 				ticketCloseAt,
+				now.plusDays(35),
 				200,
 				EventStatus.PRE_OPEN
 			);
@@ -197,7 +202,7 @@ class AdminEventControllerTest {
 			EventUpdateRequest request = new EventUpdateRequest(
 				"수정", EventCategory.CONCERT, "설명", "장소", "url",
 				1000, 2000, preOpenAt, preCloseAt, ticketOpenAt, ticketCloseAt,
-				100, EventStatus.READY
+				now.plusDays(35), 100, EventStatus.READY
 			);
 
 			// when & then

@@ -113,7 +113,8 @@ public class EventService {
 			request.preOpenAt(),
 			request.preCloseAt(),
 			request.ticketOpenAt(),
-			request.ticketCloseAt()
+			request.ticketCloseAt(),
+			request.eventDate()
 		);
 		event.changeStatus(request.status());
 

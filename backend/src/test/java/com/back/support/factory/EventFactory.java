@@ -24,6 +24,7 @@ public class EventFactory extends BaseFactory {
 			.preCloseAt(LocalDateTime.now().minusDays(5))
 			.ticketOpenAt(LocalDateTime.now().minusDays(3))
 			.ticketCloseAt(LocalDateTime.now().plusDays(30))
+			.eventDate(LocalDateTime.now().plusDays(35))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.OPEN)
 			.build();
@@ -45,6 +46,7 @@ public class EventFactory extends BaseFactory {
 			.preCloseAt(LocalDateTime.now().minusDays(5))
 			.ticketOpenAt(LocalDateTime.now().minusDays(3))
 			.ticketCloseAt(LocalDateTime.now().plusDays(30))
+			.eventDate(LocalDateTime.now().plusDays(35))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.OPEN)
 			.build();
@@ -66,6 +68,7 @@ public class EventFactory extends BaseFactory {
 			.preCloseAt(LocalDateTime.now().minusDays(5))
 			.ticketOpenAt(LocalDateTime.now().minusDays(3))
 			.ticketCloseAt(LocalDateTime.now().plusDays(30))
+			.eventDate(LocalDateTime.now().plusDays(35))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(status)
 			.build();
@@ -87,6 +90,7 @@ public class EventFactory extends BaseFactory {
 			.preCloseAt(LocalDateTime.now().plusDays(7))
 			.ticketOpenAt(LocalDateTime.now().plusDays(10))
 			.ticketCloseAt(LocalDateTime.now().plusDays(30))
+			.eventDate(LocalDateTime.now().plusDays(35))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.PRE_OPEN)
 			.build();
@@ -108,6 +112,7 @@ public class EventFactory extends BaseFactory {
 			.preCloseAt(LocalDateTime.now().plusDays(10))
 			.ticketOpenAt(LocalDateTime.now().plusDays(15))
 			.ticketCloseAt(LocalDateTime.now().plusDays(30))
+			.eventDate(LocalDateTime.now().plusDays(35))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.READY)
 			.build();
@@ -129,6 +134,7 @@ public class EventFactory extends BaseFactory {
 			.preCloseAt(LocalDateTime.now().minusDays(8))
 			.ticketOpenAt(LocalDateTime.now().minusDays(5))
 			.ticketCloseAt(LocalDateTime.now().plusDays(10))
+			.eventDate(LocalDateTime.now().plusDays(15))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.OPEN)
 			.build();

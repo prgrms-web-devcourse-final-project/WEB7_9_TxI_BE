@@ -98,6 +98,7 @@ class NotificationEventListenerTest {
 			.preCloseAt(java.time.LocalDateTime.now().plusDays(3))
 			.ticketOpenAt(java.time.LocalDateTime.now().plusDays(5))
 			.ticketCloseAt(java.time.LocalDateTime.now().plusDays(7))
+			.eventDate(java.time.LocalDateTime.now().plusDays(10))
 			.maxTicketAmount(1000)
 			.status(EventStatus.READY)
 			.build());
