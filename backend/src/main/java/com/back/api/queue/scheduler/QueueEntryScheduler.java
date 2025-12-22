@@ -41,21 +41,52 @@ public class QueueEntryScheduler {
 	)
 	public void autoQueueEntries() {
 		String runId = UUID.randomUUID().toString();
+		long startAt = System.currentTimeMillis();
+
+		int processedEvents = 0;
+		int failedEvents = 0;
 
 		try {
+			// 시작로그
 			MdcContext.putRunId(runId);
+			log.info("SCHED_START job=QueueEntry");
 
 			List<Event> openEvents = eventService.findEventsByStatus((EventStatus.OPEN));
 
 			if (openEvents.isEmpty()) {
+				log.info("SCHED_END job=QueueEntry processed=0 failed=0 durationMs={}",
+					System.currentTimeMillis() - startAt);
 				return;
 			}
 
 			for (Event event : openEvents) {
-				queueEntryProcessService.processEventQueueEntries(event);
+				try {
+					MdcContext.putEventId(event.getId());
+					queueEntryProcessService.processEventQueueEntries(event);
+					processedEvents++;
+				} catch (Exception ex) {
+					failedEvents++;
+					// 실패 로그
+					log.error("SCHED_EVENT_FAIL job=QueueEntry eventId={} error={}", event.getId(), ex.toString(), ex);
+				} finally {
+					MdcContext.removeEventId();
+				}
 			}
-		} catch (Exception e) {
-			log.error("자동 입장 스케줄러 실패", e);
+
+			// 종료 로그
+			log.info(
+				"SCHED_END job=QueueEntry processed={} failed={} durationMs={}",
+				processedEvents,
+				failedEvents,
+				System.currentTimeMillis() - startAt
+			);
+		} catch (Exception ex) {
+			log.error(
+				"SCHED_FAIL job=QueueEntry durationMs={} error={}",
+				System.currentTimeMillis() - startAt,
+				ex.toString(),
+				ex
+			);
 		} finally {
 			MdcContext.removeRunId();
 		}

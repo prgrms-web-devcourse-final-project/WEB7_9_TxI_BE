@@ -36,9 +36,14 @@ public class QueueExpireScheduler {
 	)
 	public void autoExpireEntries() {
 		String runId = UUID.randomUUID().toString();
+		long startAt = System.currentTimeMillis();
+
+		int processed = 0;
+		int failed = 0;
 
 		try {
 			MdcContext.putRunId(runId);
+			log.info("SCHED_START job=QueueExpire");
 
 			LocalDateTime now = LocalDateTime.now();
 
@@ -48,16 +53,39 @@ public class QueueExpireScheduler {
 			);
 
 			if (expiredEntries.isEmpty()) {
+				log.info(
+					"SCHED_END job=QueueExpire processed=0 failed=0 durationMs={}",
+					System.currentTimeMillis() - startAt
+				);
 				return;
 			}
 
-			log.info("만료 대상 : {}명", expiredEntries.size());
+			log.info(
+				"SCHED_BATCH_FOUND job=QueueExpire candidates={}",
+				expiredEntries.size()
+			);
 
-			queueEntryProcessService.expireBatchEntries(expiredEntries);
+			try {
+				queueEntryProcessService.expireBatchEntries(expiredEntries);
+				processed = expiredEntries.size();
+			} catch (Exception ex) {
+				failed = expiredEntries.size();
+				log.error("SCHED_BATCH_FAIL job=QueueExpire error={}", ex.toString(), ex);
+			}
 
-			log.info("만료 처리 완료 : {}명", expiredEntries.size());
-		} catch (Exception e) {
-			log.error("자동 만료 스케줄러 실패", e);
+			log.info(
+				"SCHED_END job=QueueExpire processed={} failed={} durationMs={}",
+				processed,
+				failed,
+				System.currentTimeMillis() - startAt
+			);
+		} catch (Exception ex) {
+			log.error(
+				"SCHED_FAIL job=QueueExpire durationMs={} error={}",
+				System.currentTimeMillis() - startAt,
+				ex.toString(),
+				ex
+			);
 		} finally {
 			MdcContext.removeRunId();
 		}
