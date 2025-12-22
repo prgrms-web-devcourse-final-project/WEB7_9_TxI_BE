@@ -45,19 +45,31 @@ public class PerfPreregisterDataInitializer {
 			return;
 		}
 
-		int eventCount = events.size();
-		int totalPreRegisterCount = (int) (users.size() * preregRatio);
+		// Event #1 (PRE_OPEN) 조회
+		Event event1 = eventRepository.findById(1L).orElse(null);
+		if (event1 == null || event1.getStatus() != EventStatus.PRE_OPEN) {
+			log.warn("Event #1이 없거나 PRE_OPEN 상태가 아닙니다. 사전등록 생성을 건너뜁니다.");
+			return;
+		}
 
-		log.info("PreRegister 초기 데이터 생성 중: 총 {}개 이벤트에 {}명 균등 분배, 비율 {}%",
-			eventCount, totalPreRegisterCount, (int) (preregRatio * 100));
+		log.info("PreRegister 초기 데이터 생성 중: Event #1 ({}) 전용, 비율 {}%",
+			event1.getTitle(), (int)(preregRatio * 100));
 
-		// 모든 이벤트에 골고루 분배 (Round-robin 방식)
+		// Event #1에만 사전등록 생성
+		int preRegisterCount = (int)(users.size() * preregRatio);
+		List<PreRegister> preRegisters = createPreRegistersForEvent(event1, users, preRegisterCount);
+		preRegisterRepository.saveAll(preRegisters);
+
+		log.info("✅ PreRegister 데이터 생성 완료: Event #1에 {}건 (사전등록 부하테스트용)", preRegisters.size());
+	}
+
+	private List<PreRegister> createPreRegistersForEvent(Event event, List<User> users, int count) {
 		List<PreRegister> preRegisters = new ArrayList<>();
-		int userIndex = 0;
 
-		for (int i = 0; i < totalPreRegisterCount && userIndex < users.size(); i++) {
-			Event event = events.get(i % eventCount); // Round-robin으로 이벤트 선택
-			User user = users.get(userIndex);
+		int registerCount = Math.min(count, users.size());
+
+		for (int i = 0; i < registerCount; i++) {
+			User user = users.get(i);
 
 			PreRegister preRegister = PreRegister.builder()
 				.event(event)
@@ -67,20 +79,8 @@ public class PerfPreregisterDataInitializer {
 				.build();
 
 			preRegisters.add(preRegister);
-			userIndex++;
 		}
 
-		preRegisterRepository.saveAll(preRegisters);
-
-		// 이벤트별 생성 개수 로깅
-		for (Event event : events) {
-			long count = preRegisters.stream()
-				.filter(pr -> pr.getEvent().getId().equals(event.getId()))
-				.count();
-			log.info("  - Event #{} ({}): {}건", event.getId(), event.getTitle(), count);
-		}
-
-		log.info("✅ PreRegister 데이터 생성 완료: 총 {}건 ({}개 이벤트에 균등 분배)",
-			preRegisters.size(), eventCount);
+		return preRegisters;
 	}
 }

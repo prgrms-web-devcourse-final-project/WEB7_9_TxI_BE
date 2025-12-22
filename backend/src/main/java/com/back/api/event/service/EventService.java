@@ -98,10 +98,6 @@ public class EventService {
 
 	private void validateEventDates(LocalDateTime preOpenAt, LocalDateTime preCloseAt,
 		LocalDateTime ticketOpenAt, LocalDateTime ticketCloseAt) {
-		// 과거 날짜 이벤트 생성 허용 (테스트/관리 목적)
-		// if (preOpenAt.isBefore(LocalDateTime.now())) {
-		// 	throw new ErrorException(EventErrorCode.INVALID_EVENT_DATE);
-		// }
 		if (preOpenAt.isAfter(preCloseAt)) {
 			throw new ErrorException(EventErrorCode.INVALID_EVENT_DATE);
 		}
@@ -114,27 +110,15 @@ public class EventService {
 	}
 
 	private void validateDuplicateEvent(String title, String place, LocalDateTime ticketOpenAt) {
-		// title과 place만으로 중복 체크 (시간은 수정 가능하도록)
-		// if (eventRepository.existsByTitleAndPlaceAndTicketOpenAtAndDeletedFalse(title, place, ticketOpenAt)) {
-		// 	throw new ErrorException(EventErrorCode.DUPLICATE_EVENT);
-		// }
 	}
 
 	private void validateDuplicateEventForUpdate(Long eventId, String title, String place,
 		LocalDateTime ticketOpenAt) {
-		// 수정 시 중복 체크 비활성화 - 시간만 수정해도 가능하도록
-		// eventRepository.findByTitleAndPlaceAndTicketOpenAtAndDeletedFalse(title, place, ticketOpenAt)
-		// 	.ifPresent(existingEvent -> {
-		// 		if (!existingEvent.getId().equals(eventId)) {
-		// 			throw new ErrorException(EventErrorCode.DUPLICATE_EVENT);
-		// 		}
-		// 	});
 	}
 
 	public List<Event> findEventsByStatus(EventStatus status) {
 		return eventRepository.findByStatus(status);
 	}
-
 
 	public List<Event> findEventsByTicketOpenAtBetweenAndStatus(
 		LocalDateTime start,
@@ -143,6 +127,5 @@ public class EventService {
 	) {
 		return eventRepository.findByTicketOpenAtBetweenAndStatus(start, end, status);
 	}
-
 
 }
