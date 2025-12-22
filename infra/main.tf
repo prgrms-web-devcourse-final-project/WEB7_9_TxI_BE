@@ -63,19 +63,6 @@ resource "aws_subnet" "subnet_2" {
   }
 }
 
-# 추후 필요 시 추가
-# resource "aws_subnet" "subnet_3" {
-#   vpc_id                  = aws_vpc.vpc_1.id
-#   cidr_block              = "10.0.3.0/24"
-#   availability_zone       = "${var.region}c"
-#   map_public_ip_on_launch = true
-#
-#   tags = {
-#     Name = "${local.name}-subnet-3"
-#     Team = var.team_tag
-#   }
-# }
-
 resource "aws_internet_gateway" "igw_1" {
   vpc_id = aws_vpc.vpc_1.id
 
@@ -108,15 +95,6 @@ resource "aws_route_table_association" "association_2" {
   subnet_id      = aws_subnet.subnet_2.id
   route_table_id = aws_route_table.rt_1.id
 }
-
-# 추후 필요시 추가
-# resource "aws_route_table_association" "association_3" {
-#   subnet_id      = aws_subnet.subnet_3.id
-#   route_table_id = aws_route_table.rt_1.id
-# }
-#DB 서브넷 넣으면 ssh로 접근해서관리해야함
-# 9090, 3300,
-# 3300
 
 resource "aws_security_group" "sg_1" {
   name = "${local.name}-security-group"
@@ -245,6 +223,45 @@ resource "aws_eip" "ec2" {
     Name = "${local.name}-eip"
   }
 }
+
+# S3 버킷 생성
+resource "aws_s3_bucket" "s3_bucket_1" {
+    bucket = "${local.name}-s3-bucket-1"
+
+  tags = {
+    Name = "${local.name}-s3-bucket-1"
+    Team = var.team_tag
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "s3_bucket_1_public" {
+  bucket = aws_s3_bucket.s3_bucket_1.id
+
+  block_public_acls   = false
+  block_public_policy = false
+  ignore_public_acls  = false
+  restrict_public_buckets = false
+}
+
+# 이미지 조회(GET)만 퍼블릭 허용
+resource "aws_s3_bucket_policy" "s3_bucket_1_policy" {
+  bucket = aws_s3_bucket.s3_bucket_1.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowPublicRead"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = ["s3:GetObject"]
+        Resource  = "${aws_s3_bucket.s3_bucket_1.arn}/*"
+      }
+    ]
+  })
+}
+
+
 
 locals {
   ec2_user_data_base = <<-END_OF_FILE
