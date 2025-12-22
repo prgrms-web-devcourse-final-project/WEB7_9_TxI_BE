@@ -11,7 +11,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
 
 import com.back.domain.event.entity.Event;
 import com.back.domain.seat.entity.Seat;
@@ -30,7 +33,6 @@ import com.back.support.helper.UserHelper;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Transactional
 @DisplayName("DraftTicketExpirationScheduler 통합 테스트")
 class DraftTicketExpirationSchedulerTest {
 
@@ -55,18 +57,23 @@ class DraftTicketExpirationSchedulerTest {
 	@Autowired
 	private TicketHelper ticketHelper;
 
+	@Autowired
+	private EntityManager em;
+
 	private User user;
 	private Event event;
 	private Seat seat;
 
 	@BeforeEach
 	void setUp() {
+		// Helper 메서드들이 각자 @Transactional로 커밋
 		user = userHelper.createUser(UserRole.NORMAL).user();
 		event = eventHelper.createEvent();
 		seat = seatHelper.createSeat(event, "A1", SeatGrade.VIP);
 	}
 
 	@Test
+	@Transactional
 	@DisplayName("좌석이 할당된 만료된 Draft 티켓을 정상적으로 처리한다")
 	void expireDraftTicket_withSeat_success() throws Exception {
 		// given: 15분 이상 경과한 Draft 티켓 생성 (좌석 할당됨)
@@ -77,10 +84,15 @@ class DraftTicketExpirationSchedulerTest {
 		seat.markAsReserved();
 		seatRepository.save(seat);
 
-		// when: 스케줄러 실행
-		scheduler.expireDraftTickets();
+		// 트랜잭션 커밋하여 스케줄러가 데이터를 볼 수 있도록 함
+		TestTransaction.flagForCommit();
+		TestTransaction.end();
 
-		// then: 티켓이 FAILED 상태로 변경됨
+		// when: 스케줄러 실행 (Lock 없이, 별도 트랜잭션)
+		scheduler.expireDraftTicketsInternal();
+
+		// then: 새 트랜잭션 시작하여 결과 확인
+		TestTransaction.start();
 		Ticket expiredTicket = ticketRepository.findById(ticket.getId()).orElseThrow();
 		assertThat(expiredTicket.getTicketStatus()).isEqualTo(TicketStatus.FAILED);
 
@@ -90,8 +102,9 @@ class DraftTicketExpirationSchedulerTest {
 	}
 
 	@Test
-	@DisplayName("좌석이 없는 만료된 Draft 티켓 처리 시 NPE 발생으로 FAILED 변경 실패 (현재 버그)")
-	void expireDraftTicket_withoutSeat_npeOccurs() throws Exception {
+	@Transactional
+	@DisplayName("좌석이 없는 만료된 Draft 티켓도 정상적으로 처리한다")
+	void expireDraftTicket_withoutSeat_success() throws Exception {
 		// given: 15분 이상 경과한 Draft 티켓 생성 (좌석 없음)
 		Ticket ticket = Ticket.builder()
 			.owner(user)
@@ -102,14 +115,19 @@ class DraftTicketExpirationSchedulerTest {
 		ticketRepository.save(ticket);
 		setCreatedAt(ticket, LocalDateTime.now().minusMinutes(20));
 
-		// when: 스케줄러 실행 (NPE가 발생하지만 try-catch로 잡힘)
-		scheduler.expireDraftTickets();
+		// 트랜잭션 커밋하여 스케줄러가 데이터를 볼 수 있도록 함
+		TestTransaction.flagForCommit();
+		TestTransaction.end();
 
-		// then: NPE 발생으로 티켓 상태가 DRAFT 그대로 유지됨 (버그!)
-		Ticket unchangedTicket = ticketRepository.findById(ticket.getId()).orElseThrow();
-		assertThat(unchangedTicket.getTicketStatus())
-			.as("NPE 발생으로 인해 DRAFT 상태 그대로 유지됨 (버그)")
-			.isEqualTo(TicketStatus.FAILED);  // 버그: FAILED가 되어야 하는데 DRAFT 그대로
+		// when: 스케줄러 실행 (Lock 없이, 별도 트랜잭션)
+		scheduler.expireDraftTicketsInternal();
+
+		// then: 새 트랜잭션 시작하여 결과 확인
+		TestTransaction.start();
+		Ticket expiredTicket = ticketRepository.findById(ticket.getId()).orElseThrow();
+		assertThat(expiredTicket.getTicketStatus())
+			.as("좌석이 없어도 FAILED 상태로 정상 변경됨")
+			.isEqualTo(TicketStatus.FAILED);
 	}
 
 	@Test
@@ -118,8 +136,8 @@ class DraftTicketExpirationSchedulerTest {
 		// given: 최근 생성된 Draft 티켓 (만료되지 않음)
 		Ticket ticket = ticketHelper.createDraftTicket(user, seat, event);
 
-		// when: 스케줄러 실행
-		scheduler.expireDraftTickets();
+		// when: 스케줄러 실행 (Lock 없이)
+		scheduler.expireDraftTicketsInternal();
 
 		// then: 티켓 상태가 변경되지 않음
 		Ticket notExpiredTicket = ticketRepository.findById(ticket.getId()).orElseThrow();
@@ -127,21 +145,28 @@ class DraftTicketExpirationSchedulerTest {
 	}
 
 	@Test
+	@Transactional
 	@DisplayName("PAID 상태의 티켓은 처리하지 않는다")
 	void expireDraftTicket_paidTicket_ignored() throws Exception {
 		// given: 만료 시간이 지난 PAID 티켓
 		Ticket ticket = ticketHelper.createPaidTicket(user, seat, event);
 		setCreatedAt(ticket, LocalDateTime.now().minusMinutes(20));
 
-		// when: 스케줄러 실행
-		scheduler.expireDraftTickets();
+		// 트랜잭션 커밋하여 스케줄러가 데이터를 볼 수 있도록 함
+		TestTransaction.flagForCommit();
+		TestTransaction.end();
 
-		// then: 티켓 상태가 변경되지 않음 (PAID 유지)
+		// when: 스케줄러 실행 (Lock 없이, 별도 트랜잭션)
+		scheduler.expireDraftTicketsInternal();
+
+		// then: 새 트랜잭션 시작하여 결과 확인
+		TestTransaction.start();
 		Ticket unchangedTicket = ticketRepository.findById(ticket.getId()).orElseThrow();
 		assertThat(unchangedTicket.getTicketStatus()).isEqualTo(TicketStatus.PAID);
 	}
 
 	@Test
+	@Transactional
 	@DisplayName("여러 개의 만료된 Draft 티켓을 배치로 처리한다")
 	void expireDraftTicket_multipleTickets_success() throws Exception {
 		// given: 3개의 만료된 Draft 티켓 생성
@@ -164,10 +189,15 @@ class DraftTicketExpirationSchedulerTest {
 		seatRepository.save(seat2);
 		seatRepository.save(seat3);
 
-		// when: 스케줄러 실행
-		scheduler.expireDraftTickets();
+		// 트랜잭션 커밋하여 스케줄러가 데이터를 볼 수 있도록 함
+		TestTransaction.flagForCommit();
+		TestTransaction.end();
 
-		// then: 모든 티켓이 FAILED 상태로 변경됨
+		// when: 스케줄러 실행 (Lock 없이, 별도 트랜잭션)
+		scheduler.expireDraftTicketsInternal();
+
+		// then: 새 트랜잭션 시작하여 결과 확인
+		TestTransaction.start();
 		assertThat(ticketRepository.findById(ticket1.getId()).orElseThrow().getTicketStatus())
 			.isEqualTo(TicketStatus.FAILED);
 		assertThat(ticketRepository.findById(ticket2.getId()).orElseThrow().getTicketStatus())
@@ -185,6 +215,7 @@ class DraftTicketExpirationSchedulerTest {
 	}
 
 	@Test
+	@Transactional
 	@DisplayName("좌석이 없는 티켓과 있는 티켓이 섞여있어도 정상 처리한다")
 	void expireDraftTicket_mixedTickets_success() throws Exception {
 		// given: 좌석 있는 티켓과 없는 티켓 혼합
@@ -203,10 +234,15 @@ class DraftTicketExpirationSchedulerTest {
 		seat.markAsReserved();
 		seatRepository.save(seat);
 
-		// when: 스케줄러 실행
-		scheduler.expireDraftTickets();
+		// 트랜잭션 커밋하여 스케줄러가 데이터를 볼 수 있도록 함
+		TestTransaction.flagForCommit();
+		TestTransaction.end();
 
-		// then: 두 티켓 모두 FAILED 상태로 변경됨
+		// when: 스케줄러 실행 (Lock 없이, 별도 트랜잭션)
+		scheduler.expireDraftTicketsInternal();
+
+		// then: 새 트랜잭션 시작하여 결과 확인
+		TestTransaction.start();
 		assertThat(ticketRepository.findById(ticketWithSeat.getId()).orElseThrow().getTicketStatus())
 			.isEqualTo(TicketStatus.FAILED);
 		assertThat(ticketRepository.findById(ticketWithoutSeat.getId()).orElseThrow().getTicketStatus())

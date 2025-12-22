@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,9 +22,27 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, TicketRep
 	boolean existsBySeatIdAndTicketStatusIn(Long seatId, List<TicketStatus> paid);
 
 	boolean existsByEventIdAndOwnerIdAndTicketStatusIn(Long eventId, Long userId, List<TicketStatus> statuses);
-
-	@Query("SELECT t FROM Ticket t WHERE t.ticketStatus = :status AND t.createAt < :time")
-	List<Ticket> findExpiredDraftTickets(TicketStatus status, LocalDateTime time);
+	
+	@Query(
+		value = """
+				SELECT t
+				FROM Ticket t
+				WHERE t.ticketStatus = :status
+				AND t.createAt < :time
+				ORDER BY t.id
+			""",
+		countQuery = """
+				SELECT COUNT(t)
+				FROM Ticket t
+				WHERE t.ticketStatus = :status
+				AND t.createAt < :time
+			"""
+	)
+	Page<Ticket> findExpiredDraftTickets(
+		@Param("status") TicketStatus status,
+		@Param("time") LocalDateTime time,
+		Pageable pageable
+	);
 
 	Optional<Ticket> findBySeatIdAndOwnerIdAndTicketStatus(Long seatId, Long userId, TicketStatus ticketStatus);
 
