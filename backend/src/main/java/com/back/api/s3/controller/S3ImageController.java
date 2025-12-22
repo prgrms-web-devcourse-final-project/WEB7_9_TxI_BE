@@ -14,12 +14,12 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/images")
 @RequiredArgsConstructor
-public class S3ImageController {
+public class S3ImageController implements S3ImageApi {
 
 	private final S3PresignedService s3PresignedService;
 
-
 	// 이벤트 이미지 업로드용 Presigned URL 발급
+	@Override
 	@PostMapping("/events/upload-url")
 	public ApiResponse<PresignedUrlResponse> issueEventImageUploadUrl(
 		@RequestParam String fileName
