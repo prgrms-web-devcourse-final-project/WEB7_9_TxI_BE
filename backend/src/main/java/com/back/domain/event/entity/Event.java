@@ -62,6 +62,9 @@ public class Event extends BaseEntity {
 	private LocalDateTime ticketCloseAt;
 
 	@Column(nullable = false)
+	private LocalDateTime eventDate;
+
+	@Column(nullable = false)
 	private Integer maxTicketAmount;
 
 	@Enumerated(EnumType.STRING)
@@ -76,7 +79,7 @@ public class Event extends BaseEntity {
 		String imageUrl, Integer minPrice, Integer maxPrice,
 		LocalDateTime preOpenAt, LocalDateTime preCloseAt,
 		LocalDateTime ticketOpenAt, LocalDateTime ticketCloseAt,
-		Integer maxTicketAmount, EventStatus status) {
+		LocalDateTime eventDate, Integer maxTicketAmount, EventStatus status) {
 		validatePrice(minPrice, maxPrice);
 		this.title = title;
 		this.category = category;
@@ -89,6 +92,7 @@ public class Event extends BaseEntity {
 		this.preCloseAt = preCloseAt;
 		this.ticketOpenAt = ticketOpenAt;
 		this.ticketCloseAt = ticketCloseAt;
+		this.eventDate = eventDate;
 		this.maxTicketAmount = maxTicketAmount;
 		this.status = status != null ? status : EventStatus.READY;
 		this.deleted = false;
@@ -111,11 +115,12 @@ public class Event extends BaseEntity {
 	}
 
 	public void changePeriod(LocalDateTime preOpenAt, LocalDateTime preCloseAt,
-		LocalDateTime ticketOpenAt, LocalDateTime ticketCloseAt) {
+		LocalDateTime ticketOpenAt, LocalDateTime ticketCloseAt, LocalDateTime eventDate) {
 		this.preOpenAt = preOpenAt;
 		this.preCloseAt = preCloseAt;
 		this.ticketOpenAt = ticketOpenAt;
 		this.ticketCloseAt = ticketCloseAt;
+		this.eventDate = eventDate;
 	}
 
 	public void changeStatus(EventStatus status) {

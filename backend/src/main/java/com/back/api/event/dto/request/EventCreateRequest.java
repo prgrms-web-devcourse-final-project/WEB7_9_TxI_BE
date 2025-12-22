@@ -57,6 +57,10 @@ public record EventCreateRequest(
 	@NotNull(message = "티켓팅 종료일은 필수입니다.")
 	LocalDateTime ticketCloseAt,
 
+	@Schema(description = "이벤트 날짜", example = "2026-02-28T19:00:00")
+	@NotNull(message = "이벤트 날짜는 필수입니다.")
+	LocalDateTime eventDate,
+
 	@Schema(description = "최대 티켓 수량", example = "5000")
 	@NotNull(message = "최대 티켓 수량은 필수입니다.")
 	@Min(value = 1, message = "최대 티켓 수량은 1 이상이어야 합니다.")
@@ -75,6 +79,7 @@ public record EventCreateRequest(
 			.preCloseAt(preCloseAt)
 			.ticketOpenAt(ticketOpenAt)
 			.ticketCloseAt(ticketCloseAt)
+			.eventDate(eventDate)
 			.maxTicketAmount(maxTicketAmount)
 			.status(EventStatus.READY)
 			.build();

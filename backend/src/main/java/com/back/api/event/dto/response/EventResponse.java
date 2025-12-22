@@ -46,6 +46,9 @@ public record EventResponse(
 	@Schema(description = "티켓팅 종료일시", example = "2026-01-30T23:59:59")
 	LocalDateTime ticketCloseAt,
 
+	@Schema(description = "이벤트 날짜 (실제 이벤트 개최일)", example = "2026-02-15T19:00:00")
+	LocalDateTime eventDate,
+
 	@Schema(description = "최대 티켓 수량", example = "5000")
 	Integer maxTicketAmount,
 
@@ -67,6 +70,7 @@ public record EventResponse(
 			event.getPreCloseAt(),
 			event.getTicketOpenAt(),
 			event.getTicketCloseAt(),
+			event.getEventDate(),
 			event.getMaxTicketAmount(),
 			event.getStatus()
 		);

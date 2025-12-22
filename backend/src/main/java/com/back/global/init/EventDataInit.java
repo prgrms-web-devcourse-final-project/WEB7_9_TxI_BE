@@ -48,6 +48,7 @@ public class EventDataInit implements ApplicationRunner {
 			.preCloseAt(now.plusDays(7))
 			.ticketOpenAt(now.plusDays(10))
 			.ticketCloseAt(now.plusDays(30))
+			.eventDate(now.plusDays(40))
 			.maxTicketAmount(5000)
 			.status(EventStatus.PRE_OPEN)
 			.build();
@@ -64,6 +65,7 @@ public class EventDataInit implements ApplicationRunner {
 			.preCloseAt(now.plusDays(3))
 			.ticketOpenAt(now.plusDays(5))
 			.ticketCloseAt(now.plusDays(7))
+			.eventDate(now.plusDays(10))
 			.maxTicketAmount(500)
 			.status(EventStatus.READY)
 			.build();
@@ -80,10 +82,10 @@ public class EventDataInit implements ApplicationRunner {
 			.preCloseAt(now.minusDays(8))
 			.ticketOpenAt(now.minusDays(5))
 			.ticketCloseAt(now.plusDays(14))
+			.eventDate(now.plusDays(21))
 			.maxTicketAmount(3000)
 			.status(EventStatus.PRE_OPEN)
 			.build();
-
 
 		Event event4 = Event.builder()
 			.title("2025 스프링 재즈 나이트")
@@ -97,6 +99,7 @@ public class EventDataInit implements ApplicationRunner {
 			.preCloseAt(now.minusDays(8))
 			.ticketOpenAt(now.plusHours(1).plusMinutes(5))
 			.ticketCloseAt(now.plusDays(14))
+			.eventDate(now.plusDays(21))
 			.maxTicketAmount(3000)
 			.status(EventStatus.PRE_OPEN)
 			.build();

@@ -48,6 +48,7 @@ public class PerfEventDataInitializer {
 			.preCloseAt(now.plusDays(5))
 			.ticketOpenAt(now.plusDays(7))
 			.ticketCloseAt(now.plusDays(30))
+			.eventDate(now.plusDays(35))
 			.maxTicketAmount(500)
 			.status(EventStatus.PRE_OPEN)
 			.build());
@@ -65,6 +66,7 @@ public class PerfEventDataInitializer {
 			.preCloseAt(now.minusDays(3))
 			.ticketOpenAt(now.plusMinutes(30))
 			.ticketCloseAt(now.plusDays(20))
+			.eventDate(now.plusDays(25))
 			.maxTicketAmount(500)
 			.status(EventStatus.QUEUE_READY)
 			.build());
@@ -82,6 +84,7 @@ public class PerfEventDataInitializer {
 			.preCloseAt(now.minusDays(2))
 			.ticketOpenAt(now.minusHours(1))
 			.ticketCloseAt(now.plusDays(3))
+			.eventDate(now.plusDays(8))
 			.maxTicketAmount(500)
 			.status(EventStatus.OPEN)
 			.build());
@@ -100,6 +103,7 @@ public class PerfEventDataInitializer {
 				.preCloseAt(now.minusDays(20))
 				.ticketOpenAt(now.minusDays(15))
 				.ticketCloseAt(now.minusDays(10))
+				.eventDate(now.minusDays(5))
 				.maxTicketAmount(500)
 				.status(EventStatus.CLOSED)
 				.build());
@@ -138,6 +142,7 @@ public class PerfEventDataInitializer {
 			.preCloseAt(baseTime.plusDays(9))
 			.ticketOpenAt(baseTime.plusDays(12))
 			.ticketCloseAt(baseTime.plusDays(30))
+			.eventDate(baseTime.plusDays(35))
 			.maxTicketAmount(maxTickets)
 			.status(EventStatus.READY)
 			.build();
@@ -157,6 +162,7 @@ public class PerfEventDataInitializer {
 			.preCloseAt(baseTime.plusDays(5))
 			.ticketOpenAt(baseTime.plusDays(7))
 			.ticketCloseAt(baseTime.plusDays(21))
+			.eventDate(baseTime.plusDays(25))
 			.maxTicketAmount(maxTickets)
 			.status(EventStatus.READY)
 			.build();
@@ -176,6 +182,7 @@ public class PerfEventDataInitializer {
 			.preCloseAt(baseTime.plusDays(3))
 			.ticketOpenAt(baseTime.plusDays(5))
 			.ticketCloseAt(baseTime.plusDays(10))
+			.eventDate(baseTime.plusDays(12))
 			.maxTicketAmount(maxTickets)
 			.status(EventStatus.READY)
 			.build();

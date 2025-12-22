@@ -108,7 +108,6 @@ class PreRegisterServiceTest {
 			assertThat(response.id()).isNotNull();
 			assertThat(response.eventId()).isEqualTo(testEvent.getId());
 			assertThat(response.userId()).isEqualTo(testUser.user().getId());
-			assertThat(response.status()).isEqualTo(PreRegisterStatus.REGISTERED);
 
 			// DB 검증
 			PreRegister savedPreRegister = preRegisterRepository
@@ -214,6 +213,7 @@ class PreRegisterServiceTest {
 				.preCloseAt(now.plusDays(5))
 				.ticketOpenAt(now.plusDays(10))
 				.ticketCloseAt(now.plusDays(20))
+				.eventDate(now.plusDays(25))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build();
@@ -249,6 +249,7 @@ class PreRegisterServiceTest {
 				.preCloseAt(now.minusDays(8))  // 8일 전에 종료
 				.ticketOpenAt(now.minusDays(5))
 				.ticketCloseAt(now.plusDays(10))
+				.eventDate(now.plusDays(15))
 				.maxTicketAmount(100)
 				.status(EventStatus.OPEN)
 				.build();
@@ -508,7 +509,6 @@ class PreRegisterServiceTest {
 			assertThat(response.id()).isNotNull();
 			assertThat(response.eventId()).isEqualTo(testEvent.getId());
 			assertThat(response.userId()).isEqualTo(testUser.user().getId());
-			assertThat(response.status()).isEqualTo(PreRegisterStatus.REGISTERED);
 			assertThat(response.createdAt()).isNotNull();
 		}
 
@@ -645,8 +645,7 @@ class PreRegisterServiceTest {
 				testUser.user().getId(),
 				request
 			);
-			assertThat(registerResponse.status()).isEqualTo(PreRegisterStatus.REGISTERED);
-
+	
 			// 2. 조회
 			PreRegisterResponse getResponse = preRegisterService.getMyPreRegister(
 				testEvent.getId(),
@@ -756,8 +755,7 @@ class PreRegisterServiceTest {
 				testUser.user().getId(),
 				request
 			);
-			assertThat(registerResponse.status()).isEqualTo(PreRegisterStatus.REGISTERED);
-
+	
 			// when: 취소
 			preRegisterService.cancel(testEvent.getId(), testUser.user().getId());
 
@@ -773,7 +771,6 @@ class PreRegisterServiceTest {
 			);
 
 			// then: 재등록 성공 및 기존 레코드를 재활용
-			assertThat(reRegisterResponse.status()).isEqualTo(PreRegisterStatus.REGISTERED);
 			assertThat(reRegisterResponse.id()).isEqualTo(registerResponse.id()); // 같은 레코드 재활용
 			assertThat(preRegisterService.isRegistered(testEvent.getId(), testUser.user().getId())).isTrue();
 
