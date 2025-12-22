@@ -81,4 +81,19 @@ public class QueueEntryController implements QueueEntryApi {
 		return ApiResponse.ok("내 앞 사용들이 모두 입장 처리가 완료되었습니다.", response);
 	}
 
+	@Override
+	@PostMapping("/{eventId}/process-include-me")
+	public ApiResponse<ProcessEntriesResponse> processIncludingMe(
+		@PathVariable Long eventId
+	) {
+		Long userId = httpRequestContext.getUserId();
+
+		ProcessEntriesResponse response = queueEntryProcessService.processTopEntriesIncludingMeForTest(
+			eventId,
+			userId
+		);
+
+		return ApiResponse.ok("나를 포함한 내 앞 사용들이 모두 입장 처리가 완료되었습니다.", response);
+	}
+
 }

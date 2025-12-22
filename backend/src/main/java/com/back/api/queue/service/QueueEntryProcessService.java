@@ -236,6 +236,48 @@ public class QueueEntryProcessService {
 		return ProcessEntriesResponse.from(eventId, userIds.size(), remainingCount);
 	}
 
+	/* ==================== 테스트용 내 앞에 사람 + 나까지 모두 입장 처리 ==================== */
+	@Transactional
+	public ProcessEntriesResponse processTopEntriesIncludingMeForTest(Long eventId, Long userId) {
+
+		QueueEntry myEntry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
+			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
+
+		if (myEntry.getQueueEntryStatus() != QueueEntryStatus.WAITING) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_WAITING_STATUS);
+		}
+
+		Long myRank = queueEntryRedisRepository.getMyRankInWaitingQueue(eventId, userId);
+
+		if (myRank == null) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY);
+		}
+
+		// 나를 포함한 입장 처리 (나의 순위만큼 처리)
+		int countToProcess = myRank.intValue();
+
+		Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, countToProcess);
+
+		if (topWaitingUsers.isEmpty()) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_INVALID_COUNT);
+		}
+
+		List<Long> userIds = new ArrayList<>();
+		for (Object userIdObj : topWaitingUsers) {
+			userIds.add(Long.parseLong(userIdObj.toString()));
+		}
+
+		if (userIds.isEmpty()) {
+			return ProcessEntriesResponse.from(eventId, 0,
+				queueEntryRedisRepository.getTotalWaitingCount(eventId));
+		}
+
+		processBatchEntry(eventId, userIds);
+		publishWaitingUpdateEvents(eventId);
+
+		Long remainingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
+		return ProcessEntriesResponse.from(eventId, userIds.size(), remainingCount);
+	}
 
 	/* ==================== 만료 처리 ==================== */
 

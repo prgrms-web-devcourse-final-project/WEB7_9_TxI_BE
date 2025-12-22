@@ -75,4 +75,18 @@ public interface QueueEntryApi {
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId
 	);
+
+	@Operation(
+		summary = "[테스트용] 나를 포함한 앞 사용자 모두 입장 처리",
+		description = "나를 포함하여 내 앞에 있는 모든 사용자들을 입장 처리합니다."
+	)
+	@ApiErrorCode({
+		"NOT_FOUND_QUEUE_ENTRY",
+		"NOT_WAITING_STATUS",
+		"NOT_INVALID_COUNT"
+	})
+	ApiResponse<ProcessEntriesResponse> processIncludingMe(
+		@Parameter(description = "이벤트 ID", example = "1")
+		@PathVariable Long eventId
+	);
 }
