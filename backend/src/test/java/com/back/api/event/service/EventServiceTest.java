@@ -195,10 +195,50 @@ class EventServiceTest {
 		// @DisplayName("사전등록 시작일이 과거이면 예외 발생")
 		// void createEventFailWhenPreOpenAtIsBeforeNow() { ... }
 
-		// 중복 체크 비활성화로 인해 테스트 제거됨
-		// @Test
-		// @DisplayName("중복된 이벤트 생성 시 예외 발생")
-		// void createEventFailWhenDuplicateEvent() { ... }
+		@Test
+		@DisplayName("중복된 이벤트 생성 시 예외 발생")
+		void createEventFailWhenDuplicateEvent() {
+			// given
+			// 첫 번째 이벤트 생성
+			eventRepository.save(Event.builder()
+				.title("중복 테스트 이벤트")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("중복 장소")
+				.imageUrl("https://example.com/image.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.eventDate(eventDate)
+				.maxTicketAmount(100)
+				.status(EventStatus.READY)
+				.build());
+
+			// 동일한 title, place, ticketOpenAt으로 이벤트 생성 시도
+			EventCreateRequest request = new EventCreateRequest(
+				"중복 테스트 이벤트", // 동일한 title
+				EventCategory.POPUP,
+				"다른 설명",
+				"중복 장소", // 동일한 place
+				"https://example.com/image2.jpg",
+				20000,
+				80000,
+				preOpenAt,
+				preCloseAt,
+				ticketOpenAt, // 동일한 ticketOpenAt
+				ticketCloseAt,
+				eventDate,
+				200
+			);
+
+			// when & then
+			assertThatThrownBy(() -> eventService.createEvent(request))
+				.isInstanceOf(ErrorException.class)
+				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.DUPLICATE_EVENT);
+		}
 	}
 
 	@Nested
@@ -343,9 +383,9 @@ class EventServiceTest {
 			);
 
 			// when & then
-			// 중복 체크 비활성화로 인해 이제 성공해야 함
-			EventResponse response = eventService.updateEvent(secondEvent.getId(), request);
-			assertThat(response.title()).isEqualTo("첫 번째 이벤트");
+			assertThatThrownBy(() -> eventService.updateEvent(secondEvent.getId(), request))
+				.isInstanceOf(ErrorException.class)
+				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.DUPLICATE_EVENT);
 		}
 
 		@Test
