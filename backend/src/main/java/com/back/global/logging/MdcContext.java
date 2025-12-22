@@ -25,7 +25,29 @@ public final class MdcContext {
 		}
 	}
 
+	public static void putRunId(String runId) {
+		if (runId != null && !runId.isBlank()) {
+			MDC.put("runId", runId);
+		}
+	}
+
 	public static void removeUserId() {
 		MDC.remove("userId");
+	}
+
+	public static void removeEventId() {
+		MDC.remove("eventId");
+	}
+
+	public static void removeSeatId() {
+		MDC.remove("seatId");
+	}
+
+	public static void removeRunId() {
+		MDC.remove("runId");
+	}
+
+	public static void clearAll() {
+		MDC.clear();
 	}
 }

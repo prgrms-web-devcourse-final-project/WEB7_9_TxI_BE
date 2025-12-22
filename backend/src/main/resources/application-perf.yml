@@ -4,13 +4,23 @@ spring:
       on-profile: perf
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/waitfair_perf
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: ${PERF_SUPABASE_URL}
+    username: ${PERF_SUPABASE_USERNAME}
+    password: ${PERF_SUPABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      data-source-properties:
+        prepareThreshold: 0
+        cachePrepStmts: false
+        useServerPrepStmts: false
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop  # 스키마 검증만, 변경하지 않음
     show-sql: false
     properties:
       hibernate:
@@ -24,6 +34,7 @@ logging:
     org.hibernate.SQL: WARN
     org.hibernate.orm.jdbc.bind: WARN
     org.hibernate.orm.jdbc.extract: WARN
+    org.springframework.transaction.interceptor: WARN
 
 management:
   endpoints:
