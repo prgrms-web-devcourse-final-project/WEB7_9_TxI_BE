@@ -121,7 +121,7 @@ JSON 형식이 아니면:
 # 로그에서 에러 확인
 docker logs alloy
 
-# 흔한 원因:
+# 흔한 원인:
 # 1. .env 파일 누락
 # 2. Grafana Cloud 인증 정보 오류
 # 3. config.alloy 문법 에러
