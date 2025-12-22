@@ -21,3 +21,17 @@ sms:
   test:
     enabled: true        # 고정 인증번호 활성화
     fixed-code: "123456" # HTTP 파일에서 123456 사용
+
+custom:
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:8080
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    allowed-headers:
+      - "*"

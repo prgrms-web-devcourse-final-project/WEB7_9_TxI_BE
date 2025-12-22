@@ -2,6 +2,8 @@ package com.back.api.payment.payment.service;
 
 import java.util.UUID;
 
+import com.back.api.seat.service.SeatService;
+import com.back.domain.seat.entity.Seat;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,7 @@ public class PaymentService {
 	private final ApplicationEventPublisher eventPublisher;
 	private final TossPaymentService tossPaymentService;
 	private final PaymentRepository paymentRepository;
+	private final SeatService seatService;
 
 
 	@Transactional
@@ -58,7 +61,9 @@ public class PaymentService {
 
 		TossPaymentResponse result = tossPaymentService.confirmPayment(request);
 
-		if (!result.status().equals("DONE")) { // 결제 승인 완료시 토스 API 응답 : Status = "DONE"
+		log.info("############### 결제 승인 결과 {}", result.status());
+
+		if (result.status() != ApproveStatus.DONE) { // 결제 승인 완료시 토스 API 응답 : Status = "DONE"
 			order.markFailed();
 			ticketService.failPayment(order.getTicket().getId()); // Ticket FAILED + Seat 해제
 			//TODO 결제 실패 로직 추가
@@ -72,12 +77,14 @@ public class PaymentService {
 				orderId,
 				order.getAmount(),
 				result.method(),
-				ApproveStatus.DONE
+				result.status()
 			)
 		);
 
 		// Order status PENDING -> PAID, paymentKey DB 저장 (주문 상태 업테이트)
 		order.markPaid(result.paymentKey());
+
+		order.getTicket().getSeat().markAsReserved();
 
 		// Ticket 발급
 		Ticket ticket = ticketService.confirmPayment(
@@ -86,10 +93,10 @@ public class PaymentService {
 		);
 
 		// Queue 완료
-		queueEntryProcessService.completePayment(
-			ticket.getEvent().getId(),
-			userId
-		);
+//		queueEntryProcessService.completePayment(
+//			ticket.getEvent().getId(),
+//			userId
+//		);
 
 		// String eventTitle = ticket.getEvent().getTitle();
 		//
