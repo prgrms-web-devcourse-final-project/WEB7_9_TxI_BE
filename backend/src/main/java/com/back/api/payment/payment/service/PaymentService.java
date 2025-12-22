@@ -9,6 +9,7 @@ import com.back.api.payment.payment.client.PaymentClient;
 import com.back.api.payment.payment.dto.request.PaymentConfirmCommand;
 import com.back.api.payment.payment.dto.response.PaymentConfirmResponse;
 import com.back.api.payment.payment.dto.response.PaymentConfirmResult;
+import com.back.api.payment.payment.dto.response.PaymentReceiptResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.notification.systemMessage.OrdersSuccessMessage;
@@ -99,5 +100,17 @@ public class PaymentService {
 		);
 
 		return PaymentConfirmResponse.from(order, ticket);
+	}
+
+	/**
+	 * 결제 영수증 조회
+	 * - 결제 완료 화면에 필요한 모든 정보 제공
+	 */
+	@Transactional(readOnly = true)
+	public PaymentReceiptResponse getPaymentReceipt(Long orderId, Long userId) {
+		Order order = orderService.getOrderWithDetails(orderId, userId);
+		Ticket ticket = order.getTicket();
+
+		return PaymentReceiptResponse.from(order, ticket);
 	}
 }

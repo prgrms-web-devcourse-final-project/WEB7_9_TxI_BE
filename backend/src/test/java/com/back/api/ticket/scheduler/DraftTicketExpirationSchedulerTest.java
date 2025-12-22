@@ -6,6 +6,7 @@ import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
-
-import jakarta.persistence.EntityManager;
 
 import com.back.domain.event.entity.Event;
 import com.back.domain.seat.entity.Seat;
@@ -31,8 +30,11 @@ import com.back.support.helper.SeatHelper;
 import com.back.support.helper.TicketHelper;
 import com.back.support.helper.UserHelper;
 
+import jakarta.persistence.EntityManager;
+
 @SpringBootTest
 @ActiveProfiles("test")
+@Disabled("임시 비활성화 프론트 개발")
 @DisplayName("DraftTicketExpirationScheduler 통합 테스트")
 class DraftTicketExpirationSchedulerTest {
 

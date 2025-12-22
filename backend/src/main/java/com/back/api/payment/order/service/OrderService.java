@@ -1,5 +1,6 @@
 package com.back.api.payment.order.service;
 
+import java.util.Random;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -48,17 +49,30 @@ public class OrderService {
 			throw new ErrorException(OrderErrorCode.AMOUNT_MISMATCH);
 		}
 
+		// 주문번호 생성 (WF + 10자리 숫자)
+		String orderNumber = generateOrderNumber();
+
 		// 주문 생성
 		Order newOrder = Order.builder()
 			.ticket(draft)
 			.amount(orderRequestDto.amount())
 			.status(OrderStatus.PENDING)
 			.orderKey(UUID.randomUUID().toString())
+			.orderNumber(orderNumber)
 			.build();
 
 		Order savedOrder = orderRepository.save(newOrder);
 
 		return OrderResponseDto.from(savedOrder, savedOrder.getTicket());
+	}
+
+	/**
+	 * 주문번호 생성 (WF + 10자리 숫자)
+	 */
+	private String generateOrderNumber() {
+		Random random = new Random();
+		long number = 1000000000L + (long) (random.nextDouble() * 9000000000L);
+		return "WF" + number;
 	}
 
 	// 결제 가능한 Order 조회 및 검증 -> 결제 서비스에 보장
@@ -78,6 +92,21 @@ public class OrderService {
 
 		if (!order.getAmount().equals(clientAmount)) {
 			throw new ErrorException(PaymentErrorCode.AMOUNT_VERIFICATION_FAILED);
+		}
+
+		return order;
+	}
+
+	/**
+	 * 영수증 조회용 Order 조회 (Ticket, Event, Seat 포함)
+	 */
+	@Transactional(readOnly = true)
+	public Order getOrderWithDetails(Long orderId, Long userId) {
+		Order order = orderRepository.findByIdWithDetails(orderId)
+			.orElseThrow(() -> new ErrorException(OrderErrorCode.ORDER_NOT_FOUND));
+
+		if (!order.getTicket().getOwner().getId().equals(userId)) {
+			throw new ErrorException(OrderErrorCode.UNAUTHORIZED_ORDER_ACCESS);
 		}
 
 		return order;

@@ -2,6 +2,8 @@ package com.back.domain.payment.order.entity;
 
 import static com.back.domain.payment.order.entity.OrderStatus.*;
 
+import java.time.LocalDateTime;
+
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.entity.BaseEntity;
 
@@ -43,28 +45,18 @@ public class Order extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private OrderStatus status = PENDING;
 
-	/**
-	 * ticket에 포함되는 정보, 임시 주석처리
-	 // @ManyToOne(fetch = FetchType.LAZY)
-	 // @JoinColumn(name = "event_id", nullable = false)
-	 // private Event event; //클라이언트로부터 받아야함
-	 //
-	 // @ManyToOne(fetch = FetchType.LAZY)
-	 // @JoinColumn(name = "user_id", nullable = false)
-	 // private User user; //클라이언트로부터 받아야함 //v2에서는 직접 받지 않고 스프링시큐리티를 통해 JWT로부터 추출하는 방식으로 전환할 예정
-	 //
-	 // @OneToOne
-	 // @JoinColumn(name = "seat_id", nullable = false)
-	 // private Seat seat; //클라이언트로부터 받아야함
-	 * */
-
 	private String paymentKey; // Toss paymentKey
-	
+
 	private String orderKey;   // merchant_uid(UUID)
+
+	private String orderNumber; // 주문번호 (예: WF4840318933)
+
+	private LocalDateTime paidAt;
 
 	public void markPaid(String paymentKey) {
 		this.status = OrderStatus.PAID;
 		this.paymentKey = paymentKey;
+		this.paidAt = LocalDateTime.now();
 	}
 
 	public void markFailed() {
