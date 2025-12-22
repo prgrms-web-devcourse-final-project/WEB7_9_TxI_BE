@@ -1,0 +1,61 @@
+logging {
+  level = "debug"
+  format = "logfmt"
+}
+
+// Loki endpoint configuration
+loki.write "grafana_cloud" {
+  endpoint {
+    url = env("LOKI_PUSH_URL")
+
+    basic_auth {
+      username = env("GRAFANA_USER_ID")
+      password = env("GRAFANA_API_TOKEN")
+    }
+  }
+}
+
+// Docker log source - automatically discovers all containers
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+loki.source.docker "docker_logs" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.containers.targets
+  forward_to = [loki.relabel.add_labels.receiver]
+}
+
+// Add custom labels and filter containers
+loki.relabel "add_labels" {
+  forward_to = [loki.write.grafana_cloud.receiver]
+
+  // TEMPORARILY DISABLED - Collect ALL containers for debugging
+  // rule {
+  //   source_labels = ["__meta_docker_container_name"]
+  //   regex         = ".*(app1|waitfair).*"
+  //   action        = "keep"
+  // }
+
+  // Set container name as label
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    target_label  = "container"
+  }
+
+  // Add static labels
+  rule {
+    target_label = "app"
+    replacement  = "waitfair"
+  }
+
+  rule {
+    target_label = "env"
+    replacement  = "perf"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "waitfair"
+  }
+}
