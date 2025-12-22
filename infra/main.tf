@@ -219,11 +219,11 @@ resource "aws_iam_role" "ec2_role_1" {
   EOF
 }
 
-# # EC2 역할에 AmazonS3FullAccess 정책을 부착
-# resource "aws_iam_role_policy_attachment" "s3_full_access" {
-#   role       = aws_iam_role.ec2_role_1.name
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-# }
+# EC2 역할에 AmazonS3FullAccess 정책을 부착
+resource "aws_iam_role_policy_attachment" "s3_full_access" {
+  role       = aws_iam_role.ec2_role_1.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
 
 # EC2 역할에 AmazonEC2RoleforSSM 정책을 부착 (SSH 대체)
 resource "aws_iam_role_policy_attachment" "ec2_ssm" {
