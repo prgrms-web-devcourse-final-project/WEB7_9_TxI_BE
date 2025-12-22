@@ -106,3 +106,8 @@ sms:
     from-number: ${COOLSMS_FROM_NUMBER}
   test:
     enabled: false
+
+cloud:
+  aws:
+    s3:
+      bucket: ${S3_BUCKET_NAME}

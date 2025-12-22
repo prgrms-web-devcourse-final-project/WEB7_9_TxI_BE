@@ -79,6 +79,9 @@ dependencies {
     // logstash logback encoder
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
+    //s3
+    implementation("software.amazon.awssdk:s3:2.40.13")
+
 
 }
 
