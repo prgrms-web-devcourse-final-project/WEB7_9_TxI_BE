@@ -53,10 +53,10 @@ public class PerfPreregisterDataInitializer {
 		}
 
 		log.info("PreRegister 초기 데이터 생성 중: Event #1 ({}) 전용, 비율 {}%",
-			event1.getTitle(), (int) (preregRatio * 100));
+			event1.getTitle(), (int)(preregRatio * 100));
 
 		// Event #1에만 사전등록 생성
-		int preRegisterCount = (int) (users.size() * preregRatio);
+		int preRegisterCount = (int)(users.size() * preregRatio);
 		List<PreRegister> preRegisters = createPreRegistersForEvent(event1, users, preRegisterCount);
 		preRegisterRepository.saveAll(preRegisters);
 

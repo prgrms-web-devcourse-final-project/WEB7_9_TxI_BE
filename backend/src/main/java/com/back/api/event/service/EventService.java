@@ -98,9 +98,6 @@ public class EventService {
 
 	private void validateEventDates(LocalDateTime preOpenAt, LocalDateTime preCloseAt,
 		LocalDateTime ticketOpenAt, LocalDateTime ticketCloseAt) {
-		if (preOpenAt.isBefore(LocalDateTime.now())) {
-			throw new ErrorException(EventErrorCode.INVALID_EVENT_DATE);
-		}
 		if (preOpenAt.isAfter(preCloseAt)) {
 			throw new ErrorException(EventErrorCode.INVALID_EVENT_DATE);
 		}
@@ -113,25 +110,15 @@ public class EventService {
 	}
 
 	private void validateDuplicateEvent(String title, String place, LocalDateTime ticketOpenAt) {
-		if (eventRepository.existsByTitleAndPlaceAndTicketOpenAtAndDeletedFalse(title, place, ticketOpenAt)) {
-			throw new ErrorException(EventErrorCode.DUPLICATE_EVENT);
-		}
 	}
 
 	private void validateDuplicateEventForUpdate(Long eventId, String title, String place,
 		LocalDateTime ticketOpenAt) {
-		eventRepository.findByTitleAndPlaceAndTicketOpenAtAndDeletedFalse(title, place, ticketOpenAt)
-			.ifPresent(existingEvent -> {
-				if (!existingEvent.getId().equals(eventId)) {
-					throw new ErrorException(EventErrorCode.DUPLICATE_EVENT);
-				}
-			});
 	}
 
 	public List<Event> findEventsByStatus(EventStatus status) {
 		return eventRepository.findByStatus(status);
 	}
-
 
 	public List<Event> findEventsByTicketOpenAtBetweenAndStatus(
 		LocalDateTime start,
@@ -140,6 +127,5 @@ public class EventService {
 	) {
 		return eventRepository.findByTicketOpenAtBetweenAndStatus(start, end, status);
 	}
-
 
 }
