@@ -214,7 +214,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -266,7 +266,7 @@ class EventServiceTest {
 				preCloseAt,
 				ticketOpenAt,
 				ticketCloseAt,
-			now.plusDays(35),
+				now.plusDays(35),
 				200,
 				EventStatus.PRE_OPEN
 			);
@@ -294,7 +294,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -312,7 +312,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt.plusDays(1))
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -357,7 +357,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -410,7 +410,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -458,7 +458,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -504,7 +504,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -521,7 +521,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.PRE_OPEN)
 				.build());
@@ -551,7 +551,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.PRE_OPEN)
 				.build());
@@ -582,7 +582,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -613,7 +613,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.PRE_OPEN)
 				.build());
@@ -653,7 +653,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -700,7 +700,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt)
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -717,7 +717,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt.plusDays(1))
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -734,7 +734,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(ticketOpenAt.plusDays(2))
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.PRE_OPEN)
 				.build());
@@ -783,7 +783,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(now.plusDays(7)) // 범위 내
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -800,7 +800,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(now.plusDays(10)) // 범위 내
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());
@@ -818,7 +818,7 @@ class EventServiceTest {
 				.preCloseAt(preCloseAt)
 				.ticketOpenAt(now.plusDays(20)) // 범위 밖
 				.ticketCloseAt(ticketCloseAt)
-			.eventDate(now.plusDays(35))
+				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
 				.build());

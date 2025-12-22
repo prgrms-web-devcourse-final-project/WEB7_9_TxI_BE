@@ -147,7 +147,7 @@ cloud:
   aws:
     region: ap-northeast-2
     s3:
-        bucket: ${S3_BUCKET_NAME}
+      bucket: ${S3_BUCKET_NAME}
     presigned:
       put-expire-minutes: 5
       get-expire-minutes: 10
