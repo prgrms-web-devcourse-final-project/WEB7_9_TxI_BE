@@ -24,6 +24,7 @@ import com.back.api.event.dto.request.EventUpdateRequest;
 import com.back.api.event.dto.response.EventListResponse;
 import com.back.api.event.dto.response.EventResponse;
 import com.back.api.s3.service.S3MoveService;
+import com.back.api.s3.service.S3PresignedService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
@@ -46,6 +47,9 @@ class EventServiceTest {
 	@MockitoBean
 	private S3MoveService s3MoveService;
 
+	@MockitoBean
+	private S3PresignedService s3PresignedService;
+
 	private LocalDateTime now;
 	private LocalDateTime preOpenAt;
 	private LocalDateTime preCloseAt;
@@ -64,6 +68,9 @@ class EventServiceTest {
 		eventDate = now.plusDays(15);
 		when(s3MoveService.moveImage(anyLong(), anyString()))
 			.thenReturn("events/1/main.jpg");
+
+		when(s3PresignedService.issueDownloadUrl(anyString()))
+			.thenReturn("https://mocked-presigned-url");
 
 	}
 

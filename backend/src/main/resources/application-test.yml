@@ -38,3 +38,12 @@ sms:
     enabled: true
     fixed-code: "123456"
 
+# S3
+cloud:
+  aws:
+    region: ap-northeast-2
+    s3:
+      bucket: test-waitfair-bucket
+    presigned:
+      put-expire-minutes: 5
+      get-expire-minutes: 10
