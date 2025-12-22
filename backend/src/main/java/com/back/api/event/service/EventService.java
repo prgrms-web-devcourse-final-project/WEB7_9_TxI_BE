@@ -2,6 +2,7 @@ package com.back.api.event.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -111,10 +112,19 @@ public class EventService {
 	}
 
 	private void validateDuplicateEvent(String title, String place, LocalDateTime ticketOpenAt) {
+		if (eventRepository.existsByTitleAndPlaceAndTicketOpenAtAndDeletedFalse(title, place, ticketOpenAt)) {
+			throw new ErrorException(EventErrorCode.DUPLICATE_EVENT);
+		}
 	}
 
 	private void validateDuplicateEventForUpdate(Long eventId, String title, String place,
 		LocalDateTime ticketOpenAt) {
+		Optional<Event> duplicateEvent = eventRepository.findByTitleAndPlaceAndTicketOpenAtAndDeletedFalse(
+			title, place, ticketOpenAt);
+
+		if (duplicateEvent.isPresent() && !duplicateEvent.get().getId().equals(eventId)) {
+			throw new ErrorException(EventErrorCode.DUPLICATE_EVENT);
+		}
 	}
 
 	public List<Event> findEventsByStatus(EventStatus status) {

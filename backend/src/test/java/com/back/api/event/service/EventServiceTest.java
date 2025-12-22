@@ -327,9 +327,9 @@ class EventServiceTest {
 			);
 
 			// when & then
-			// 중복 체크 비활성화로 인해 이제 성공해야 함
-			EventResponse response = eventService.updateEvent(secondEvent.getId(), request);
-			assertThat(response.title()).isEqualTo("첫 번째 이벤트");
+			assertThatThrownBy(() -> eventService.updateEvent(secondEvent.getId(), request))
+				.isInstanceOf(ErrorException.class)
+				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.DUPLICATE_EVENT);
 		}
 
 		@Test
