@@ -14,22 +14,19 @@ import com.back.api.payment.payment.service.PaymentService;
 import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/payments")
-@Tag(name = "Payment", description = "결제 API")
-public class PaymentController {
+public class PaymentController implements PaymentApi {
 
 	private final PaymentService paymentService;
 	private final HttpRequestContext httpRequestContext;
 
+	@Override
 	@PostMapping("/confirm")
-	@Operation(summary = "결제 승인", description = "PG사를 통한 결제를 승인하고 티켓을 발급합니다")
 	public ApiResponse<PaymentConfirmResponse> confirmPayment(
 		@Valid @RequestBody PaymentConfirmRequest request
 	) {
@@ -48,11 +45,8 @@ public class PaymentController {
 		);
 	}
 
+	@Override
 	@GetMapping("/{orderId}/receipt")
-	@Operation(
-		summary = "결제 영수증 조회",
-		description = "결제 완료 후 영수증 정보를 조회합니다. 주문, 티켓, 이벤트, 좌석 정보를 모두 포함합니다."
-	)
 	public ApiResponse<PaymentReceiptResponse> getPaymentReceipt(
 		@PathVariable Long orderId
 	) {
