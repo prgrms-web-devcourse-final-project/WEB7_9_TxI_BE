@@ -20,7 +20,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate  # 운영에서는 validate만 사용
+      ddl-auto: update  # 운영에서는 validate만 사용
     show-sql: false
     properties:
       hibernate:
