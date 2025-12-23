@@ -65,9 +65,6 @@ public record PaymentReceiptResponse(
 	@Schema(description = "좌석 가격", example = "100000")
 	Integer seatPrice,
 
-	@Schema(description = "예매 수수료", example = "0")
-	Integer bookingFee,
-
 	@Schema(description = "결제 수단", example = "신용카드")
 	String paymentMethod
 ) {
@@ -90,7 +87,6 @@ public record PaymentReceiptResponse(
 			ticket.getSeat().getSeatCode(),
 			ticket.getSeat().getGrade().getDisplayName(),
 			ticket.getSeat().getPrice(),
-			0, // 예매 수수료 (무료)
 			"신용카드" // 결제 수단
 		);
 	}
