@@ -11,8 +11,6 @@ import com.back.api.queue.service.QueueEntryReadService;
 import com.back.api.seat.dto.response.SeatResponse;
 import com.back.api.seat.service.SeatService;
 import com.back.domain.seat.entity.Seat;
-import com.back.global.error.code.SeatErrorCode;
-import com.back.global.error.exception.ErrorException;
 import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
 
@@ -33,10 +31,6 @@ public class SeatController implements SeatApi {
 		@PathVariable Long eventId
 	) {
 		Long userId = httpRequestContext.getUser().getId();
-
-		if (!queueEntryReadService.existsInWaitingQueue(eventId, userId)) {
-			throw new ErrorException(SeatErrorCode.NOT_IN_QUEUE);
-		}
 
 		List<Seat> seats = seatService.getSeatsByEvent(eventId, userId);
 
