@@ -56,14 +56,19 @@ public record EventResponse(
 		example = "PRE_OPEN")
 	EventStatus status
 ) {
+
 	public static EventResponse from(Event event) {
+		return from(event, null);
+	}
+
+	public static EventResponse from(Event event, String imageUrl) {
 		return new EventResponse(
 			event.getId(),
 			event.getTitle(),
 			event.getCategory(),
 			event.getDescription(),
 			event.getPlace(),
-			event.getImageUrl(),
+			imageUrl,
 			event.getMinPrice(),
 			event.getMaxPrice(),
 			event.getPreOpenAt(),

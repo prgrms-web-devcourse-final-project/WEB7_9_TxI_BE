@@ -79,6 +79,9 @@ dependencies {
     // logstash logback encoder
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
+    //s3
+    implementation("software.amazon.awssdk:s3:2.40.13")
+
     // ShedLock (스케줄러 중복 실행 방지)
     implementation("net.javacrumbs.shedlock:shedlock-spring:5.10.0")
     implementation("net.javacrumbs.shedlock:shedlock-provider-redis-spring:5.10.0")

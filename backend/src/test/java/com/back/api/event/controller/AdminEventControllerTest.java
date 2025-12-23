@@ -2,6 +2,7 @@ package com.back.api.event.controller;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -18,11 +19,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.event.dto.request.EventCreateRequest;
 import com.back.api.event.dto.request.EventUpdateRequest;
+import com.back.api.s3.service.S3MoveService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
@@ -47,6 +50,9 @@ class AdminEventControllerTest {
 	@Autowired
 	private EventRepository eventRepository;
 
+	@MockitoBean
+	private S3MoveService s3MoveService;
+
 	private LocalDateTime now;
 	private LocalDateTime preOpenAt;
 	private LocalDateTime preCloseAt;
@@ -63,6 +69,9 @@ class AdminEventControllerTest {
 		ticketOpenAt = now.plusDays(6);
 		ticketCloseAt = now.plusDays(10);
 		eventDate = now.plusDays(15);
+		when(s3MoveService.moveImage(anyLong(), anyString()))
+			.thenReturn("events/1/main.jpg");
+
 	}
 
 	@Nested

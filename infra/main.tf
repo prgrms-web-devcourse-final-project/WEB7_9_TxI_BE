@@ -63,19 +63,6 @@ resource "aws_subnet" "subnet_2" {
   }
 }
 
-# 추후 필요 시 추가
-# resource "aws_subnet" "subnet_3" {
-#   vpc_id                  = aws_vpc.vpc_1.id
-#   cidr_block              = "10.0.3.0/24"
-#   availability_zone       = "${var.region}c"
-#   map_public_ip_on_launch = true
-#
-#   tags = {
-#     Name = "${local.name}-subnet-3"
-#     Team = var.team_tag
-#   }
-# }
-
 resource "aws_internet_gateway" "igw_1" {
   vpc_id = aws_vpc.vpc_1.id
 
@@ -108,15 +95,6 @@ resource "aws_route_table_association" "association_2" {
   subnet_id      = aws_subnet.subnet_2.id
   route_table_id = aws_route_table.rt_1.id
 }
-
-# 추후 필요시 추가
-# resource "aws_route_table_association" "association_3" {
-#   subnet_id      = aws_subnet.subnet_3.id
-#   route_table_id = aws_route_table.rt_1.id
-# }
-#DB 서브넷 넣으면 ssh로 접근해서관리해야함
-# 9090, 3300,
-# 3300
 
 resource "aws_security_group" "sg_1" {
   name = "${local.name}-security-group"
@@ -219,11 +197,11 @@ resource "aws_iam_role" "ec2_role_1" {
   EOF
 }
 
-# # EC2 역할에 AmazonS3FullAccess 정책을 부착
-# resource "aws_iam_role_policy_attachment" "s3_full_access" {
-#   role       = aws_iam_role.ec2_role_1.name
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-# }
+# EC2 역할에 AmazonS3FullAccess 정책을 부착
+resource "aws_iam_role_policy_attachment" "s3_full_access" {
+  role       = aws_iam_role.ec2_role_1.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
 
 # EC2 역할에 AmazonEC2RoleforSSM 정책을 부착 (SSH 대체)
 resource "aws_iam_role_policy_attachment" "ec2_ssm" {
@@ -245,6 +223,28 @@ resource "aws_eip" "ec2" {
     Name = "${local.name}-eip"
   }
 }
+
+# S3 버킷 생성
+resource "aws_s3_bucket" "s3_bucket_1" {
+    bucket = "${local.name}-s3-bucket-1"
+
+  tags = {
+    Name = "${local.name}-s3-bucket-1"
+    Team = var.team_tag
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "s3_bucket_1_public" {
+  bucket = aws_s3_bucket.s3_bucket_1.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+
+
 
 locals {
   ec2_user_data_base = <<-END_OF_FILE

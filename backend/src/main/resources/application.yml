@@ -141,3 +141,13 @@ coolsms:
   api-Key: ${SMS_API_KEY}
   api-Secret: ${SMS_SECRET_KEY}
   sender-Number: ${SMS_SENDER_NUMBER}
+
+# S3
+cloud:
+  aws:
+    region: ap-northeast-2
+    s3:
+      bucket: ${S3_BUCKET_NAME}
+    presigned:
+      put-expire-minutes: 5
+      get-expire-minutes: 10
