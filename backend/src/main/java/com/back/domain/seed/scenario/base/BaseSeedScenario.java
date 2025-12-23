@@ -26,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 public class BaseSeedScenario {
 
 	protected static final String PREFIX = "[SEED] ";
-	protected static final int USER_COUNT = 101;
 
 	protected final SeedResetSupport resetSupport;
 	protected final UserRepository userRepository;
@@ -39,11 +38,11 @@ public class BaseSeedScenario {
 		resetSupport.resetSeedDataByPrefix(PREFIX);
 	}
 
-	protected List<User> createUser101() {
-		List<User> users = new ArrayList<>(USER_COUNT);
+	protected List<User> createUsersN(int userCount) {
+		List<User> users = new ArrayList<>(userCount);
 		String encoded = passwordEncoder.encode("abc12345");
 
-		for (int i = 1; i <= USER_COUNT; i++) {
+		for (int i = 1; i <= userCount; i++) {
 			User user = User.builder()
 				.email("seed" + i + "@test.com")
 				.password(encoded)

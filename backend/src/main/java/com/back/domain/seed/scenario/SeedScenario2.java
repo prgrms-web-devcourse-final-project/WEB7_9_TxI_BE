@@ -65,7 +65,7 @@ public class SeedScenario2 extends BaseSeedScenario implements ScenarioSeeder {
 			EventStatus.PRE_OPEN
 		);
 
-		List<User> users = createUser101();
+		List<User> users = createUsersN(100);
 		createPreRegisters(event, users);
 		shuffleQueue(event, users); // Redis waiting + status QUEUE_READY
 

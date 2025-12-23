@@ -64,7 +64,7 @@ public class SeedScenario1 extends BaseSeedScenario implements ScenarioSeeder {
 			EventStatus.PRE_OPEN
 		);
 
-		List<User> users = createUser101();
+		List<User> users = createUsersN(101);
 		createPreRegisters(event, users);
 		shuffleQueue(event, users);
 
