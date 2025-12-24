@@ -43,4 +43,12 @@ public interface QueueEntryRepository extends JpaRepository<QueueEntry, Long> {
 		@Param("count") int count
 	);
 
+	@Query("SELECT MAX(q.queueRank) FROM QueueEntry q "
+		+ "WHERE q.event.id = :eventId "
+		+ "AND q.queueEntryStatus = 'WAITING'"
+	)
+	Optional<Long> findMaxQueueRankInWaiting(
+		@Param("eventId") Long eventId
+	);
+
 }
