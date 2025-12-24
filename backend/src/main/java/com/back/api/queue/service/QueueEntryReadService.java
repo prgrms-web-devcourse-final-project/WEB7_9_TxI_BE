@@ -110,13 +110,24 @@ public class QueueEntryReadService {
 		return queueEntryRepository.existsByEvent_IdAndUser_Id(eventId, userId);
 	}
 
-	//TODO 여기 폴백 수정
 	//대기열 ENTERED 상태인지 확인
 	//Redis & DB
 	public boolean isUserEntered(Long eventId, Long userId) {
 		try {
-			return queueEntryRedisRepository.isInEnteredQueue(eventId, userId);
+			boolean isInRedis = queueEntryRedisRepository.isInEnteredQueue(eventId, userId);
+
+			if (isInRedis) {
+				return true;
+			}
+
+			//Redis false면 DB 한번 더 확인
+			return queueEntryRepository
+				.findByEvent_IdAndUser_Id(eventId, userId)
+				.map(entry -> entry.getQueueEntryStatus() == QueueEntryStatus.ENTERED)
+				.orElse(false);
+
 		} catch (Exception e) {
+			// Redis 예외 시 DB 조회
 			log.warn("Redis ENTERED 조회 실패, DB Fallback");
 
 			return queueEntryRepository
