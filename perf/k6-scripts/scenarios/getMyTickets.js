@@ -45,7 +45,7 @@ export function getMyTickets(baseUrl, jwt, testId) {
     "status 200": (r) => r.status === 200,
     "data exists": () => data !== null,
     "data is array": () => Array.isArray(data),
-    "tickets length ≥ 0": () => data.length >= 0,
+    "tickets length ≥ 0": () => Array.isArray(data) && data.length >= 0,
   });
 
   // 티켓이 있을 경우 첫 번째 티켓 구조 검증
