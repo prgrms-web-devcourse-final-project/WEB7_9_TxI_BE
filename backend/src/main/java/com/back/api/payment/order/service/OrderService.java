@@ -8,15 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.payment.order.dto.request.OrderRequestDto;
 import com.back.api.payment.order.dto.response.OrderResponseDto;
-import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
-import com.back.domain.event.repository.EventRepository;
 import com.back.domain.payment.order.entity.Order;
 import com.back.domain.payment.order.entity.OrderStatus;
 import com.back.domain.payment.order.repository.OrderRepository;
-import com.back.domain.seat.repository.SeatRepository;
 import com.back.domain.ticket.entity.Ticket;
-import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.OrderErrorCode;
 import com.back.global.error.code.PaymentErrorCode;
 import com.back.global.error.exception.ErrorException;
@@ -27,11 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OrderService {
 	private final OrderRepository orderRepository;
-	private final EventRepository eventRepository;
-	private final UserRepository userRepository;
-	private final SeatRepository seatRepository;
 	private final TicketService ticketService;
-	private final QueueEntryProcessService queueEntryProcessService;
 
 	/**
 	 * 주문 생성
@@ -71,7 +63,7 @@ public class OrderService {
 	 */
 	private String generateOrderNumber() {
 		Random random = new Random();
-		long number = 1000000000L + (long) (random.nextDouble() * 9000000000L);
+		long number = 1000000000L + (long)(random.nextDouble() * 9000000000L);
 		return "WF" + number;
 	}
 

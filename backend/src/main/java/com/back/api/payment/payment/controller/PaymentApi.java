@@ -3,7 +3,7 @@ package com.back.api.payment.payment.controller;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.back.api.payment.payment.dto.request.PaymentConfirmRequest;
-import com.back.api.payment.payment.dto.response.PaymentConfirmResponse;
+import com.back.api.payment.payment.dto.response.PaymentReceiptResponse;
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
 
@@ -24,7 +24,7 @@ public interface PaymentApi {
 		"PAYMENT_AMOUNT_MISMATCH",
 		"PAYMENT_FAILED"
 	})
-	ApiResponse<PaymentConfirmResponse> confirmPayment(
+	ApiResponse<PaymentReceiptResponse> confirmPayment(
 		@Valid @RequestBody PaymentConfirmRequest request
 	);
 

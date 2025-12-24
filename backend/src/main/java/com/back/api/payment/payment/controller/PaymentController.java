@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.payment.payment.dto.request.PaymentConfirmRequest;
-import com.back.api.payment.payment.dto.response.PaymentConfirmResponse;
+import com.back.api.payment.payment.dto.response.PaymentReceiptResponse;
 import com.back.api.payment.payment.service.PaymentService;
 import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
@@ -24,12 +24,12 @@ public class PaymentController implements PaymentApi {
 
 	@Override
 	@PostMapping("/confirm")
-	public ApiResponse<PaymentConfirmResponse> confirmPayment(
+	public ApiResponse<PaymentReceiptResponse> confirmPayment(
 		@Valid @RequestBody PaymentConfirmRequest request
 	) {
 		Long userId = httpRequestContext.getUser().getId();
 
-		PaymentConfirmResponse response = paymentService.confirmPayment(
+		PaymentReceiptResponse response = paymentService.confirmPayment(
 			request.orderId(),
 			request.paymentKey(),
 			request.amount(),
