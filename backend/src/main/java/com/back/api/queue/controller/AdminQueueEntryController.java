@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 
 @RestController
-@RequestMapping("/api/v1/admin/queues")
+@RequestMapping("/api/v1/admin/queues/{eventId}")
 @RequiredArgsConstructor
 //@PreAuthorize("hasRole('ADMIN')")
 public class AdminQueueEntryController implements AdminQueueEntryApi {
@@ -34,7 +34,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 
 	@Override
-	@PostMapping("/{eventId}/shuffle")
+	@PostMapping("/shuffle")
 	public ApiResponse<ShuffleQueueResponse> shuffleQueue(
 		@PathVariable Long eventId,
 		@RequestBody @Valid ShuffleQueueRequest request
@@ -49,7 +49,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 	}
 
 	@Override
-	@GetMapping("/{eventId}/statistics")
+	@GetMapping("/statistics")
 	public ApiResponse<QueueStatisticsResponse> getQueueStatistics(
 		@PathVariable Long eventId
 	) {
@@ -59,7 +59,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 
 	//테스트용
 	@Override
-	@PostMapping("/{eventId}/users/{userId}/complete")
+	@PostMapping("/users/{userId}/complete")
 	public ApiResponse<CompletedQueueResponse> completePayment(
 		@PathVariable Long eventId,
 		@PathVariable Long userId
@@ -72,7 +72,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 	}
 
 	@Override
-	@DeleteMapping("/{eventId}/reset")
+	@DeleteMapping("/reset")
 	public ApiResponse<Void> resetQueue(
 		@PathVariable Long eventId
 	) {
