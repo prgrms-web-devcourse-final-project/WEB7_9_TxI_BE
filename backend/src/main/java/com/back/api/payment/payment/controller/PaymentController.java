@@ -1,14 +1,11 @@
 package com.back.api.payment.payment.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.payment.payment.dto.request.PaymentConfirmRequest;
-import com.back.api.payment.payment.dto.response.PaymentConfirmResponse;
 import com.back.api.payment.payment.dto.response.PaymentReceiptResponse;
 import com.back.api.payment.payment.service.PaymentService;
 import com.back.global.http.HttpRequestContext;
@@ -27,12 +24,12 @@ public class PaymentController implements PaymentApi {
 
 	@Override
 	@PostMapping("/confirm")
-	public ApiResponse<PaymentConfirmResponse> confirmPayment(
+	public ApiResponse<PaymentReceiptResponse> confirmPayment(
 		@Valid @RequestBody PaymentConfirmRequest request
 	) {
 		Long userId = httpRequestContext.getUser().getId();
 
-		PaymentConfirmResponse response = paymentService.confirmPayment(
+		PaymentReceiptResponse response = paymentService.confirmPayment(
 			request.orderId(),
 			request.paymentKey(),
 			request.amount(),
@@ -45,18 +42,21 @@ public class PaymentController implements PaymentApi {
 		);
 	}
 
-	@Override
-	@GetMapping("/{orderId}/receipt")
-	public ApiResponse<PaymentReceiptResponse> getPaymentReceipt(
-		@PathVariable Long orderId
-	) {
-		Long userId = httpRequestContext.getUser().getId();
+	/**
+	 * 결제 post요청에 응답값에 영수증 정보가 모두 담기는 것으로 변경,
+	 * 추후 PG연동 대비 보관처리
+	 @Override
+	 @GetMapping("/{orderId}/receipt") public ApiResponse<PaymentReceiptResponse> getPaymentReceipt(
+	 @PathVariable Long orderId
+	 ) {
+	 Long userId = httpRequestContext.getUser().getId();
 
-		PaymentReceiptResponse response = paymentService.getPaymentReceipt(orderId, userId);
+	 PaymentReceiptResponse response = paymentService.getPaymentReceipt(orderId, userId);
 
-		return ApiResponse.ok(
-			"결제 영수증 조회 성공",
-			response
-		);
-	}
+	 return ApiResponse.ok(
+	 "결제 영수증 조회 성공",
+	 response
+	 );
+	 }
+	 */
 }
