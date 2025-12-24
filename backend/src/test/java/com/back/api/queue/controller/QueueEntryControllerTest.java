@@ -20,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.config.TestRedisConfig;
 import com.back.domain.event.entity.Event;
+import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
+import com.back.domain.queue.repository.QueueEntryRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
@@ -42,6 +44,9 @@ public class QueueEntryControllerTest {
 
 	@Autowired
 	private QueueEntryRedisRepository queueEntryRedisRepository;
+
+	@Autowired
+	private QueueEntryRepository queueEntryRepository;
 
 	@Autowired
 	private UserRepository userRepository;
@@ -142,24 +147,73 @@ public class QueueEntryControllerTest {
 	}
 
 	@Nested
-	@DisplayName("대기열 진입 여부 조회 API (/api/v1/queues/{eventId}/exists")
+	@DisplayName("대기열 입장 완료 여부 조회 API (/api/v1/queues/{eventId}/exists")
 	class GetQueueExistsTest {
 		@Test
-		@DisplayName("대기 중인 사용자 조회")
-		void existsInQueue_Waiting_ReturnsTrue() throws Exception {
-			queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 3);
+		@DisplayName("입장 완료한 사용자 조회 - true 반환")
+		void existsInQueue_Entered_ReturnsTrue() throws Exception {
+			// ENTERED 상태로 생성
+			QueueEntry queueEntry = queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 1);
+			queueEntry.enterQueue(); // ENTERED 상태로 변경
+			queueEntryRepository.save(queueEntry);
+			queueEntryRedisRepository.moveToEnteredQueue(testEvent.getId(), testUser.getId());
 
 			mockMvc.perform(get("/api/v1/queues/{eventId}/exists", testEvent.getId()))
 				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("대기열 입장 완료 여부를 확인했습니다.(ENTERED)"))
 				.andExpect(jsonPath("$.data").value(true))
 				.andDo(print());
 		}
 
 		@Test
-		@DisplayName("대기열에 없는 사용자 조회")
+		@DisplayName("대기 중인 사용자 조회 - false 반환")
+		void existsInQueue_Waiting_ReturnsFalse() throws Exception {
+			// WAITING 상태로만 생성
+			queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 3);
+
+			mockMvc.perform(get("/api/v1/queues/{eventId}/exists", testEvent.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("대기열 입장 완료 여부를 확인했습니다.(ENTERED)"))
+				.andExpect(jsonPath("$.data").value(false))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("대기열에 없는 사용자 조회 - false 반환")
 		void existsInQueue_NotInQueue_ReturnsFalse() throws Exception {
 			mockMvc.perform(get("/api/v1/queues/{eventId}/exists", testEvent.getId()))
 				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("대기열 입장 완료 여부를 확인했습니다.(ENTERED)"))
+				.andExpect(jsonPath("$.data").value(false))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("만료된 사용자 조회 - false 반환")
+		void existsInQueue_Expired_ReturnsFalse() throws Exception {
+			QueueEntry queueEntry = queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 1);
+			queueEntry.enterQueue();
+			queueEntry.expire(); // EXPIRED 상태로 변경
+			queueEntryRepository.save(queueEntry);
+
+			mockMvc.perform(get("/api/v1/queues/{eventId}/exists", testEvent.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("대기열 입장 완료 여부를 확인했습니다.(ENTERED)"))
+				.andExpect(jsonPath("$.data").value(false))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("결제 완료한 사용자 조회 - false 반환")
+		void existsInQueue_Completed_ReturnsFalse() throws Exception {
+			QueueEntry queueEntry = queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 1);
+			queueEntry.enterQueue();
+			queueEntry.completePayment(); // COMPLETED 상태로 변경
+			queueEntryRepository.save(queueEntry);
+
+			mockMvc.perform(get("/api/v1/queues/{eventId}/exists", testEvent.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("대기열 입장 완료 여부를 확인했습니다.(ENTERED)"))
 				.andExpect(jsonPath("$.data").value(false))
 				.andDo(print());
 		}

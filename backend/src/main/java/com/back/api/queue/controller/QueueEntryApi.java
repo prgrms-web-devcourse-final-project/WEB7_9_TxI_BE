@@ -32,8 +32,8 @@ public interface QueueEntryApi {
 
 
 	@Operation(
-		summary = "대기열 진입 여부 조회",
-		description = "사용자가 특정 이벤트의 대기열에 진입했는지 조회합니다."
+		summary = "대기열 입장 완료 여부 조회",
+		description = "사용자가 특정 이벤트의 대기열에 입장했는지 조회합니다.(ENTERED)"
 	)
 	ApiResponse<Boolean> existsInQueue(
 		@Parameter(description = "이벤트 ID", example = "1")

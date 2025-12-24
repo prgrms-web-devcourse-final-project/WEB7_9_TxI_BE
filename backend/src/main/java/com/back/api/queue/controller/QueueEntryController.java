@@ -45,8 +45,8 @@ public class QueueEntryController implements QueueEntryApi {
 		@PathVariable Long eventId
 	) {
 		Long userId = httpRequestContext.getUserId();
-		boolean exists = queueEntryReadService.existsInWaitingQueue(eventId, userId);
-		return ApiResponse.ok("대기열 진입 여부를 확인했습니다.", exists);
+		boolean exists = queueEntryReadService.isUserEntered(eventId, userId);
+		return ApiResponse.ok("대기열 입장 완료 여부를 확인했습니다.(ENTERED)", exists);
 	}
 
 	@Override
