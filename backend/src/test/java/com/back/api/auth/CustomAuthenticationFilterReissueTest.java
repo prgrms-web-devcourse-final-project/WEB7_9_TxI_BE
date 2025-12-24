@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -30,7 +29,10 @@ import com.back.global.security.SecurityUser;
 import com.back.support.data.TestUser;
 import com.back.support.helper.UserHelper;
 
+import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest(properties = {
@@ -62,19 +64,34 @@ public class CustomAuthenticationFilterReissueTest {
 		SecurityContextHolder.clearContext();
 	}
 
+	static class CapturingChain implements FilterChain {
+		Authentication captured;
+
+		@Override
+		public void doFilter(ServletRequest request, ServletResponse response)
+			throws IOException, ServletException {
+			captured = SecurityContextHolder.getContext().getAuthentication();
+		}
+	}
+
 	@Test
 	@DisplayName("만료된 accessToken + 유효한 refreshToken 이 있으면 필터에서 토큰을 재발급하고 Authentication을 세팅한다")
 	void reissue_tokens_when_accessToken_expired_and_refresh_token_valid()
-		throws ServletException, IOException, InterruptedException {
+		throws Exception {
+
 		// given
 		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
 		User user = testUser.user();
 
+		// ActiveSession을 DB에 만들고 (sid/version 확정)
 		ActiveSession session = activeSessionRepository.save(ActiveSession.create(user));
 		String sid = session.getSessionId();
 		long tokenVersion = session.getTokenVersion();
 
+		// issueTokens가 Redis 저장 + DB 메타 저장까지 수행하는 구조(너 코드 기준)
 		JwtDto tokens = authTokenService.issueTokens(user, sid, tokenVersion);
+
+		// accessToken 만료 유도 (1초 설정이므로 1.1초 sleep)
 		Thread.sleep(1100);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/some-resource");
@@ -84,35 +101,35 @@ public class CustomAuthenticationFilterReissueTest {
 		);
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
-		MockFilterChain chain = new MockFilterChain();
+		CapturingChain chain = new CapturingChain();
 
 		// when
 		filter.doFilter(request, response, chain);
 
-		// then
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		assertThat(authentication).isNotNull();
-		assertThat(authentication.getPrincipal()).isInstanceOf(SecurityUser.class);
+		// then: 체인에 도달했을 때 Authentication이 이미 세팅되어 있어야 함
+		assertThat(chain.captured).isNotNull();
+		assertThat(chain.captured.getPrincipal()).isInstanceOf(SecurityUser.class);
 
-		SecurityUser securityUser = (SecurityUser)authentication.getPrincipal();
+		SecurityUser securityUser = (SecurityUser)chain.captured.getPrincipal();
 		assertThat(securityUser.getId()).isEqualTo(user.getId());
 
-		// 응답에 새 토큰이 쿠키로 세팅되었는지 확인
+		// then: 응답 쿠키에 새 토큰이 내려왔는지 확인
 		Cookie[] cookies = response.getCookies();
 		assertThat(cookies).isNotEmpty();
+
 		String newAccessToken = null;
 		String newRefreshToken = null;
 		for (Cookie cookie : cookies) {
-			if ("accessToken".equals(cookie.getName())) {
+			if ("accessToken".equals(cookie.getName()))
 				newAccessToken = cookie.getValue();
-			}
-			if ("refreshToken".equals(cookie.getName())) {
+			if ("refreshToken".equals(cookie.getName()))
 				newRefreshToken = cookie.getValue();
-			}
 		}
 
 		assertThat(newAccessToken).isNotBlank();
 		assertThat(newRefreshToken).isNotBlank();
+
+		// access는 재발급되어야 하므로 기존과 달라야 함
 		assertThat(newAccessToken).isNotEqualTo(tokens.accessToken());
 	}
 }

@@ -23,7 +23,9 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.user.entity.UserRole;
 import com.back.support.factory.EventFactory;
+import com.back.support.helper.TestAuthHelper;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -41,10 +43,17 @@ class EventControllerTest {
 	@MockitoBean
 	private S3PresignedService s3PresignedService;
 
+	@Autowired
+	private TestAuthHelper authHelper;
+
+	String token;
+
 	@BeforeEach
 	void setUp() {
 		when(s3PresignedService.issueDownloadUrl(anyString()))
 			.thenReturn("https://mocked-presigned-url");
+
+		token = authHelper.issueAccessToken(UserRole.NORMAL);
 	}
 
 	@Nested
@@ -58,7 +67,8 @@ class EventControllerTest {
 			Event event = eventRepository.save(EventFactory.fakeEvent("단건 조회 이벤트"));
 
 			// when & then
-			mockMvc.perform(get("/api/v1/events/{eventId}", event.getId()))
+			mockMvc.perform(get("/api/v1/events/{eventId}", event.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.id").value(event.getId()))
@@ -69,7 +79,8 @@ class EventControllerTest {
 		@DisplayName("존재하지 않는 이벤트 조회 시 404 에러")
 		void getEvent_Fail_NotFound() throws Exception {
 			// when & then
-			mockMvc.perform(get("/api/v1/events/{eventId}", 999L))
+			mockMvc.perform(get("/api/v1/events/{eventId}", 999L)
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isNotFound());
 		}
@@ -88,6 +99,7 @@ class EventControllerTest {
 
 			// when & then
 			mockMvc.perform(get("/api/v1/events")
+					.header("Authorization", "Bearer " + token)
 					.param("page", "0")
 					.param("size", "10"))
 				.andDo(print())
@@ -104,6 +116,7 @@ class EventControllerTest {
 
 			// when & then
 			mockMvc.perform(get("/api/v1/events")
+					.header("Authorization", "Bearer " + token)
 					.param("category", "CONCERT")
 					.param("page", "0")
 					.param("size", "10"))
@@ -122,6 +135,7 @@ class EventControllerTest {
 
 			// when & then
 			mockMvc.perform(get("/api/v1/events")
+					.header("Authorization", "Bearer " + token)
 					.param("status", "PRE_OPEN")
 					.param("page", "0")
 					.param("size", "10"))

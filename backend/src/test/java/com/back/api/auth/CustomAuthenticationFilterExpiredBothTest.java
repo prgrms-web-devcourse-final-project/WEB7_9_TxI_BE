@@ -1,5 +1,7 @@
 package com.back.api.auth;
 
+import static org.assertj.core.api.AssertionsForClassTypes.*;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,20 +16,22 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.auth.dto.JwtDto;
+import com.back.api.auth.service.AuthTokenService;
+import com.back.domain.auth.entity.ActiveSession;
+import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.AuthErrorCode;
-import com.back.global.error.exception.ErrorException;
 import com.back.global.security.CustomAuthenticationFilter;
-import com.back.global.security.JwtProvider;
 import com.back.support.data.TestUser;
 import com.back.support.helper.UserHelper;
 
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest(properties = {
-	"custom.jwt.access-token-duration=0",
-	"custom.jwt.refresh-token-duration=0"
+	"custom.jwt.access-token-duration=1",
+	"custom.jwt.refresh-token-duration=1"
 })
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
@@ -41,7 +45,10 @@ public class CustomAuthenticationFilterExpiredBothTest {
 	private UserHelper userHelper;
 
 	@Autowired
-	private JwtProvider jwtProvider;
+	private ActiveSessionRepository activeSessionRepository;
+
+	@Autowired
+	private AuthTokenService authTokenService;
 
 	@Value("${custom.jwt.secret}")
 	private String secret;
@@ -53,29 +60,27 @@ public class CustomAuthenticationFilterExpiredBothTest {
 
 	@Test
 	@DisplayName("accessToken, refreshToken 모두 만료되면 TOKEN_EXPIRED 에러가 발생한다")
-	void token_expired_when_both_access_and_refresh_invalid() {
+	void token_expired_when_both_access_and_refresh_invalid() throws Exception {
 		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
 		User user = testUser.user();
 
-		String sid = "test-sid";
-		long tokenVersion = 1L;
+		ActiveSession session = activeSessionRepository.save(ActiveSession.create(user));
+		JwtDto tokens = authTokenService.issueTokens(user, session.getSessionId(), session.getTokenVersion());
 
-		String accessToken = jwtProvider.generateAccessToken(user, sid, tokenVersion);
-		String refreshToken = jwtProvider.generateRefreshToken(user, sid, tokenVersion);
+		Thread.sleep(1100);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/some-resource");
 		request.setCookies(
-			new Cookie("accessToken", accessToken),
-			new Cookie("refreshToken", refreshToken)
+			new Cookie("accessToken", tokens.accessToken()),
+			new Cookie("refreshToken", tokens.refreshToken())
 		);
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
-		MockFilterChain chain = new MockFilterChain();
+		// when
+		filter.doFilter(request, response, new MockFilterChain());
 
-		org.assertj.core.api.Assertions.assertThatThrownBy(() ->
-				filter.doFilter(request, response, chain)
-			).isInstanceOf(ErrorException.class)
-			.extracting("errorCode")
-			.isEqualTo(AuthErrorCode.TOKEN_EXPIRED);
+		// then
+		assertThat(response.getStatus()).isEqualTo(AuthErrorCode.TOKEN_EXPIRED.getHttpStatus().value());
+		assertThat(response.getContentAsString()).contains(AuthErrorCode.TOKEN_EXPIRED.getMessage());
 	}
 }

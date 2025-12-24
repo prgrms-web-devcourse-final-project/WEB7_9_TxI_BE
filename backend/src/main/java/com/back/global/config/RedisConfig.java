@@ -11,6 +11,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import com.back.api.auth.dto.cache.RefreshTokenCache;
+
 @Configuration
 public class RedisConfig {
 
@@ -44,4 +46,23 @@ public class RedisConfig {
 		return redisTemplate;
 	}
 
+	@Bean(name = "refreshTokenRedisTemplate")
+	public RedisTemplate<String, RefreshTokenCache> refreshTokenRedisTemplate(
+		RedisConnectionFactory connectionFactory
+	) {
+		RedisTemplate<String, RefreshTokenCache> template = new RedisTemplate<>();
+		template.setConnectionFactory(connectionFactory);
+
+		StringRedisSerializer keySerializer = new StringRedisSerializer();
+		GenericJackson2JsonRedisSerializer valueSerializer = new GenericJackson2JsonRedisSerializer();
+
+		template.setKeySerializer(keySerializer);
+		template.setValueSerializer(valueSerializer);
+
+		template.setHashKeySerializer(keySerializer);
+		template.setHashValueSerializer(valueSerializer);
+
+		template.afterPropertiesSet();
+		return template;
+	}
 }

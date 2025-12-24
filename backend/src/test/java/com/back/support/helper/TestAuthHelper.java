@@ -1,19 +1,47 @@
 package com.back.support.helper;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.back.domain.auth.entity.ActiveSession;
+import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.user.entity.User;
+import com.back.domain.user.entity.UserActiveStatus;
+import com.back.domain.user.entity.UserRole;
+import com.back.domain.user.repository.UserRepository;
+import com.back.global.security.JwtProvider;
 import com.back.global.security.SecurityUser;
 
 @Component
 public class TestAuthHelper {
+
+	private final JwtProvider jwtProvider;
+	private final ActiveSessionRepository activeSessionRepository;
+	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
+
+	public TestAuthHelper(
+		JwtProvider jwtProvider,
+		ActiveSessionRepository activeSessionRepository,
+		UserRepository userRepository,
+		PasswordEncoder passwordEncoder
+	) {
+		this.jwtProvider = jwtProvider;
+		this.activeSessionRepository = activeSessionRepository;
+		this.userRepository = userRepository;
+		this.passwordEncoder = passwordEncoder;
+	}
+
 	public void authenticate(User user) {
 
 		List<GrantedAuthority> authorities =
@@ -34,5 +62,45 @@ public class TestAuthHelper {
 		);
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
+	}
+
+	/** role 지정해서 유저 생성 + accessToken 발급 */
+	public String issueAccessToken(UserRole role) {
+		User user = createUser(role);
+		ActiveSession session = activeSessionRepository.save(ActiveSession.create(user));
+		return jwtProvider.generateAccessToken(user, session.getSessionId(), session.getTokenVersion());
+	}
+
+	@Transactional
+	public String issueAccessToken(User user) {
+		User ref = userRepository.getReferenceById(user.getId());
+
+		ActiveSession session = activeSessionRepository.findByUserId(ref.getId())
+			.orElseGet(() -> ActiveSession.create(ref));
+
+		session.rotate();
+		activeSessionRepository.saveAndFlush(session);
+
+		return jwtProvider.generateAccessToken(ref, session.getSessionId(), session.getTokenVersion());
+	}
+
+	public User createUser(UserRole role) {
+		String suffix = UUID.randomUUID().toString().substring(0, 8);
+
+		User user = User.builder()
+			.email(role.name().toLowerCase() + "+" + suffix + "@test.com")
+			.password(passwordEncoder.encode("pw"))
+			.nickname(role.name().toLowerCase() + "_" + suffix) // 닉네임 유니크 필요하면
+			.fullName("test-" + role.name())
+			.role(role)
+			.activeStatus(UserActiveStatus.ACTIVE)
+			.birthDate(LocalDate.of(2000, 1, 1))
+			.build();
+
+		return userRepository.save(user);
+	}
+
+	public void clearAuthentication() {
+		SecurityContextHolder.clearContext();
 	}
 }

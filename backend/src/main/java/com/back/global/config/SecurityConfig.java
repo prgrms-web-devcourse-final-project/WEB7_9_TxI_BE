@@ -1,7 +1,5 @@
 package com.back.global.config;
 
-import java.io.IOException;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,15 +14,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.back.global.error.code.AuthErrorCode;
-import com.back.global.error.code.ErrorCode;
 import com.back.global.logging.RequestIdFilter;
 import com.back.global.properties.CorsProperties;
-import com.back.global.response.ApiResponse;
 import com.back.global.security.CustomAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -59,8 +53,8 @@ public class SecurityConfig {
 				.requestMatchers("/ws/**").permitAll()  // WebSocket 핸드셰이크 허용
 				// .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")  // TODO: 프론트 개발 완료 후 권한 활성화
 				.requestMatchers("/actuator/**").permitAll()    // 모니터링/Actuator 관련
-				// .requestMatchers("/api/v1/**").authenticated() // TODO: 개발 후 인증 활성화
-				.anyRequest().permitAll() // TODO: 보안 인증 설정 시 제거, 현재는 모든 API 요청을 인증없이 허용
+				.requestMatchers("/api/v1/**").authenticated()
+				.anyRequest().authenticated()
 			)
 			.csrf(csrf -> csrf
 				.ignoringRequestMatchers("/h2-console/**")  // H2 콘솔은 CSRF 제외
@@ -70,17 +64,6 @@ public class SecurityConfig {
 			)
 			.headers(headers -> headers
 				.frameOptions(frameOptions -> frameOptions.sameOrigin())  // H2 콘솔 iframe 허용
-			)
-
-			//401 403 커스텀 에러
-			.exceptionHandling(exceptionHandling -> exceptionHandling
-				.authenticationEntryPoint((request, response, authException) -> {
-					writeError(response, AuthErrorCode.UNAUTHORIZED);
-				})
-
-				.accessDeniedHandler((request, response, accessDeniedException) -> {
-					writeError(response, AuthErrorCode.FORBIDDEN);
-				})
 			);
 
 		// MDC RequestId로깅용 필터 클래스 순서보장
@@ -111,13 +94,5 @@ public class SecurityConfig {
 		@Value("${security.password.bcrypt-strength}") int strength
 	) {
 		return new BCryptPasswordEncoder(strength);
-	}
-
-	private void writeError(HttpServletResponse response, ErrorCode code) throws IOException {
-		response.setStatus(code.getHttpStatus().value());
-		response.setContentType("application/json; charset=UTF-8");
-
-		ApiResponse<?> body = ApiResponse.fail(code);
-		response.getWriter().write(objectMapper.writeValueAsString(body));
 	}
 }
