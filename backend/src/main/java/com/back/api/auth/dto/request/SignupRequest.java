@@ -13,10 +13,18 @@ public record SignupRequest(
 	@NotBlank(message = "이메일은 필수입니다.")
 	@Email(message = "이메일 형식이 올바르지 않습니다.")
 	@Size(max = 100)
+	@Schema(
+		description = "이메일",
+		example = "test@test.com"
+	)
 	String email,
 
 	@NotBlank(message = "비밀번호는 필수입니다.")
 	@Size(min = 8, max = 30, message = "비밀번호는 8~30 글자여야 합니다.")
+	@Schema(
+		description = "비밀번호",
+		example = "abc12345"
+	)
 	String password,
 
 	@NotBlank(message = "이름은 필수입니다.")
