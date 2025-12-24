@@ -16,7 +16,7 @@ public record MoveToBackResponse(
 	@Schema(description = "전체 대기 인원", example = "10")
 	int totalWaitingUsers
 ) {
-	public static MoveToBackResponse from (
+	public static MoveToBackResponse from(
 		Long userId,
 		int previousRank,
 		int newRank,

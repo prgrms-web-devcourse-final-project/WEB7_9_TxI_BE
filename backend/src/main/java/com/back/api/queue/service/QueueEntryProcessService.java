@@ -105,7 +105,10 @@ public class QueueEntryProcessService {
 			totalWaitingCount =  queueEntryRedisRepository.getTotalWaitingCount(eventId);
 		} catch (Exception e) {
 			log.warn("Redis 조회 실패, DB로부터 대기 중 인원 수 조회 시도 - eventId: {}", eventId,  e);
-			totalWaitingCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(eventId, QueueEntryStatus.WAITING);
+			totalWaitingCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+				eventId,
+				QueueEntryStatus.WAITING
+			);
 		}
 
 		if (totalWaitingCount == 0) {
@@ -119,7 +122,10 @@ public class QueueEntryProcessService {
 			currentEnteredCount = queueEntryRedisRepository.getTotalEnteredCount(eventId);
 		} catch (Exception e) {
 			log.warn("Redis 조회 실패, DB로부터 입장 완료된 인원 수 조회 시도 - eventId: {}", eventId,  e);
-			currentEnteredCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(eventId, QueueEntryStatus.ENTERED);
+			currentEnteredCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+				eventId,
+				QueueEntryStatus.ENTERED
+			);
 		}
 
 
@@ -459,7 +465,7 @@ public class QueueEntryProcessService {
 			QueueEntryStatus.WAITING
 		);
 
-		return MoveToBackResponse.from(userId, previousRank , newRank, (int)totalWaiting);
+		return MoveToBackResponse.from(userId, previousRank, newRank, (int)totalWaiting);
 
 	}
 
