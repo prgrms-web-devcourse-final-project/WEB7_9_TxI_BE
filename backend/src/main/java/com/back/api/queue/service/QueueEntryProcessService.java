@@ -436,15 +436,8 @@ public class QueueEntryProcessService {
 
 		int previousRank = queueEntry.getQueueRank();
 
-		Long maxRank;
-
-		try {
-			maxRank = queueEntryRedisRepository.getTotalWaitingCount(eventId);
-		} catch (Exception e) {
-			log.warn("Redis 조회 실패, DB로부터 조회 시도 - eventId: {}", eventId,  e);
-			maxRank = queueEntryRepository.findMaxQueueRankInWaiting(eventId)
-				.orElse(0L);
-		}
+		Long maxRank = queueEntryRepository.findMaxRankInQueue(eventId)
+			.orElse(0L);
 
 		int newRank = maxRank.intValue() + 1;
 
@@ -460,7 +453,13 @@ public class QueueEntryProcessService {
 		}
 
 		publishWaitingUpdateEvents(eventId);
-		return MoveToBackResponse.from(eventId, previousRank , newRank, maxRank.intValue());
+
+		long totalWaiting = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+			eventId,
+			QueueEntryStatus.WAITING
+		);
+
+		return MoveToBackResponse.from(userId, previousRank , newRank, (int)totalWaiting);
 
 	}
 
