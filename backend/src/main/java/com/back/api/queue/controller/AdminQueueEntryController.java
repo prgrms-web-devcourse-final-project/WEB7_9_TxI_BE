@@ -1,5 +1,6 @@
 package com.back.api.queue.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +22,6 @@ import com.back.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-
 @RestController
 @RequestMapping("/api/v1/admin/queues")
 @RequiredArgsConstructor
@@ -35,6 +35,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 
 	@Override
 	@PostMapping("/{eventId}/shuffle")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<ShuffleQueueResponse> shuffleQueue(
 		@PathVariable Long eventId,
 		@RequestBody @Valid ShuffleQueueRequest request
@@ -50,6 +51,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 
 	@Override
 	@GetMapping("/{eventId}/statistics")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<QueueStatisticsResponse> getQueueStatistics(
 		@PathVariable Long eventId
 	) {
@@ -60,6 +62,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 	//테스트용
 	@Override
 	@PostMapping("/{eventId}/users/{userId}/complete")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<CompletedQueueResponse> completePayment(
 		@PathVariable Long eventId,
 		@PathVariable Long userId
@@ -73,6 +76,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 
 	@Override
 	@DeleteMapping("/{eventId}/reset")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<Void> resetQueue(
 		@PathVariable Long eventId
 	) {

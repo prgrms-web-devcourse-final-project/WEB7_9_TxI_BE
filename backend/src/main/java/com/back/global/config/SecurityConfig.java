@@ -1,5 +1,7 @@
 package com.back.global.config;
 
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,18 +9,26 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.back.global.error.code.AuthErrorCode;
+import com.back.global.error.code.ErrorCode;
 import com.back.global.logging.RequestIdFilter;
 import com.back.global.properties.CorsProperties;
+import com.back.global.response.ApiResponse;
 import com.back.global.security.CustomAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -38,20 +48,46 @@ public class SecurityConfig {
 
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http, RequestIdFilter requestIdFilter) throws Exception {
-		http
 
+		AuthenticationEntryPoint entryPoint = (req, res, ex) -> {
+			writeError(res, AuthErrorCode.UNAUTHORIZED);
+		};
+
+		AccessDeniedHandler deniedHandler = (req, res, ex) -> {
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			boolean isAdmin = auth != null && auth.getAuthorities().stream()
+				.anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+			String uri = req.getRequestURI();
+
+			// Normal 사용자가 Admin API 요청 시
+			if (uri.startsWith("/api/v1/admin/") && !isAdmin) {
+				writeError(res, AuthErrorCode.ADMIN_ONLY);
+				return;
+			}
+
+			writeError(res, AuthErrorCode.FORBIDDEN);
+		};
+
+		http
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			.exceptionHandling(exception -> exception
+				.authenticationEntryPoint(entryPoint)
+				.accessDeniedHandler(deniedHandler)
+			)
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.requestMatchers("/favicon.ico").permitAll()
 				.requestMatchers("/h2-console/**").permitAll()  // H2 콘솔 접근 허용
+				.requestMatchers("/", "/index.html").permitAll()
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()  // Swagger 접근 허용
 				.requestMatchers("/.well-known/**").permitAll()
 				.requestMatchers("/api/v1/auth/signup").permitAll()
 				.requestMatchers("/api/v1/auth/login").permitAll()
 				.requestMatchers("/api/v1/admin/auth/**").permitAll()
+				.requestMatchers("/api/v1/events/**").permitAll()
 				.requestMatchers("/ws/**").permitAll()  // WebSocket 핸드셰이크 허용
-				// .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")  // TODO: 프론트 개발 완료 후 권한 활성화
+				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 				.requestMatchers("/actuator/**").permitAll()    // 모니터링/Actuator 관련
 				.requestMatchers("/api/v1/**").authenticated()
 				.anyRequest().authenticated()
@@ -94,5 +130,13 @@ public class SecurityConfig {
 		@Value("${security.password.bcrypt-strength}") int strength
 	) {
 		return new BCryptPasswordEncoder(strength);
+	}
+
+	private void writeError(HttpServletResponse response, ErrorCode
+		code) throws IOException {
+		response.setStatus(code.getHttpStatus().value());
+		response.setContentType("application/json; charset=UTF-8");
+		ApiResponse<?> body = ApiResponse.fail(code);
+		response.getWriter().write(objectMapper.writeValueAsString(body));
 	}
 }

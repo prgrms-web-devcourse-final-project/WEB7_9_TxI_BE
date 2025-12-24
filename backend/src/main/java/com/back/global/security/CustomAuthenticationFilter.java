@@ -51,10 +51,10 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private final SessionGuard sessionGuard;
 	private final ObjectMapper objectMapper;
 
-	@Value("${jwt.access-token-duration:3600}")
+	@Value("${custom.jwt.access-token-duration:3600}")
 	private long accessTokenDurationSeconds;
 
-	@Value("${jwt.refresh-token-duration:1209600}")
+	@Value("${custom.jwt.refresh-token-duration:1209600}")
 	private long refreshTokenDurationSeconds;
 
 	@Override

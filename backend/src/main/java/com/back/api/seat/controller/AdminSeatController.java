@@ -2,6 +2,7 @@ package com.back.api.seat.controller;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +32,7 @@ public class AdminSeatController implements AdminSeatApi {
 
 	@Override
 	@PostMapping("/events/{eventId}/seats/bulk")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<List<SeatResponse>> bulkCreateSeats(
 		@PathVariable Long eventId,
 		@Valid @RequestBody BulkCreateSeatsRequest request
@@ -48,6 +50,7 @@ public class AdminSeatController implements AdminSeatApi {
 
 	@Override
 	@PostMapping("/events/{eventId}/seats/auto")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<List<SeatResponse>> autoCreateSeats(
 		@PathVariable Long eventId,
 		@Valid @RequestBody AutoCreateSeatsRequest request
@@ -66,6 +69,7 @@ public class AdminSeatController implements AdminSeatApi {
 
 	@Override
 	@PostMapping("/events/{eventId}/seats/single")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<SeatResponse> createSingleSeat(
 		@PathVariable Long eventId,
 		@Valid @RequestBody SeatCreateRequest request
@@ -77,6 +81,7 @@ public class AdminSeatController implements AdminSeatApi {
 
 	@Override
 	@PutMapping("/events/{eventId}/seats/{seatId}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<SeatResponse> updateSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId,
@@ -89,6 +94,7 @@ public class AdminSeatController implements AdminSeatApi {
 
 	@Override
 	@DeleteMapping("/events/{eventId}/seats/{seatId}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<Void> deleteSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId
@@ -100,6 +106,7 @@ public class AdminSeatController implements AdminSeatApi {
 
 	@Override
 	@DeleteMapping("/events/{eventId}/seats")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<Void> deleteAllEventSeats(
 		@PathVariable Long eventId
 	) {
