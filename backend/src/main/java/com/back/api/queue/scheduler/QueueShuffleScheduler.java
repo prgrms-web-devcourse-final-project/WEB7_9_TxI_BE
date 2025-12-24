@@ -29,14 +29,14 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"perf"})
+@Profile({"dev", "perf"})
 public class QueueShuffleScheduler {
 	private static final String JOB_NAME = "QueueShuffle";
 
 	private final QueueEntryRepository queueEntryRepository;
 	private final QueueShuffleService queueShuffleService;
 	private final EventService eventService;
-	private final PreRegisterRepository preRegisterRepository; //TODO service로 변경 필요
+	private final PreRegisterRepository preRegisterRepository;
 	private final QueueSchedulerProperties properties;
 
 	@Scheduled(cron = "${queue.scheduler.shuffle.cron}", zone = "Asia/Seoul")
@@ -149,7 +149,6 @@ public class QueueShuffleScheduler {
 			return false;
 		}
 
-		//TODO PreRegisterService로 변경 필요
 		List<Long> preRegisteredUserIds = preRegisterRepository.findRegisteredUserIdsByEventId(eventId);
 
 		if (preRegisteredUserIds.isEmpty()) {

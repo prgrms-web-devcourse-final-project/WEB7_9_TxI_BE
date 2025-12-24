@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 /*
  * 대기열 조회 로직
  * Redis 우선 조회 -> DB 조회
- * 트랜잭션 읽기 / 쓰기 분리 고려
  * TODO 시간 계산 로직 수정
  */
 @Service
@@ -111,6 +110,7 @@ public class QueueEntryReadService {
 		return queueEntryRepository.existsByEvent_IdAndUser_Id(eventId, userId);
 	}
 
+	//TODO 여기 폴백 수정
 	//대기열 ENTERED 상태인지 확인
 	//Redis & DB
 	public boolean isUserEntered(Long eventId, Long userId) {
