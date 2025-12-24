@@ -23,7 +23,6 @@ import com.back.domain.auth.repository.RefreshTokenRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.AuthErrorCode;
-import com.back.global.error.exception.ErrorException;
 import com.back.global.security.CustomAuthenticationFilter;
 import com.back.support.data.TestUser;
 import com.back.support.helper.UserHelper;
@@ -87,12 +86,12 @@ public class MultiDeviceBlockRefreshTest {
 		);
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
-		MockFilterChain chain = new MockFilterChain();
+
+		// when
+		filter.doFilter(request, response, new MockFilterChain());
 
 		// then
-		assertThatThrownBy(() -> filter.doFilter(request, response, chain))
-			.isInstanceOf(ErrorException.class)
-			.extracting("errorCode")
-			.isEqualTo(AuthErrorCode.ACCESS_OTHER_DEVICE);
+		assertThat(response.getStatus()).isEqualTo(AuthErrorCode.ACCESS_OTHER_DEVICE.getHttpStatus().value());
+		assertThat(response.getContentAsString()).contains(AuthErrorCode.ACCESS_OTHER_DEVICE.getMessage());
 	}
 }

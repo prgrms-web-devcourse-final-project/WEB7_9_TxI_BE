@@ -15,13 +15,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.back.api.auth.dto.JwtDto;
 import com.back.api.auth.service.AuthTokenService;
+import com.back.api.auth.service.SessionGuard;
 import com.back.domain.auth.entity.ActiveSession;
-import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.AuthErrorCode;
+import com.back.global.error.code.ErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.global.http.CookieManager;
 import com.back.global.logging.MdcContext;
+import com.back.global.response.ApiResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,9 +32,11 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private static final String BEARER_PREFIX = "Bearer ";
 
@@ -43,12 +48,13 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private final JwtProvider jwtProvider;
 	private final AuthTokenService tokenService;
 	private final CookieManager cookieManager;
-	private final ActiveSessionRepository activeSessionRepository;
+	private final SessionGuard sessionGuard;
+	private final ObjectMapper objectMapper;
 
-	@Value("${jwt.access-token-duration:3600}")
+	@Value("${custom.jwt.access-token-duration:3600}")
 	private long accessTokenDurationSeconds;
 
-	@Value("${jwt.refresh-token-duration:1209600}")
+	@Value("${custom.jwt.refresh-token-duration:1209600}")
 	private long refreshTokenDurationSeconds;
 
 	@Override
@@ -56,8 +62,18 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		HttpServletRequest request,
 		HttpServletResponse response,
 		FilterChain filterChain
-	) throws ServletException, IOException {
-		authenticate(request, response, filterChain);
+	) throws IOException {
+		try {
+			authenticate(request, response, filterChain);
+		} catch (ErrorException e) {
+			handleErrorException(request, response, e);
+		} catch (Exception e) {
+			log.error("Unexpected auth filter error: ", e);
+			writeError(response, AuthErrorCode.UNAUTHORIZED);
+		} finally {
+			SecurityContextHolder.clearContext();
+			MdcContext.removeUserId();
+		}
 	}
 
 	private void authenticate(
@@ -67,6 +83,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	) throws ServletException, IOException {
 		String requestUrl = request.getRequestURI();
 
+		// bypass
 		if ("OPTIONS".equalsIgnoreCase(request.getMethod())
 			|| !requestUrl.startsWith("/api/")
 			|| AUTH_WHITELIST.contains(requestUrl)
@@ -76,12 +93,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		}
 
 		String accessToken = resolveAccessToken(request);
-
-		// TODO: 초기에 인증없이 모든 API 사용 가능하도록 설정, 기능 개발 완료 후 제거
-		if (accessToken == null || accessToken.isBlank()) {
-			filterChain.doFilter(request, response);
-			return;
-		}
 
 		String validAccessToken = ensureValidAccessToken(accessToken, request, response);
 
@@ -96,9 +107,9 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		String sid = claims.sessionId();
 		long tokenVersion = claims.tokenVersion();
 
-		ActiveSession active = activeSessionRepository.findByUserId(userId)
-			.orElseThrow(() -> new ErrorException(AuthErrorCode.UNAUTHORIZED));
+		ActiveSession active = sessionGuard.requireActiveSession(userId);
 
+		// 싱글 디바이스 검증
 		if (!active.getSessionId().equals(sid) || active.getTokenVersion() != tokenVersion) {
 			cookieManager.deleteAuthCookies(request, response);
 			throw new ErrorException(AuthErrorCode.ACCESS_OTHER_DEVICE);
@@ -130,12 +141,32 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		}
 	}
 
+	private void handleErrorException(
+		HttpServletRequest request,
+		HttpServletResponse response,
+		ErrorException error
+	) throws IOException {
+		if (response.isCommitted()) {
+			return;
+		}
+
+		if (error.getErrorCode() == AuthErrorCode.ACCESS_OTHER_DEVICE
+			|| error.getErrorCode() == AuthErrorCode.REFRESH_TOKEN_NOT_FOUND
+			|| error.getErrorCode() == AuthErrorCode.TOKEN_EXPIRED
+		) {
+			cookieManager.deleteAuthCookies(request, response);
+		}
+
+		writeError(response, error.getErrorCode());
+	}
+
 	private String resolveAccessToken(HttpServletRequest request) {
 		String headerAuthorization = request.getHeader("Authorization");
 		if (!StringUtils.isBlank(headerAuthorization)
 			&& headerAuthorization.startsWith(BEARER_PREFIX)
 		) {
-			return headerAuthorization.substring(BEARER_PREFIX.length());
+			String value = headerAuthorization.substring(BEARER_PREFIX.length());
+			return StringUtils.isBlank(value) ? null : value;
 		}
 		return resolveCookie(request, "accessToken");
 	}
@@ -143,16 +174,17 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private String resolveCookie(HttpServletRequest request, String name) {
 		Cookie[] cookies = request.getCookies();
 		if (cookies == null) {
-			return "";
+			return null;
 		}
 
 		for (Cookie cookie : cookies) {
 			if (name.equals(cookie.getName())) {
-				return cookie.getValue();
+				String value = cookie.getValue();
+				return StringUtils.isBlank(value) ? null : value;
 			}
 		}
 
-		return "";
+		return null;
 	}
 
 	private String ensureValidAccessToken(
@@ -160,6 +192,10 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		HttpServletRequest request,
 		HttpServletResponse response
 	) {
+		if (StringUtils.isBlank(accessToken)) {
+			throw new ErrorException(AuthErrorCode.UNAUTHORIZED);
+		}
+
 		if (!jwtProvider.isExpired(accessToken)) {
 			return accessToken;
 		}
@@ -186,5 +222,13 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			}
 			throw e;
 		}
+	}
+
+	private void writeError(HttpServletResponse response, ErrorCode code) throws IOException {
+		response.setStatus(code.getHttpStatus().value());
+		response.setContentType("application/json; charset=UTF-8");
+
+		ApiResponse<?> body = ApiResponse.fail(code);
+		response.getWriter().write(objectMapper.writeValueAsString(body));
 	}
 }

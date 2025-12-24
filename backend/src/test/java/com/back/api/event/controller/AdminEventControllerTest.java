@@ -30,8 +30,10 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.EventErrorCode;
 import com.back.support.factory.EventFactory;
+import com.back.support.helper.TestAuthHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest
@@ -53,12 +55,17 @@ class AdminEventControllerTest {
 	@MockitoBean
 	private S3MoveService s3MoveService;
 
+	@Autowired
+	private TestAuthHelper authHelper;
+
 	private LocalDateTime now;
 	private LocalDateTime preOpenAt;
 	private LocalDateTime preCloseAt;
 	private LocalDateTime ticketOpenAt;
 	private LocalDateTime ticketCloseAt;
 	private LocalDateTime eventDate;
+
+	String token;
 
 	@BeforeEach
 	void setUp() {
@@ -72,6 +79,7 @@ class AdminEventControllerTest {
 		when(s3MoveService.moveImage(anyLong(), anyString()))
 			.thenReturn("events/1/main.jpg");
 
+		token = authHelper.issueAccessToken(UserRole.ADMIN);
 	}
 
 	@Nested
@@ -100,6 +108,7 @@ class AdminEventControllerTest {
 
 			// when & then
 			mockMvc.perform(post("/api/v1/admin/events")
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
@@ -130,6 +139,7 @@ class AdminEventControllerTest {
 
 			// when & then
 			mockMvc.perform(post("/api/v1/admin/events")
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
@@ -152,6 +162,7 @@ class AdminEventControllerTest {
 
 			// when & then
 			mockMvc.perform(post("/api/v1/admin/events")
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
@@ -190,6 +201,7 @@ class AdminEventControllerTest {
 
 			// when & then
 			mockMvc.perform(put("/api/v1/admin/events/{eventId}", originalEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
@@ -216,6 +228,7 @@ class AdminEventControllerTest {
 
 			// when & then
 			mockMvc.perform(put("/api/v1/admin/events/{eventId}", 999L)
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
@@ -237,7 +250,8 @@ class AdminEventControllerTest {
 			Long eventId = savedEvent.getId();
 
 			// when & then
-			mockMvc.perform(delete("/api/v1/admin/events/{eventId}", eventId))
+			mockMvc.perform(delete("/api/v1/admin/events/{eventId}", eventId)
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isNoContent());
 
@@ -249,7 +263,8 @@ class AdminEventControllerTest {
 		@DisplayName("존재하지 않는 이벤트 삭제 시 404 에러")
 		void deleteEvent_Fail_NotFound() throws Exception {
 			// when & then
-			mockMvc.perform(delete("/api/v1/admin/events/{eventId}", 999L))
+			mockMvc.perform(delete("/api/v1/admin/events/{eventId}", 999L)
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.message").value(EventErrorCode.NOT_FOUND_EVENT.getMessage()));
@@ -269,7 +284,8 @@ class AdminEventControllerTest {
 			eventRepository.saveAll(List.of(event1, event2));
 
 			// when & then
-			mockMvc.perform(get("/api/v1/admin/events/dashboard"))
+			mockMvc.perform(get("/api/v1/admin/events/dashboard")
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data", hasSize(2)))
@@ -284,7 +300,8 @@ class AdminEventControllerTest {
 		@DisplayName("이벤트가 없으면 빈 배열을 반환한다")
 		void getAllEventsDashboard_EmptyList() throws Exception {
 			// when & then
-			mockMvc.perform(get("/api/v1/admin/events/dashboard"))
+			mockMvc.perform(get("/api/v1/admin/events/dashboard")
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data", hasSize(0)));

@@ -2,6 +2,7 @@ package com.back.api.event.controller;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +31,7 @@ public class AdminEventController implements AdminEventApi {
 
 	@Override
 	@PostMapping
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<EventResponse> createEvent(
 		@Valid @RequestBody EventCreateRequest request) {
 		EventResponse response = adminEventService.createEvent(request);
@@ -38,6 +40,7 @@ public class AdminEventController implements AdminEventApi {
 
 	@Override
 	@PutMapping("/{eventId}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<EventResponse> updateEvent(
 		@PathVariable Long eventId,
 		@Valid @RequestBody EventUpdateRequest request) {
@@ -47,6 +50,7 @@ public class AdminEventController implements AdminEventApi {
 
 	@Override
 	@DeleteMapping("/{eventId}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<Void> deleteEvent(
 		@PathVariable Long eventId) {
 		adminEventService.deleteEvent(eventId);
@@ -55,6 +59,7 @@ public class AdminEventController implements AdminEventApi {
 
 	@Override
 	@GetMapping("/dashboard")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<List<AdminEventDashboardResponse>> getAllEventsDashboard() {
 		List<AdminEventDashboardResponse> responses = adminEventService.getAllEventsDashboard();
 		return ApiResponse.ok("이벤트 현황 조회 성공", responses);

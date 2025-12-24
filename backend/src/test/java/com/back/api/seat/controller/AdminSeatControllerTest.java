@@ -20,8 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.domain.event.entity.Event;
 import com.back.domain.seat.entity.SeatGrade;
+import com.back.domain.user.entity.UserRole;
 import com.back.support.helper.EventHelper;
 import com.back.support.helper.SeatHelper;
+import com.back.support.helper.TestAuthHelper;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -40,6 +42,11 @@ class AdminSeatControllerTest {
 	@Autowired
 	private SeatHelper seatHelper;
 
+	@Autowired
+	TestAuthHelper authHelper;
+
+	private String token;
+
 	private Event testEvent;
 
 	@BeforeEach
@@ -48,6 +55,7 @@ class AdminSeatControllerTest {
 		eventHelper.clearEvent();
 
 		testEvent = eventHelper.createEvent("테스트 콘서트");
+		token = authHelper.issueAccessToken(UserRole.ADMIN);
 	}
 
 	@Nested
@@ -68,6 +76,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/bulk", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -92,6 +101,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/bulk", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -111,6 +121,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/bulk", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -133,6 +144,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/bulk", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -153,6 +165,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/bulk", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -172,6 +185,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/bulk", 999999L)
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -196,6 +210,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/auto", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -223,6 +238,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/auto", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -242,6 +258,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/auto", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -261,6 +278,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/auto", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -280,6 +298,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/auto", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -301,6 +320,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/auto", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -325,6 +345,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/single", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -350,6 +371,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/single", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -377,6 +399,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -402,6 +425,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -426,6 +450,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat2.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -446,6 +471,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), 999999L)
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -463,7 +489,8 @@ class AdminSeatControllerTest {
 			var savedSeat = seatHelper.createSeat(testEvent, "A1", SeatGrade.R, 100000);
 
 			mockMvc.perform(
-					delete("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId()))
+					delete("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
+						.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isNoContent())
 				.andExpect(jsonPath("$.message").value("좌석을 삭제했습니다."));
@@ -472,7 +499,8 @@ class AdminSeatControllerTest {
 		@Test
 		@DisplayName("실패: 존재하지 않는 좌석 삭제")
 		void deleteSeat_NotFound() throws Exception {
-			mockMvc.perform(delete("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), 999999L))
+			mockMvc.perform(delete("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), 999999L)
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isBadRequest());
 		}
@@ -489,7 +517,8 @@ class AdminSeatControllerTest {
 			seatHelper.createSeat(testEvent, "A2", SeatGrade.R, 100000);
 			seatHelper.createSeat(testEvent, "B1", SeatGrade.S, 80000);
 
-			mockMvc.perform(delete("/api/v1/admin/events/{eventId}/seats", testEvent.getId()))
+			mockMvc.perform(delete("/api/v1/admin/events/{eventId}/seats", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isNoContent())
 				.andExpect(jsonPath("$.message").value("이벤트의 모든 좌석을 삭제했습니다."));
@@ -498,7 +527,8 @@ class AdminSeatControllerTest {
 		@Test
 		@DisplayName("성공: 좌석이 없어도 성공")
 		void deleteAllEventSeats_NoSeats() throws Exception {
-			mockMvc.perform(delete("/api/v1/admin/events/{eventId}/seats", testEvent.getId()))
+			mockMvc.perform(delete("/api/v1/admin/events/{eventId}/seats", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isNoContent());
 		}
@@ -525,6 +555,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/bulk", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -547,6 +578,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat1.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -568,6 +600,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/bulk", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -592,6 +625,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/auto", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -614,6 +648,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/auto", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -634,6 +669,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(post("/api/v1/admin/events/{eventId}/seats/single", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -656,6 +692,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
@@ -678,6 +715,7 @@ class AdminSeatControllerTest {
 				""";
 
 			mockMvc.perform(put("/api/v1/admin/events/{eventId}/seats/{seatId}", testEvent.getId(), savedSeat.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andDo(print())
