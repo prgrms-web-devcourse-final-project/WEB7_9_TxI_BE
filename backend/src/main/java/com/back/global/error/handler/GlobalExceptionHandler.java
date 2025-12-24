@@ -3,6 +3,7 @@ package com.back.global.error.handler;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.code.CommonErrorCode;
 import com.back.global.error.code.ErrorCode;
 import com.back.global.error.exception.ErrorException;
@@ -144,6 +146,17 @@ public class GlobalExceptionHandler {
 			.status(code.getHttpStatus())
 			.contentType(MediaType.APPLICATION_JSON)
 			.body(ApiResponse.fail(code.getHttpStatus(), ex.getMessage()));
+	}
+
+	@ExceptionHandler(AuthorizationDeniedException.class)
+	public ResponseEntity<ApiResponse<?>> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+		ErrorCode code = AuthErrorCode.FORBIDDEN;
+		log.error("UNAUTHORIZED: {}", ex.getMessage(), ex);
+
+		return ResponseEntity
+			.status(code.getHttpStatus())
+			.contentType(MediaType.APPLICATION_JSON)
+			.body(ApiResponse.fail(code.getHttpStatus(), code.getMessage()));
 	}
 
 	// 그 외 모든 예외 처리
