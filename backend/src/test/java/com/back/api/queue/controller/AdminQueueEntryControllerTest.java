@@ -33,7 +33,7 @@ import com.back.support.helper.TestAuthHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
 @Import(TestRedisConfig.class)
@@ -64,6 +64,8 @@ public class AdminQueueEntryControllerTest {
 	private Event testEvent;
 	private User adminUser;
 
+	private String accessToken;
+
 	@BeforeEach
 	void setUp() {
 		testEvent = eventHelper.createEvent("TestEvent");
@@ -71,7 +73,7 @@ public class AdminQueueEntryControllerTest {
 		adminUser = UserFactory.fakeUser(UserRole.ADMIN, passwordEncoder).user();
 		userRepository.save(adminUser);
 
-		authHelper.authenticate(adminUser);
+		accessToken = authHelper.issueAccessToken(adminUser);
 		queueEntryHelper.clearRedis(testEvent.getId());
 	}
 
@@ -98,6 +100,7 @@ public class AdminQueueEntryControllerTest {
 
 			// when then
 			mockMvc.perform(post("/api/v1/admin/queues/{eventId}/shuffle", testEvent.getId())
+					.header("Authorization", "Bearer " + accessToken)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andExpect(status().isCreated())
@@ -117,6 +120,7 @@ public class AdminQueueEntryControllerTest {
 
 			// when then
 			mockMvc.perform(post("/api/v1/admin/queues/{eventId}/shuffle", testEvent.getId())
+					.header("Authorization", "Bearer " + accessToken)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andExpect(status().isBadRequest())
@@ -140,6 +144,7 @@ public class AdminQueueEntryControllerTest {
 
 			// when then
 			mockMvc.perform(post("/api/v1/admin/queues/{eventId}/shuffle", testEvent.getId())
+					.header("Authorization", "Bearer " + accessToken)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody))
 				.andExpect(status().isBadRequest())
@@ -172,7 +177,8 @@ public class AdminQueueEntryControllerTest {
 			queueEntryHelper.createQueueEntry(testEvent, user4, 4, QueueEntryStatus.COMPLETED);
 
 			// when then
-			mockMvc.perform(get("/api/v1/admin/queues/{eventId}/statistics", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/admin/queues/{eventId}/statistics", testEvent.getId())
+					.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.message").value("대기열 통계를 조회했습니다."))
 				.andExpect(jsonPath("$.data.eventId").value(testEvent.getId()))
@@ -188,7 +194,8 @@ public class AdminQueueEntryControllerTest {
 		void getQueueStatistics_NotFound_Fail() throws Exception {
 
 			// when then
-			mockMvc.perform(get("/api/v1/admin/queues/{eventId}/statistics", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/admin/queues/{eventId}/statistics", testEvent.getId())
+					.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.message").value("큐 대기열 항목을 찾을 수 없습니다."))
 				.andDo(print());
@@ -210,7 +217,8 @@ public class AdminQueueEntryControllerTest {
 
 			// when then
 			mockMvc.perform(post("/api/v1/admin/queues/{eventId}/users/{userId}/complete",
-					testEvent.getId(), user.getId()))
+					testEvent.getId(), user.getId())
+					.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.message").value("결제 완료 처리되었습니다."))
 				.andExpect(jsonPath("$.data.userId").value(user.getId()))
@@ -229,7 +237,8 @@ public class AdminQueueEntryControllerTest {
 
 			// when then
 			mockMvc.perform(post("/api/v1/admin/queues/{eventId}/users/{userId}/complete",
-					testEvent.getId(), user.getId()))
+					testEvent.getId(), user.getId())
+					.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value("입장 완료 상태가 아닙니다."))
 				.andDo(print());
@@ -245,7 +254,8 @@ public class AdminQueueEntryControllerTest {
 
 			// when then
 			mockMvc.perform(post("/api/v1/admin/queues/{eventId}/users/{userId}/complete",
-					testEvent.getId(), user.getId()))
+					testEvent.getId(), user.getId())
+					.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value("이미 결제가 완료되었습니다."))
 				.andDo(print());
@@ -269,7 +279,8 @@ public class AdminQueueEntryControllerTest {
 			queueEntryHelper.createQueueEntryWithRedis(testEvent, user2, 2);
 
 			// when then
-			mockMvc.perform(delete("/api/v1/admin/queues/{eventId}/reset", testEvent.getId()))
+			mockMvc.perform(delete("/api/v1/admin/queues/{eventId}/reset", testEvent.getId())
+					.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.message").value("대기열이 초기화되었습니다."))
 				.andDo(print());
@@ -278,6 +289,7 @@ public class AdminQueueEntryControllerTest {
 	}
 
 	// DTO record for request body
-	record ShuffleQueueRequest(List<Long> preRegisteredUserIds) { }
+	record ShuffleQueueRequest(List<Long> preRegisteredUserIds) {
+	}
 
 }

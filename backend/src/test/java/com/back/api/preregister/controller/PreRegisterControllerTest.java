@@ -71,6 +71,8 @@ class PreRegisterControllerTest {
 	@Autowired
 	private TestAuthHelper testAuthHelper;
 
+	String token;
+
 	private static final String DEFAULT_PHONE_NUMBER = "01012345678";
 	private static final String SMS_VERIFIED_KEY_PREFIX = "SMS_VERIFIED:";
 
@@ -88,6 +90,8 @@ class PreRegisterControllerTest {
 
 		testEvent = EventFactory.fakePreOpenEvent();
 		eventRepository.save(testEvent);
+
+		token = testAuthHelper.issueAccessToken(testUser.user());
 	}
 
 	private void setSmsVerified(String phoneNumber) {
@@ -103,7 +107,6 @@ class PreRegisterControllerTest {
 		@DisplayName("유효한 본인 인증 정보로 사전등록 성공 후 DB에 저장된다")
 		void register_Success() throws Exception {
 			// given
-			testAuthHelper.authenticate(testUser.user());
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
@@ -112,6 +115,7 @@ class PreRegisterControllerTest {
 
 			// when
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
@@ -198,7 +202,6 @@ class PreRegisterControllerTest {
 		@DisplayName("중복 등록 시 400 에러")
 		void register_Fail_AlreadyRegistered() throws Exception {
 			// given: 이미 사전등록한 사용자
-			testAuthHelper.authenticate(testUser.user());
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegister existingPreRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
@@ -210,6 +213,7 @@ class PreRegisterControllerTest {
 
 			// when & then
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
@@ -221,7 +225,6 @@ class PreRegisterControllerTest {
 		@DisplayName("사전등록 기간이 아닐 때 400 에러")
 		void register_Fail_InvalidPeriod() throws Exception {
 			// given: 사전등록 기간이 지난 이벤트
-			testAuthHelper.authenticate(testUser.user());
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			Event closedEvent = EventFactory.fakePreClosedEvent();
@@ -233,6 +236,7 @@ class PreRegisterControllerTest {
 
 			// when & then
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", closedEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
@@ -251,13 +255,13 @@ class PreRegisterControllerTest {
 		@DisplayName("사전등록 취소 성공 후 상태가 CANCELED로 변경된다")
 		void cancel_Success() throws Exception {
 			// given: 사전등록된 상태
-			testAuthHelper.authenticate(testUser.user());
 
 			PreRegister preRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
 			preRegisterRepository.save(preRegister);
 
 			// when
-			mockMvc.perform(delete("/api/v1/events/{eventId}/pre-registers", testEvent.getId()))
+			mockMvc.perform(delete("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isNoContent())
 				.andExpect(jsonPath("$.message").value("사전등록이 취소되었습니다."));
@@ -274,9 +278,8 @@ class PreRegisterControllerTest {
 		@DisplayName("사전등록하지 않은 경우 404 에러")
 		void cancel_Fail_NotFound() throws Exception {
 			// when & then
-			testAuthHelper.authenticate(testUser.user());
-
-			mockMvc.perform(delete("/api/v1/events/{eventId}/pre-registers", testEvent.getId()))
+			mockMvc.perform(delete("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.message").value(
@@ -286,14 +289,12 @@ class PreRegisterControllerTest {
 		@Test
 		@DisplayName("이미 취소된 사전등록을 다시 취소하면 400 에러")
 		void cancel_Fail_AlreadyCanceled() throws Exception {
-			// given: 이미 취소된 사전등록
-			testAuthHelper.authenticate(testUser.user());
-
 			PreRegister preRegister = PreRegisterFactory.fakeCanceledPreRegister(testEvent, testUser.user());
 			preRegisterRepository.save(preRegister);
 
 			// when & then
-			mockMvc.perform(delete("/api/v1/events/{eventId}/pre-registers", testEvent.getId()))
+			mockMvc.perform(delete("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.ALREADY_CANCELED.getMessage()));
@@ -345,13 +346,12 @@ class PreRegisterControllerTest {
 		@DisplayName("사전등록한 경우 true 반환")
 		void isRegistered_True() throws Exception {
 			// given: 사전등록된 상태
-			testAuthHelper.authenticate(testUser.user());
-
 			PreRegister preRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
 			preRegisterRepository.save(preRegister);
 
 			// when & then
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/status", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/status", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data").value(true));
@@ -361,9 +361,8 @@ class PreRegisterControllerTest {
 		@DisplayName("사전등록하지 않은 경우 false 반환")
 		void isRegistered_False() throws Exception {
 			// when & then
-			testAuthHelper.authenticate(testUser.user());
-
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/status", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/status", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data").value(false));
@@ -373,13 +372,12 @@ class PreRegisterControllerTest {
 		@DisplayName("취소된 사전등록은 false 반환")
 		void isRegistered_False_WhenCanceled() throws Exception {
 			// given: 취소된 사전등록
-			testAuthHelper.authenticate(testUser.user());
-
 			PreRegister preRegister = PreRegisterFactory.fakeCanceledPreRegister(testEvent, testUser.user());
 			preRegisterRepository.save(preRegister);
 
 			// when & then
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/status", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/status", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data").value(false));
@@ -401,7 +399,8 @@ class PreRegisterControllerTest {
 			preRegisterRepository.save(createPreRegister(testEvent, user2.user()));
 
 			// when & then
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/count", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/count", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.message").value("사전등록 현황을 조회했습니다."))
@@ -421,7 +420,8 @@ class PreRegisterControllerTest {
 			preRegisterRepository.save(canceledPreRegister);
 
 			// when & then: REGISTERED 상태만 카운트
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/count", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/count", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data").value(1));
@@ -431,7 +431,8 @@ class PreRegisterControllerTest {
 		@DisplayName("존재하지 않는 이벤트는 404 에러")
 		void getRegistrationCount_Fail_EventNotFound() throws Exception {
 			// when & then
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/count", 99999L))
+			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/count", 99999L)
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isNotFound());
 		}
@@ -445,8 +446,6 @@ class PreRegisterControllerTest {
 		@DisplayName("취소 후 재등록 시나리오 - 성공")
 		void scenario_CancelAndReRegister() throws Exception {
 			// given: 먼저 사전등록
-			testAuthHelper.authenticate(testUser.user());
-
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
 				testUser.user().getBirthDate()
 			);
@@ -454,30 +453,35 @@ class PreRegisterControllerTest {
 			// 1. 등록
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.data.status").value("REGISTERED"));
 
 			// 2. 취소
-			mockMvc.perform(delete("/api/v1/events/{eventId}/pre-registers", testEvent.getId()))
+			mockMvc.perform(delete("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andExpect(status().isNoContent());
 
 			// 3. 취소 확인
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/status", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/status", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data").value(false));
 
 			// 4. 재등록
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.data.status").value("REGISTERED"));
 
 			// 5. 재등록 확인
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/status", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/status", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data").value(true));
 		}
@@ -486,7 +490,6 @@ class PreRegisterControllerTest {
 		@DisplayName("삭제된 이벤트에 사전등록 시도 시 404 에러")
 		void register_Fail_DeletedEvent() throws Exception {
 			// given: 삭제된 이벤트
-			testAuthHelper.authenticate(testUser.user());
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			Event deletedEvent = EventFactory.fakePreOpenEvent();
@@ -500,6 +503,7 @@ class PreRegisterControllerTest {
 
 			// when & then
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", deletedEvent.getId())
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
@@ -517,7 +521,8 @@ class PreRegisterControllerTest {
 			eventRepository.flush();
 
 			// when & then
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/count", deletedEvent.getId()))
+			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/count", deletedEvent.getId())
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.message").value(EventErrorCode.NOT_FOUND_EVENT.getMessage()));

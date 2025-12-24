@@ -335,9 +335,9 @@ public class AuthControllerTest {
 		}
 
 		@Test
-		@DisplayName("한 사용자가 여러 기기에서 동시에 로그인할 수 있다")
-		void login_multi_devices_success() throws Exception {
-			// given: 하나의 유저 생성
+		@DisplayName("싱글디바이스 정책: 두 번째 로그인 후 첫 번째 accessToken으로 보호 API 호출하면 ACCESS_OTHER_DEVICE")
+		void old_access_blocked_after_second_login() throws Exception {
+			// given
 			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
 			User savedUser = existedUser.user();
 			String rawPassword = existedUser.rawPassword();
@@ -347,65 +347,30 @@ public class AuthControllerTest {
 				"password", rawPassword
 			));
 
-			// when: 같은 계정으로 1번째 기기 로그인
-			ResultActions actions1 = mvc.perform(
-				post(loginApi)
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(requestJson)
-			).andDo(print());
+			// 1st login
+			ResultActions login1 = mvc.perform(post("/api/v1/auth/login")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(requestJson));
 
-			// and: 같은 계정으로 2번째 기기 로그인
-			ResultActions actions2 = mvc.perform(
-				post(loginApi)
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(requestJson)
-			).andDo(print());
-
-			// then: 두 요청 모두 성공 응답
-			actions1
-				.andExpect(handler().handlerType(AuthController.class))
-				.andExpect(handler().methodName("login"))
-				.andExpect(jsonPath("$.status").value(HttpStatus.CREATED.name()))
-				.andExpect(jsonPath("$.message").value("로그인 성공"));
-
-			actions2
-				.andExpect(handler().handlerType(AuthController.class))
-				.andExpect(handler().methodName("login"))
-				.andExpect(jsonPath("$.status").value(HttpStatus.CREATED.name()))
-				.andExpect(jsonPath("$.message").value("로그인 성공"));
-
-			// 응답 바디 파싱
-			String body1 = actions1.andReturn().getResponse().getContentAsString();
-			String body2 = actions2.andReturn().getResponse().getContentAsString();
-
+			String body1 = login1.andReturn().getResponse().getContentAsString();
 			var node1 = mapper.readTree(body1);
-			var node2 = mapper.readTree(body2);
+			String access1 = node1.path("data").path("tokens").path("accessToken").asText();
 
-			long userId1 = node1.path("data").path("user").path("userId").asLong();
-			long userId2 = node2.path("data").path("user").path("userId").asLong();
+			// 2nd login (rotate + revoke + redis overwrite)
+			mvc.perform(post("/api/v1/auth/login")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(requestJson));
 
-			String accessToken1 = node1.path("data").path("tokens").path("accessToken").asText();
-			String accessToken2 = node2.path("data").path("tokens").path("accessToken").asText();
+			// when: old access로 보호 API 호출
+			ResultActions blocked = mvc.perform(
+				get("/api/v1/some-resource")
+					.header("Authorization", "Bearer " + access1)
+			).andDo(print());
 
-			String refreshToken1 = node1.path("data").path("tokens").path("refreshToken").asText();
-			String refreshToken2 = node2.path("data").path("tokens").path("refreshToken").asText();
-
-			// 같은 유저로부터 발급된 토큰인지 확인
-			assertThat(userId1).isEqualTo(savedUser.getId());
-			assertThat(userId2).isEqualTo(savedUser.getId());
-
-			// 각 요청마다 토큰이 정상 발급되었는지
-			assertThat(accessToken1).isNotBlank();
-			assertThat(accessToken2).isNotBlank();
-			assertThat(refreshToken1).isNotBlank();
-			assertThat(refreshToken2).isNotBlank();
-
-			// DB에서 refreshToken 이 2개인지 검증
-			long tokenCount = tokenRepository.countByUserId(savedUser.getId());
-			assertThat(tokenCount).isEqualTo(2);
-
-			assertThat(refreshToken1).isNotEqualTo(refreshToken2);
-			assertThat(accessToken1).isNotEqualTo(accessToken2);
+			// then: 401 + ACCESS_OTHER_DEVICE 메시지
+			blocked
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.message").value(AuthErrorCode.ACCESS_OTHER_DEVICE.getMessage()));
 		}
 	}
 
@@ -463,7 +428,7 @@ public class AuthControllerTest {
 		}
 
 		@Test
-		@DisplayName("로그아웃 실패 - refreshToken 쿠키 없음 (REFRESH_TOKEN_REQUIRED)")
+		@DisplayName("로그아웃 실패 - refreshToken 쿠키 없음 (UNAUTHORIZED)")
 		void logout_failed_refresh_token_required() throws Exception {
 			// given: 유저 생성
 			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
@@ -477,10 +442,10 @@ public class AuthControllerTest {
 			).andDo(print());
 
 			// then
-			AuthErrorCode error = AuthErrorCode.REFRESH_TOKEN_REQUIRED;
+			AuthErrorCode error = AuthErrorCode.UNAUTHORIZED;
 
 			actions
-				.andExpect(status().isBadRequest())
+				.andExpect(status().isUnauthorized())
 				.andExpect(jsonPath("$.message").value(error.getMessage()));
 
 			// refresh token은 애초에 없으므로 DB에도 아무 변화 없음
@@ -489,34 +454,56 @@ public class AuthControllerTest {
 		}
 
 		@Test
-		@DisplayName("로그아웃 실패 - refreshToken DB에 없음 (REFRESH_TOKEN_NOT_FOUND)")
+		@DisplayName("로그아웃 실패 - refreshToken DB에 없음 (ACCESS_OTHER_DEVICE)")
 		void logout_failed_refresh_token_not_found() throws Exception {
-			// given: 유저 하나 생성 (하지만 이 유저에 대한 refreshToken 레코드는 없음)
+			// given: 유저 생성 + 로그인해서 '정상 accessToken 쿠키' 확보
 			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
 			User savedUser = existedUser.user();
+			String rawPassword = existedUser.rawPassword();
 
-			// 가짜 refreshToken 값 (DB에는 저장하지 않음)
-			String fakeRefreshToken = "this-refresh-token-does-not-exist";
-			Cookie refreshCookie = new Cookie("refreshToken", fakeRefreshToken);
+			String loginJson = mapper.writeValueAsString(Map.of(
+				"email", savedUser.getEmail(),
+				"password", rawPassword
+			));
 
-			// when: 가짜 refreshToken 쿠키 + 인증된 유저로 로그아웃 요청
+			MockHttpServletResponse loginRes = mvc.perform(
+					post("/api/v1/auth/login")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(loginJson)
+				)
+				.andReturn()
+				.getResponse();
+
+			// 로그인 응답 쿠키에서 accessToken만 추출
+			Cookie accessCookie = null;
+			for (Cookie c : loginRes.getCookies()) {
+				if ("accessToken".equals(c.getName())) {
+					accessCookie = c;
+					break;
+				}
+			}
+			assertThat(accessCookie).isNotNull();
+
+			// refreshToken은 "DB에 없는 값"으로 교체 (JWT 형태가 아니면 필터에서 INVALID_TOKEN로 잘릴 수 있으니 주의!)
+			// => 가능하면 "형식은 JWT인데 DB/Redis에 없는 refresh"를 만들어야 함.
+			// 일단 간단히는 loginRes의 refreshToken을 빼고, DB에 저장되지 않은 '진짜 JWT refresh'를 별도 발급하거나,
+			// AuthTokenService/JwtProvider로 refresh를 만들어서 DB 저장 없이 넣는 방식이 가장 안정적.
+			String fakeRefreshJwt
+				= "eyJhbGciOiJIUzUxMiJ9.eyJ0b2tlblR5cGUiOiJyZWZyZXNoIiwiaWQiOjEwMCwic2lkIjoiZmFrZSIsInRva2VuVmVyc2lvbiI6MSwiaWF0IjoxLCJleHAiOjk5OTk5OTk5OX0.xxx";
+			Cookie refreshCookie = new Cookie("refreshToken", fakeRefreshJwt);
+
+			// when
 			ResultActions actions = mvc.perform(
-				post(logoutApi)
-					.with(user(toSecurityUser(savedUser))) // SecurityContext에 유저 세팅
-					.cookie(refreshCookie)                 // 하지만 DB엔 없는 토큰
-					.contentType(MediaType.APPLICATION_JSON)
-			).andDo(print());
+					post("/api/v1/auth/logout")
+						.cookie(accessCookie, refreshCookie)  // ★ access는 정상, refresh만 fake
+						.contentType(MediaType.APPLICATION_JSON)
+				)
+				.andDo(print());
 
 			// then
-			AuthErrorCode error = AuthErrorCode.REFRESH_TOKEN_NOT_FOUND;
-
 			actions
-				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.message").value(error.getMessage()));
-
-			// 여전히 이 유저의 refreshToken은 DB에 없음
-			long activeTokens = tokenRepository.countByUserId(savedUser.getId());
-			assertThat(activeTokens).isZero();
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.message").value(AuthErrorCode.ACCESS_OTHER_DEVICE.getMessage()));
 		}
 	}
 

@@ -429,6 +429,7 @@ public class QueueEntryProcessService {
 		}
 	}
 
+	/* ==================== 대기열 순번 뒤로 보내기 ==================== */
 	@Transactional
 	public MoveToBackResponse moveToBackQueue(Long eventId, Long userId) {
 

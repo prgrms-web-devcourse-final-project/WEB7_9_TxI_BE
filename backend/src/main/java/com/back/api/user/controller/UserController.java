@@ -1,5 +1,6 @@
 package com.back.api.user.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +28,7 @@ public class UserController implements UserApi {
 
 	@Override
 	@GetMapping("/profile")
+	@PreAuthorize("hasRole('NORMAL')")
 	public ApiResponse<UserProfileResponse> getMe() {
 		long userId = httpRequestContext.getUserId();
 		UserProfileResponse response = userService.getUser(userId);
@@ -35,6 +37,7 @@ public class UserController implements UserApi {
 
 	@Override
 	@PutMapping("/profile")
+	@PreAuthorize("hasRole('NORMAL')")
 	public ApiResponse<UserProfileResponse> updateProfile(
 		@Validated @RequestBody UpdateProfileRequest request
 	) {
@@ -45,6 +48,7 @@ public class UserController implements UserApi {
 
 	@Override
 	@DeleteMapping("/me")
+	@PreAuthorize("hasRole('NORMAL')")
 	public ApiResponse<Void> deleteUser() {
 		long userUd = httpRequestContext.getUserId();
 		userService.deleteUser(userUd);
