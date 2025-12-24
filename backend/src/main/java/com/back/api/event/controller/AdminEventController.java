@@ -25,13 +25,13 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/admin/events")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminEventController implements AdminEventApi {
 
 	private final AdminEventService adminEventService;
 
 	@Override
 	@PostMapping
-	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<EventResponse> createEvent(
 		@Valid @RequestBody EventCreateRequest request) {
 		EventResponse response = adminEventService.createEvent(request);
@@ -40,7 +40,6 @@ public class AdminEventController implements AdminEventApi {
 
 	@Override
 	@PutMapping("/{eventId}")
-	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<EventResponse> updateEvent(
 		@PathVariable Long eventId,
 		@Valid @RequestBody EventUpdateRequest request) {
@@ -50,7 +49,6 @@ public class AdminEventController implements AdminEventApi {
 
 	@Override
 	@DeleteMapping("/{eventId}")
-	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<Void> deleteEvent(
 		@PathVariable Long eventId) {
 		adminEventService.deleteEvent(eventId);
@@ -59,7 +57,6 @@ public class AdminEventController implements AdminEventApi {
 
 	@Override
 	@GetMapping("/dashboard")
-	@PreAuthorize("hasRole('ADMIN')")
 	public ApiResponse<List<AdminEventDashboardResponse>> getAllEventsDashboard() {
 		List<AdminEventDashboardResponse> responses = adminEventService.getAllEventsDashboard();
 		return ApiResponse.ok("이벤트 현황 조회 성공", responses);

@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 @Validated
+@PreAuthorize("hasRole('NORMAL')")
 public class UserController implements UserApi {
 
 	private final UserService userService;
@@ -28,7 +29,6 @@ public class UserController implements UserApi {
 
 	@Override
 	@GetMapping("/profile")
-	@PreAuthorize("hasRole('NORMAL')")
 	public ApiResponse<UserProfileResponse> getMe() {
 		long userId = httpRequestContext.getUserId();
 		UserProfileResponse response = userService.getUser(userId);
@@ -37,7 +37,6 @@ public class UserController implements UserApi {
 
 	@Override
 	@PutMapping("/profile")
-	@PreAuthorize("hasRole('NORMAL')")
 	public ApiResponse<UserProfileResponse> updateProfile(
 		@Validated @RequestBody UpdateProfileRequest request
 	) {
@@ -48,7 +47,6 @@ public class UserController implements UserApi {
 
 	@Override
 	@DeleteMapping("/me")
-	@PreAuthorize("hasRole('NORMAL')")
 	public ApiResponse<Void> deleteUser() {
 		long userUd = httpRequestContext.getUserId();
 		userService.deleteUser(userUd);

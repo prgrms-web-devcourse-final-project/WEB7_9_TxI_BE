@@ -24,15 +24,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/api/v1/admin/events/{eventId}/seats")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminSeatController implements AdminSeatApi {
 
 	private final AdminSeatService adminSeatService;
 
 	@Override
-	@PostMapping("/events/{eventId}/seats/bulk")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PostMapping("/bulk")
 	public ApiResponse<List<SeatResponse>> bulkCreateSeats(
 		@PathVariable Long eventId,
 		@Valid @RequestBody BulkCreateSeatsRequest request
@@ -49,8 +49,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
-	@PostMapping("/events/{eventId}/seats/auto")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PostMapping("/auto")
 	public ApiResponse<List<SeatResponse>> autoCreateSeats(
 		@PathVariable Long eventId,
 		@Valid @RequestBody AutoCreateSeatsRequest request
@@ -68,8 +67,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
-	@PostMapping("/events/{eventId}/seats/single")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PostMapping("/single")
 	public ApiResponse<SeatResponse> createSingleSeat(
 		@PathVariable Long eventId,
 		@Valid @RequestBody SeatCreateRequest request
@@ -80,8 +78,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
-	@PutMapping("/events/{eventId}/seats/{seatId}")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PutMapping("/{seatId}")
 	public ApiResponse<SeatResponse> updateSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId,
@@ -93,8 +90,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
-	@DeleteMapping("/events/{eventId}/seats/{seatId}")
-	@PreAuthorize("hasRole('ADMIN')")
+	@DeleteMapping("/{seatId}")
 	public ApiResponse<Void> deleteSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId
@@ -105,8 +101,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
-	@DeleteMapping("/events/{eventId}/seats")
-	@PreAuthorize("hasRole('ADMIN')")
+	@DeleteMapping
 	public ApiResponse<Void> deleteAllEventSeats(
 		@PathVariable Long eventId
 	) {
