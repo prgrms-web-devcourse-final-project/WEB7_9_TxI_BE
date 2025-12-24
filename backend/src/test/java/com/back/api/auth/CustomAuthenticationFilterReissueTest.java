@@ -120,10 +120,12 @@ public class CustomAuthenticationFilterReissueTest {
 		String newAccessToken = null;
 		String newRefreshToken = null;
 		for (Cookie cookie : cookies) {
-			if ("accessToken".equals(cookie.getName()))
+			if ("accessToken".equals(cookie.getName())) {
 				newAccessToken = cookie.getValue();
-			if ("refreshToken".equals(cookie.getName()))
+			}
+			if ("refreshToken".equals(cookie.getName())) {
 				newRefreshToken = cookie.getValue();
+			}
 		}
 
 		assertThat(newAccessToken).isNotBlank();

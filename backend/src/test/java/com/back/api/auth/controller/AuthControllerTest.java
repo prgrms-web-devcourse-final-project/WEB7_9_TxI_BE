@@ -488,7 +488,8 @@ public class AuthControllerTest {
 			// => 가능하면 "형식은 JWT인데 DB/Redis에 없는 refresh"를 만들어야 함.
 			// 일단 간단히는 loginRes의 refreshToken을 빼고, DB에 저장되지 않은 '진짜 JWT refresh'를 별도 발급하거나,
 			// AuthTokenService/JwtProvider로 refresh를 만들어서 DB 저장 없이 넣는 방식이 가장 안정적.
-			String fakeRefreshJwt = "eyJhbGciOiJIUzUxMiJ9.eyJ0b2tlblR5cGUiOiJyZWZyZXNoIiwiaWQiOjEwMCwic2lkIjoiZmFrZSIsInRva2VuVmVyc2lvbiI6MSwiaWF0IjoxLCJleHAiOjk5OTk5OTk5OX0.xxx";
+			String fakeRefreshJwt
+				= "eyJhbGciOiJIUzUxMiJ9.eyJ0b2tlblR5cGUiOiJyZWZyZXNoIiwiaWQiOjEwMCwic2lkIjoiZmFrZSIsInRva2VuVmVyc2lvbiI6MSwiaWF0IjoxLCJleHAiOjk5OTk5OTk5OX0.xxx";
 			Cookie refreshCookie = new Cookie("refreshToken", fakeRefreshJwt);
 
 			// when
