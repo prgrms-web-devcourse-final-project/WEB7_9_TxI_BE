@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.back.api.payment.order.dto.request.OrderRequestDto;
 import com.back.api.payment.order.dto.response.OrderResponseDto;
+import com.back.api.payment.order.dto.response.V2_OrderResponseDto;
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
 
@@ -28,4 +29,6 @@ public interface OrderApi {
 		"INVALID_TICKET_STATE"
 	})
 	ApiResponse<OrderResponseDto> createOrder(@Valid @RequestBody OrderRequestDto orderRequestDto);
+
+	ApiResponse<V2_OrderResponseDto> v2_createOrder(@Valid @RequestBody OrderRequestDto orderRequestDto);
 }
