@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"perf", "prod"})
+@Profile({"perf"})
 public class QueueExpireScheduler {
 
 	private final QueueEntryRepository queueEntryRepository;
