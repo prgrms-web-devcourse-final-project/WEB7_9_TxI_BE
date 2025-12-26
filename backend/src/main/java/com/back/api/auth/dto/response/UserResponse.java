@@ -14,7 +14,7 @@ public record UserResponse(
 
 	@Schema(
 		description = "사용자 이메일",
-		example = "user@example.com",
+		example = "test@test.com",
 		maxLength = 100
 	)
 	String email,

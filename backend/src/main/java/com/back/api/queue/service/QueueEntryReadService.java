@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 /*
  * 대기열 조회 로직
  * Redis 우선 조회 -> DB 조회
- * 트랜잭션 읽기 / 쓰기 분리 고려
  * TODO 시간 계산 로직 수정
  */
 @Service
@@ -115,8 +114,20 @@ public class QueueEntryReadService {
 	//Redis & DB
 	public boolean isUserEntered(Long eventId, Long userId) {
 		try {
-			return queueEntryRedisRepository.isInEnteredQueue(eventId, userId);
+			boolean isInRedis = queueEntryRedisRepository.isInEnteredQueue(eventId, userId);
+
+			if (isInRedis) {
+				return true;
+			}
+
+			//Redis false면 DB 한번 더 확인
+			return queueEntryRepository
+				.findByEvent_IdAndUser_Id(eventId, userId)
+				.map(entry -> entry.getQueueEntryStatus() == QueueEntryStatus.ENTERED)
+				.orElse(false);
+
 		} catch (Exception e) {
+			// Redis 예외 시 DB 조회
 			log.warn("Redis ENTERED 조회 실패, DB Fallback");
 
 			return queueEntryRepository

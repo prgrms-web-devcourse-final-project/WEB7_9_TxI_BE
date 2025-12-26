@@ -2,6 +2,7 @@ package com.back.api.seat.controller;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,14 +24,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/api/v1/admin/events/{eventId}/seats")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminSeatController implements AdminSeatApi {
 
 	private final AdminSeatService adminSeatService;
 
 	@Override
-	@PostMapping("/events/{eventId}/seats/bulk")
+	@PostMapping("/bulk")
 	public ApiResponse<List<SeatResponse>> bulkCreateSeats(
 		@PathVariable Long eventId,
 		@Valid @RequestBody BulkCreateSeatsRequest request
@@ -47,7 +49,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
-	@PostMapping("/events/{eventId}/seats/auto")
+	@PostMapping("/auto")
 	public ApiResponse<List<SeatResponse>> autoCreateSeats(
 		@PathVariable Long eventId,
 		@Valid @RequestBody AutoCreateSeatsRequest request
@@ -65,7 +67,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
-	@PostMapping("/events/{eventId}/seats/single")
+	@PostMapping("/single")
 	public ApiResponse<SeatResponse> createSingleSeat(
 		@PathVariable Long eventId,
 		@Valid @RequestBody SeatCreateRequest request
@@ -76,7 +78,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
-	@PutMapping("/events/{eventId}/seats/{seatId}")
+	@PutMapping("/{seatId}")
 	public ApiResponse<SeatResponse> updateSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId,
@@ -88,7 +90,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
-	@DeleteMapping("/events/{eventId}/seats/{seatId}")
+	@DeleteMapping("/{seatId}")
 	public ApiResponse<Void> deleteSeat(
 		@PathVariable Long eventId,
 		@PathVariable Long seatId
@@ -99,7 +101,7 @@ public class AdminSeatController implements AdminSeatApi {
 	}
 
 	@Override
-	@DeleteMapping("/events/{eventId}/seats")
+	@DeleteMapping
 	public ApiResponse<Void> deleteAllEventSeats(
 		@PathVariable Long eventId
 	) {

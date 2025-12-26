@@ -15,8 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.back.api.payment.order.service.OrderService;
 import com.back.api.payment.payment.client.PaymentClient;
-import com.back.api.payment.payment.dto.response.PaymentConfirmResponse;
 import com.back.api.payment.payment.dto.response.PaymentConfirmResult;
+import com.back.api.payment.payment.dto.response.PaymentReceiptResponse;
 import com.back.api.payment.payment.service.PaymentService;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
@@ -72,9 +72,15 @@ class PaymentServiceTest {
 		var order = OrderFactory.fakePendingOrder(draftTicket, amount);
 
 		var issuedTicket = TicketFactory.fakeIssuedTicket(user, seat, event);
+		// 결제 완료 후 상태 (PAID + issuedTicket)
+		var paidOrder = OrderFactory.fakePaidOrder(issuedTicket, amount, paymentKey);
 
 		given(orderService.getOrderForPayment(any(), any(), any()))
 			.willReturn(order);
+
+		// 영수증 조회 시 PAID 상태의 order 반환
+		given(orderService.getOrderWithDetails(any(), any()))
+			.willReturn(paidOrder);
 
 		given(paymentClient.confirm(any()))
 			.willReturn(new PaymentConfirmResult(paymentKey, amount, true));
@@ -83,7 +89,7 @@ class PaymentServiceTest {
 			.willReturn(issuedTicket);
 
 		// when
-		PaymentConfirmResponse response = paymentService.confirmPayment(
+		PaymentReceiptResponse response = paymentService.confirmPayment(
 			1L,
 			paymentKey,
 			amount,

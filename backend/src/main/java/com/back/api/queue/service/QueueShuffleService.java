@@ -59,8 +59,6 @@ public class QueueShuffleService {
 
 		event.changeStatus(EventStatus.QUEUE_READY);
 
-		//TODO 알림 로직 추가 필요
-
 	}
 
 	private void validateShuffleRequest(Long eventId, List<Long> preRegisteredUserIds) {

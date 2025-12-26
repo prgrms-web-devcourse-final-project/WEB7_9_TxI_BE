@@ -98,7 +98,7 @@ public class QueueEntryRedisRepository {
 		return size != null ? size : 0L;
 	}
 
-	public boolean isInEnteredQueue(Long eventId, Long userId) {
+	public boolean  isInEnteredQueue(Long eventId, Long userId) {
 		String key = String.format(ENTERED_KEY, eventId);
 		Boolean isMember = redisTemplate.opsForSet().isMember(key, userId.toString());
 		return isMember != null && isMember;

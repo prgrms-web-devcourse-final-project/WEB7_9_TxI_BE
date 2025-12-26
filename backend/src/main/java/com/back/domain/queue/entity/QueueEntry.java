@@ -91,6 +91,17 @@ public class QueueEntry extends BaseEntity {
 		return LocalDateTime.now().isAfter(this.expiredAt);
 	}
 
+	// 사용자 입장 완료 상태 -> 대기 상태로 변경
+	public void backToWaiting() {
+		this.queueEntryStatus = QueueEntryStatus.WAITING;
+		this.enteredAt = null;
+		this.expiredAt = null;
+	}
+
+	public void updateRank(int newRank) {
+		this.queueRank = newRank;
+	}
+
 	public Long getUserId() {
 		return user.getId();
 	}

@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.api.payment.order.service.OrderService;
 import com.back.api.payment.payment.client.PaymentClient;
 import com.back.api.payment.payment.dto.request.PaymentConfirmCommand;
-import com.back.api.payment.payment.dto.response.PaymentConfirmResponse;
 import com.back.api.payment.payment.dto.response.PaymentConfirmResult;
 import com.back.api.payment.payment.dto.response.PaymentReceiptResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
@@ -43,7 +42,7 @@ public class PaymentService {
 	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
-	public PaymentConfirmResponse confirmPayment(
+	public PaymentReceiptResponse confirmPayment(
 		Long orderId,
 		String clientPaymentKey,
 		Long clientAmount,
@@ -99,7 +98,13 @@ public class PaymentService {
 			)
 		);
 
-		return PaymentConfirmResponse.from(order, ticket);
+		// 최종 결과조회
+		// mock구성에서는 프론트 개발속도를 위해 confirmPayment에서 처리
+		// PG연동시에 분리 필요
+		order = orderService.getOrderWithDetails(orderId, userId);
+		ticket = order.getTicket();
+
+		return PaymentReceiptResponse.from(order, ticket);
 	}
 
 	/**

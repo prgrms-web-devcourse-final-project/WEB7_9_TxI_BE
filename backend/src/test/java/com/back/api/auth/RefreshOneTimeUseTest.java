@@ -63,6 +63,6 @@ class RefreshOneTimeUseTest {
 		assertThatThrownBy(() -> authTokenService.rotateTokenByRefreshToken(tokens.refreshToken()))
 			.isInstanceOf(ErrorException.class)
 			.extracting("errorCode")
-			.isEqualTo(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND);
+			.isEqualTo(AuthErrorCode.ACCESS_OTHER_DEVICE);
 	}
 }

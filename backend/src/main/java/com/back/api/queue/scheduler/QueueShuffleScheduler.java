@@ -36,7 +36,7 @@ public class QueueShuffleScheduler {
 	private final QueueEntryRepository queueEntryRepository;
 	private final QueueShuffleService queueShuffleService;
 	private final EventService eventService;
-	private final PreRegisterRepository preRegisterRepository; //TODO service로 변경 필요
+	private final PreRegisterRepository preRegisterRepository;
 	private final QueueSchedulerProperties properties;
 
 	@Scheduled(cron = "${queue.scheduler.shuffle.cron}", zone = "Asia/Seoul")
@@ -149,7 +149,6 @@ public class QueueShuffleScheduler {
 			return false;
 		}
 
-		//TODO PreRegisterService로 변경 필요
 		List<Long> preRegisteredUserIds = preRegisterRepository.findRegisteredUserIdsByEventId(eventId);
 
 		if (preRegisteredUserIds.isEmpty()) {

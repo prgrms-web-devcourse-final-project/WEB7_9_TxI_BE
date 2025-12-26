@@ -23,17 +23,19 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.auth.repository.RefreshTokenRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.AuthErrorCode;
-import com.back.global.error.code.UserErrorCode;
 import com.back.global.http.HttpRequestContext;
 import com.back.support.data.TestUser;
 import com.back.support.helper.TestAuthHelper;
 import com.back.support.helper.UserHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.persistence.EntityManager;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -51,10 +53,16 @@ public class UserControllerTest {
 	private RefreshTokenRepository refreshTokenRepository;
 
 	@Autowired
+	private ActiveSessionRepository activeSessionRepository;
+
+	@Autowired
 	private UserHelper userHelper;
 
 	@Autowired
 	private TestAuthHelper testAuthHelper;
+
+	@Autowired
+	private EntityManager entityManager;
 
 	@MockitoSpyBean
 	private RefreshTokenRepository spyRefreshTokenRepository;
@@ -68,10 +76,20 @@ public class UserControllerTest {
 
 	TestUser testUser;
 
+	String token;
+
 	@BeforeEach
 	void setUp() {
 		testUser = userHelper.createUser(UserRole.NORMAL);
-		user = testUser.user();
+		user = userRepository.findById(testUser.user().getId()).orElseThrow();
+
+		token = testAuthHelper.issueAccessToken(user);
+
+		entityManager.flush();
+		entityManager.clear();
+		user = userRepository.findById(user.getId()).orElseThrow();
+
+		testAuthHelper.clearAuthentication();
 	}
 
 	@Nested
@@ -83,13 +101,12 @@ public class UserControllerTest {
 		@Test
 		@DisplayName("Success get user profile info")
 		void get_user_profile_success() throws Exception {
-			testAuthHelper.authenticate(user);
-
 			long userId = user.getId();
 
 			ResultActions actions = mvc
 				.perform(
 					get(getUserApi)
+						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 				).andDo(print());
 
@@ -102,11 +119,8 @@ public class UserControllerTest {
 		@Test
 		@DisplayName("Failed by not allowed user")
 		void failed_by_not_allowed_user() throws Exception {
-			ResultActions actions = mvc
-				.perform(
-					get(getUserApi)
-						.contentType(MediaType.APPLICATION_JSON)
-				).andDo(print());
+			ResultActions actions = mvc.perform(get(getUserApi))
+				.andDo(print());
 
 			AuthErrorCode error = AuthErrorCode.UNAUTHORIZED;
 
@@ -125,8 +139,6 @@ public class UserControllerTest {
 		@Test
 		@DisplayName("사용자 정보 변경 성공")
 		void success_update_profile() throws Exception {
-			testAuthHelper.authenticate(user);
-
 			long userId = user.getId();
 
 			String newNickname = "New" + user.getNickname();
@@ -143,6 +155,7 @@ public class UserControllerTest {
 			ResultActions actions = mvc
 				.perform(
 					put(updateProfileApi)
+						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(requestJson)
 				).andDo(print());
@@ -162,8 +175,6 @@ public class UserControllerTest {
 		@Test
 		@DisplayName("사용자 정보 변경 성공 - 파라미터 일부만 전달")
 		void success_with_missing_parameters() throws Exception {
-			testAuthHelper.authenticate(user);
-
 			long userId = user.getId();
 
 			String newNickname = "New" + user.getNickname();
@@ -175,6 +186,7 @@ public class UserControllerTest {
 			ResultActions actions = mvc
 				.perform(
 					put(updateProfileApi)
+						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(requestJson)
 				).andDo(print());
@@ -194,8 +206,6 @@ public class UserControllerTest {
 		@Test
 		@DisplayName("사용자 정보 변경 성공 - 파라미터 없음")
 		void success_with_empty_request() throws Exception {
-			testAuthHelper.authenticate(user);
-
 			long userId = user.getId();
 
 			String requestJson = mapper.writeValueAsString(Map.of(
@@ -204,6 +214,7 @@ public class UserControllerTest {
 			ResultActions actions = mvc
 				.perform(
 					put(updateProfileApi)
+						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(requestJson)
 				).andDo(print());
@@ -221,15 +232,12 @@ public class UserControllerTest {
 		}
 
 		@Test
-		@DisplayName("사용자 정보 변경 실패 - 사용자 없음 (NOT_FOUND)")
+		@DisplayName("사용자 정보 변경 실패 - 인증 실패")
 		void failed_update_profile_by_user_not_found() throws Exception {
 			// given
-			testAuthHelper.authenticate(user);
 			long userId = user.getId();
 
-			// 인증 후 사용자 삭제
-			userRepository.deleteById(userId);
-			userRepository.flush(); // 즉시 반영 (중요)
+			deleteUserById(userId);
 
 			String requestJson = mapper.writeValueAsString(Map.of(
 				"nickname", "newName"
@@ -238,24 +246,22 @@ public class UserControllerTest {
 			// when
 			ResultActions actions = mvc.perform(
 				put(updateProfileApi)
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestJson)
 			).andDo(print());
 
 			// then
 			actions
-				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.status").value(HttpStatus.NOT_FOUND.name()))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.status").value(AuthErrorCode.UNAUTHORIZED.name()))
 				.andExpect(jsonPath("$.message")
-					.value(UserErrorCode.NOT_FOUND.getMessage()));
+					.value(AuthErrorCode.UNAUTHORIZED.getMessage()));
 		}
 
 		@Test
 		@DisplayName("사용자 정보 변경 실패 - 닉네임 중복 (ALREADY_EXIST_NICKNAME)")
 		void failed_update_profile_by_duplicate_nickname() throws Exception {
-			// given
-			testAuthHelper.authenticate(user);
-
 			// 이미 존재하는 다른 유저 생성
 			TestUser anotherUser = userHelper.createUser(UserRole.NORMAL);
 			String duplicatedNickname = anotherUser.user().getNickname();
@@ -267,6 +273,7 @@ public class UserControllerTest {
 			// when
 			ResultActions actions = mvc.perform(
 				put(updateProfileApi)
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(requestJson)
 			).andDo(print());
@@ -290,7 +297,6 @@ public class UserControllerTest {
 		@DisplayName("회원탈퇴 성공 - 쿠키 삭제 + soft delete + (있다면) refreshToken 전체 revoke")
 		void delete_user_success_with_revoke_all() throws Exception {
 			// given
-			testAuthHelper.authenticate(user);
 			long userId = user.getId();
 
 			// (선택) 현재 유저의 refresh token이 존재하는지 확인만 해두기 (없어도 테스트 진행)
@@ -300,6 +306,7 @@ public class UserControllerTest {
 			// when
 			ResultActions actions = mvc.perform(
 				delete(deleteUserApi)
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 			).andDo(print());
 
@@ -326,56 +333,63 @@ public class UserControllerTest {
 		@DisplayName("회원탈퇴 실패 - 사용자 없음 (NOT_FOUND)")
 		void delete_user_failed_by_not_found() throws Exception {
 			// given
-			testAuthHelper.authenticate(user);
 			long userId = user.getId();
 
-			// 유저를 물리 삭제해서 NOT_FOUND 유도
-			userRepository.deleteById(userId);
-			userRepository.flush();
+			deleteUserById(userId);
 
 			// when
 			ResultActions actions = mvc.perform(
 				delete(deleteUserApi)
+					.header("Authorization", "Bearer " + token)
 					.contentType(MediaType.APPLICATION_JSON)
 			).andDo(print());
 
 			// then
 			actions
-				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.status").value(HttpStatus.NOT_FOUND.name()))
-				.andExpect(jsonPath("$.message").value(UserErrorCode.NOT_FOUND.getMessage()));
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.status").value(AuthErrorCode.UNAUTHORIZED.name()))
+				.andExpect(jsonPath("$.message").value(AuthErrorCode.UNAUTHORIZED.getMessage()));
 		}
 	}
 
 	@Test
-	@DisplayName("회원탈퇴 실패(NOT_FOUND) - revokeAll/쿠키삭제 등 부작용이 없어야 한다")
+	@DisplayName("회원탈퇴 실패 - revokeAll/쿠키삭제 등 부작용이 없어야 한다")
 	void delete_user_failed_by_not_found_has_no_side_effects() throws Exception {
 		// given
-		testAuthHelper.authenticate(user);
 		long userId = user.getId();
 
 		// authenticate 과정에서 spy 호출이 발생할 수 있으니, 검증 전에 기록 제거
 		clearInvocations(spyRefreshTokenRepository, requestContext);
 
 		// NOT_FOUND 유도: 인증은 유지하되, DB에서 유저만 삭제
+		activeSessionRepository.deleteByUserId(userId);
 		userRepository.deleteById(userId);
 		userRepository.flush();
 
 		// when
 		ResultActions actions = mvc.perform(
 			delete("/api/v1/users/me")
+				.header("Authorization", "Bearer " + token)
 				.contentType(MediaType.APPLICATION_JSON)
 		).andDo(print());
 
 		// then: 응답 검증
 		actions
-			.andExpect(status().isNotFound())
-			.andExpect(jsonPath("$.status").value(HttpStatus.NOT_FOUND.name()))
-			.andExpect(jsonPath("$.message").value(UserErrorCode.NOT_FOUND.getMessage()));
+			.andExpect(status().isUnauthorized())
+			.andExpect(jsonPath("$.status").value(AuthErrorCode.UNAUTHORIZED.name()))
+			.andExpect(jsonPath("$.message").value(AuthErrorCode.UNAUTHORIZED.getMessage()));
 
 		// then: 부작용(토큰 revoke / 쿠키 삭제) 없어야 함
 		verify(refreshTokenRepository, never()).revokeAllByUserId(anyLong());
 		verify(requestContext, never()).deleteCookie("accessToken");
 		verify(requestContext, never()).deleteCookie("refreshToken");
+	}
+
+	private void deleteUserById(long userId) {
+		activeSessionRepository.deleteByUserId(userId);
+		activeSessionRepository.flush();
+
+		userRepository.deleteById(userId);
+		userRepository.flush();
 	}
 }

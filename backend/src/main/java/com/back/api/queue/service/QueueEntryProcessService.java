@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
 import com.back.api.queue.dto.response.EnteredQueueResponse;
 import com.back.api.queue.dto.response.ExpiredQueueResponse;
+import com.back.api.queue.dto.response.MoveToBackResponse;
 import com.back.api.queue.dto.response.ProcessEntriesResponse;
 import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
 import com.back.api.queue.dto.response.WaitingQueueResponse;
@@ -35,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 /*
  * 대기열 처리 로직
  * QueueEntry 입장 처리
- * 스케줄러, 배치 활용
+ * 스케줄러 활용
  * 대기중 -> 입장 완료
  */
 
@@ -92,21 +93,42 @@ public class QueueEntryProcessService {
 	}
 
 	/* ==================== 이벤트 단위 자동 입장 처리 (스케줄러) ==================== */
-
 	@Transactional
 	public void processEventQueueEntries(Event event) {
 
 		Long eventId = event.getId();
 
 		//대기 중인 인원 확인
-		Long totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
+		Long totalWaitingCount;
+
+		try {
+			totalWaitingCount =  queueEntryRedisRepository.getTotalWaitingCount(eventId);
+		} catch (Exception e) {
+			log.warn("Redis 조회 실패, DB로부터 대기 중 인원 수 조회 시도 - eventId: {}", eventId,  e);
+			totalWaitingCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+				eventId,
+				QueueEntryStatus.WAITING
+			);
+		}
 
 		if (totalWaitingCount == 0) {
 			return;
 		}
 
 		//입장 완료된 인원 확인
-		Long currentEnteredCount = queueEntryRedisRepository.getTotalEnteredCount(eventId);
+		Long currentEnteredCount;
+
+		try {
+			currentEnteredCount = queueEntryRedisRepository.getTotalEnteredCount(eventId);
+		} catch (Exception e) {
+			log.warn("Redis 조회 실패, DB로부터 입장 완료된 인원 수 조회 시도 - eventId: {}", eventId,  e);
+			currentEnteredCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+				eventId,
+				QueueEntryStatus.ENTERED
+			);
+		}
+
+
 		int maxEnteredLimit = properties.getEntry().getMaxEnteredLimit();
 
 		//입장 가능한 인원 확인
@@ -132,16 +154,20 @@ public class QueueEntryProcessService {
 			eventId, totalWaitingCount, currentEnteredCount, availableEnteredCount, batchSize, entryCount);
 
 
-		//상위 N명 추출
-		Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, entryCount);
 
-		if (topWaitingUsers.isEmpty()) {
-			return;
+		List<Long> userIds;
+		try {
+			Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, entryCount);
+			userIds = topWaitingUsers.stream()
+				.map(obj -> Long.parseLong(obj.toString()))
+				.toList();
+		} catch (Exception e) {
+			log.warn("Redis 조회 실패, DB로부터 상위 대기 인원 조회 시도 - eventId: {}", eventId,  e);
+			userIds = queueEntryRepository.findTopNWaitingUsers(eventId, entryCount);
 		}
 
-		List<Long> userIds = new ArrayList<>();
-		for (Object userId : topWaitingUsers) {
-			userIds.add(Long.parseLong(userId.toString()));
+		if (userIds.isEmpty()) {
+			return;
 		}
 
 		processBatchEntry(eventId, userIds); // 입장 순서인 사용자 입장처리
@@ -332,7 +358,7 @@ public class QueueEntryProcessService {
 
 	/* ==================== 결제 완료 처리 ==================== */
 
-	//TODO 결제 도메인에서 사용 필요
+
 	@Transactional
 	public void completePayment(Long eventId, Long userId) {
 
@@ -401,6 +427,47 @@ public class QueueEntryProcessService {
 		} catch (Exception e) {
 			log.error("실시간 순위 업데이트 실패 - userId: {}", eventId, e);
 		}
+	}
+
+	/* ==================== 대기열 순번 뒤로 보내기 ==================== */
+	@Transactional
+	public MoveToBackResponse moveToBackQueue(Long eventId, Long userId) {
+
+		QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
+			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
+
+		// ENTERED 상태에서만 뒤로 보낸다.
+		if (queueEntry.getQueueEntryStatus() != QueueEntryStatus.ENTERED) {
+			throw new ErrorException(QueueEntryErrorCode.NOT_ENTERED_STATUS);
+		}
+
+		int previousRank = queueEntry.getQueueRank();
+
+		Long maxRank = queueEntryRepository.findMaxRankInQueue(eventId)
+			.orElse(0L);
+
+		int newRank = maxRank.intValue() + 1;
+
+		queueEntry.backToWaiting();
+		queueEntry.updateRank(newRank);
+		queueEntryRepository.save(queueEntry);
+
+		try {
+			queueEntryRedisRepository.removeFromEnteredQueue(eventId, userId);
+			queueEntryRedisRepository.addToWaitingQueue(eventId, userId, newRank);
+		} catch (Exception e) {
+			log.error("뒤로 보내기 Redis 업데이트 실패 - eventId: {}, userId: {}", eventId, userId, e);
+		}
+
+		publishWaitingUpdateEvents(eventId);
+
+		long totalWaiting = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+			eventId,
+			QueueEntryStatus.WAITING
+		);
+
+		return MoveToBackResponse.from(userId, previousRank, newRank, (int)totalWaiting);
+
 	}
 
 
