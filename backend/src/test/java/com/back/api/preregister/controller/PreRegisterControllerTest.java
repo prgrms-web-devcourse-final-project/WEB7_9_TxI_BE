@@ -387,43 +387,67 @@ class PreRegisterControllerTest {
 				.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.ALREADY_CANCELED.getMessage()));
 		}
 	}
-/*
+
 	@Nested
-	@DisplayName("내 사전등록 조회 API (GET /api/v1/events/{eventId}/pre-registers/me)")
+	@DisplayName("내 사전등록 조회 API (GET /api/v1/pre-registers/me)")
 	class GetMyPreRegister {
 
 		@Test
-		@DisplayName("내 사전등록 조회 성공")
+		@DisplayName("내 사전등록 다건 조회 성공")
 		void getMyPreRegister_Success() throws Exception {
-			// given: 사전등록된 상태
-			testAuthHelper.authenticate(testUser.user());
+			// given: 여러 이벤트에 사전등록
+			Event event2 = EventFactory.fakePreOpenEvent();
+			eventRepository.save(event2);
 
-			PreRegister preRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
-			preRegisterRepository.save(preRegister);
+			PreRegister preRegister1 = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
+			PreRegister preRegister2 = PreRegisterFactory.fakePreRegister(event2, testUser.user());
+			preRegisterRepository.save(preRegister1);
+			preRegisterRepository.save(preRegister2);
 
 			// when & then
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/me", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/pre-registers/me")
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.message").value("사전등록 정보를 조회했습니다."))
-				.andExpect(jsonPath("$.data.eventId").value(testEvent.getId()))
-				.andExpect(jsonPath("$.data.userId").value(testUser.user().getId()))
-				.andExpect(jsonPath("$.data.status").value("REGISTERED"));
+				.andExpect(jsonPath("$.data").isArray())
+				.andExpect(jsonPath("$.data.length()").value(2));
 		}
 
 		@Test
-		@DisplayName("사전등록하지 않은 경우 404 에러")
-		void getMyPreRegister_Fail_NotFound() throws Exception {
+		@DisplayName("사전등록하지 않은 경우 빈 배열 반환")
+		void getMyPreRegister_Empty() throws Exception {
 			// when & then
-			testAuthHelper.authenticate(testUser.user());
-
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/me", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/pre-registers/me")
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
-				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.message").value(
-					PreRegisterErrorCode.NOT_FOUND_PRE_REGISTER.getMessage()));
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("사전등록 정보를 조회했습니다."))
+				.andExpect(jsonPath("$.data").isArray())
+				.andExpect(jsonPath("$.data.length()").value(0));
 		}
-	}*/
+
+		@Test
+		@DisplayName("취소된 사전등록도 포함하여 전체 조회")
+		void getMyPreRegister_IncludeCanceled() throws Exception {
+			// given
+			Event event2 = EventFactory.fakePreOpenEvent();
+			eventRepository.save(event2);
+
+			PreRegister activePreRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
+			PreRegister canceledPreRegister = PreRegisterFactory.fakeCanceledPreRegister(event2, testUser.user());
+			preRegisterRepository.save(activePreRegister);
+			preRegisterRepository.save(canceledPreRegister);
+
+			// when & then: 모든 상태 조회
+			mockMvc.perform(get("/api/v1/pre-registers/me")
+					.header("Authorization", "Bearer " + token))
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data").isArray())
+				.andExpect(jsonPath("$.data.length()").value(2));
+		}
+	}
 
 	@Nested
 	@DisplayName("사전등록 여부 확인 API (GET /api/v1/events/{eventId}/pre-registers/status)")
