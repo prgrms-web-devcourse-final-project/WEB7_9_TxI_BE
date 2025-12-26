@@ -3,6 +3,7 @@ package com.back.api.preregister.controller;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -86,6 +87,7 @@ class PreRegisterControllerTest {
 	private TestUser testUser;
 	private Event testEvent;
 	private LocalDateTime now;
+	private org.springframework.security.core.Authentication authentication;
 
 	@BeforeEach
 	void setUp() {
@@ -97,6 +99,10 @@ class PreRegisterControllerTest {
 
 		testEvent = EventFactory.fakePreOpenEvent();
 		eventRepository.save(testEvent);
+
+		// Authentication 객체 생성
+		testAuthHelper.authenticate(testUser.user());
+		authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
 	}
 
 	private void setSmsVerified(String phoneNumber) {
@@ -254,7 +260,6 @@ class PreRegisterControllerTest {
 		@DisplayName("유효한 reCAPTCHA 토큰으로 사전등록 성공")
 		void register_Success_WithValidRecaptcha() throws Exception {
 			// given
-			testAuthHelper.authenticate(testUser.user());
 			String validToken = "valid-recaptcha-token";
 
 			// reCAPTCHA 검증 성공하도록 Mock 설정
@@ -262,6 +267,7 @@ class PreRegisterControllerTest {
 
 			// when & then
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.with(authentication(authentication))
 					.header("X-Recaptcha-Token", validToken))
 				.andDo(print())
 				.andExpect(status().isCreated())
@@ -278,14 +284,13 @@ class PreRegisterControllerTest {
 		@DisplayName("reCAPTCHA 토큰이 없으면 400 에러")
 		void register_Fail_MissingRecaptchaToken() throws Exception {
 			// given
-			testAuthHelper.authenticate(testUser.user());
-
 			// reCAPTCHA 토큰 누락 시 예외 발생하도록 Mock 설정
 			doThrow(new ErrorException(CommonErrorCode.RECAPTCHA_TOKEN_MISSING))
 				.when(reCaptchaService).verifyToken(isNull(), isNull());
 
 			// when & then
-			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId()))
+			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.with(authentication(authentication)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value(CommonErrorCode.RECAPTCHA_TOKEN_MISSING.getMessage()));
@@ -295,7 +300,6 @@ class PreRegisterControllerTest {
 		@DisplayName("reCAPTCHA 점수가 낮으면 400 에러")
 		void register_Fail_LowRecaptchaScore() throws Exception {
 			// given
-			testAuthHelper.authenticate(testUser.user());
 			String lowScoreToken = "low-score-token";
 
 			// 낮은 점수로 검증 실패하도록 Mock 설정
@@ -304,6 +308,7 @@ class PreRegisterControllerTest {
 
 			// when & then
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.with(authentication(authentication))
 					.header("X-Recaptcha-Token", lowScoreToken))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
@@ -314,7 +319,6 @@ class PreRegisterControllerTest {
 		@DisplayName("reCAPTCHA 검증 실패 시 400 에러")
 		void register_Fail_RecaptchaVerificationFailed() throws Exception {
 			// given
-			testAuthHelper.authenticate(testUser.user());
 			String invalidToken = "invalid-token";
 
 			// 검증 실패하도록 Mock 설정
@@ -323,6 +327,7 @@ class PreRegisterControllerTest {
 
 			// when & then
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.with(authentication(authentication))
 					.header("X-Recaptcha-Token", invalidToken))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
