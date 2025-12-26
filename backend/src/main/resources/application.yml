@@ -151,3 +151,8 @@ cloud:
     presigned:
       put-expire-minutes: 5
       get-expire-minutes: 10
+
+# reCAPTCHA
+google:
+  captcha:
+    secret-key: ${RECAPTCHA_SECRET_KEY}

@@ -645,7 +645,6 @@ class PreRegisterServiceTest {
 				testUser.user().getId(),
 				request
 			);
-	
 			// 2. 조회
 			PreRegisterResponse getResponse = preRegisterService.getMyPreRegister(
 				testEvent.getId(),
@@ -755,7 +754,6 @@ class PreRegisterServiceTest {
 				testUser.user().getId(),
 				request
 			);
-	
 			// when: 취소
 			preRegisterService.cancel(testEvent.getId(), testUser.user().getId());
 
