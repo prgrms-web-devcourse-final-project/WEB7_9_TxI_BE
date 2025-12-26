@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"perf"})
+@Profile({"perf", "prod"})
 public class DraftTicketExpirationScheduler {
 
 	private static final int PAGE_SIZE = 500;
