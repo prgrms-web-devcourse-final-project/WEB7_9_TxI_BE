@@ -406,7 +406,7 @@ class QueueEntryReadServiceTest {
 			// then
 			assertThat(response.queueRank()).isEqualTo(1);
 			assertThat(response.waitingAhead()).isEqualTo(0);
-			assertThat(response.estimatedWaitTime()).isEqualTo(3);
+			assertThat(response.estimatedWaitTime()).isEqualTo(1);
 			assertThat(response.progress()).isEqualTo(99);
 		}
 
