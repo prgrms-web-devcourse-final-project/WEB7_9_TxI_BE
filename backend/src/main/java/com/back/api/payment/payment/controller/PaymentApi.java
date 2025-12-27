@@ -3,7 +3,9 @@ package com.back.api.payment.payment.controller;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.back.api.payment.payment.dto.request.PaymentConfirmRequest;
+import com.back.api.payment.payment.dto.request.V2_PaymentConfirmRequest;
 import com.back.api.payment.payment.dto.response.PaymentReceiptResponse;
+import com.back.api.payment.payment.dto.response.V2_PaymentConfirmResponse;
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
 
@@ -42,4 +44,18 @@ public interface PaymentApi {
 	 @PathVariable Long orderId
 	 );
 	 */
+
+	@Operation(
+		summary = "결제 승인",
+		description = "토스페이먼츠 위젯을 이용한 결제 승인을 요청합니다"
+	)
+	@ApiErrorCode({
+		"ORDER_NOT_FOUND",
+		"PAYMENT_ALREADY_PROCESSED",
+		"PAYMENT_AMOUNT_MISMATCH",
+		"PAYMENT_FAILED"
+	})
+	ApiResponse<V2_PaymentConfirmResponse> V2_confirmPayment(
+		@Valid @RequestBody V2_PaymentConfirmRequest request
+	);
 }

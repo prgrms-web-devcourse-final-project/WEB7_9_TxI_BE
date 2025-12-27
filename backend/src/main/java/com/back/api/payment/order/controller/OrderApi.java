@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.back.api.payment.order.dto.request.OrderRequestDto;
 import com.back.api.payment.order.dto.response.OrderResponseDto;
+import com.back.api.payment.order.dto.response.V2_OrderResponseDto;
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
 
@@ -28,4 +29,19 @@ public interface OrderApi {
 		"INVALID_TICKET_STATE"
 	})
 	ApiResponse<OrderResponseDto> createOrder(@Valid @RequestBody OrderRequestDto orderRequestDto);
+
+	@Operation(
+		summary = "주문 생성 및 결제",
+		description = "새로운 주문을 생성합니다."
+	)
+	@ApiErrorCode({
+		"NOT_FOUND_EVENT",
+		"NOT_FOUND_SEAT",
+		"NOT_FOUND_USER",
+		"TICKET_NOT_IN_PROGRESS",
+		"TICKET_NOT_FOUND",
+		"UNAUTHORIZED_TICKET_ACCESS",
+		"INVALID_TICKET_STATE"
+	})
+	ApiResponse<V2_OrderResponseDto> v2_createOrder(@Valid @RequestBody OrderRequestDto orderRequestDto);
 }

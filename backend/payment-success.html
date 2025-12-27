@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 완료</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #1e293b;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #334155;
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background-color: #f1f5f9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+        }
+
+        .status {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status.success {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status.error {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 14px;
+            padding: 12px;
+            background-color: #fee2e2;
+            border-radius: 6px;
+            margin-top: 12px;
+        }
+
+        .success-icon {
+            text-align: center;
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        pre {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>결제 처리</h1>
+
+        <!-- 로딩 상태 -->
+        <div class="section" id="loading-section">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>결제를 처리하고 있습니다...</p>
+            </div>
+        </div>
+
+        <!-- 성공 상태 -->
+        <div class="section" id="success-section" style="display: none;">
+            <div class="success-icon">✅</div>
+            <h2 style="text-align: center; color: #16a34a;">결제가 완료되었습니다!</h2>
+
+            <div class="info-box">
+                <h3 style="margin-bottom: 12px; color: #334155;">결제 정보</h3>
+                <div class="info-item">
+                    <span class="info-label">주문 ID:</span>
+                    <span id="success-order-id"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">결제 키:</span>
+                    <span id="success-payment-key" style="font-size: 12px; word-break: break-all;"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">결제 금액:</span>
+                    <span id="success-amount"></span>
+                </div>
+            </div>
+
+            <div class="info-box" style="margin-top: 16px;">
+                <h3 style="margin-bottom: 12px; color: #334155;">서버 응답</h3>
+                <pre id="success-response"></pre>
+            </div>
+
+            <button onclick="goToHome()">처음으로 돌아가기</button>
+        </div>
+
+        <!-- 에러 상태 -->
+        <div class="section" id="error-section" style="display: none;">
+            <div style="text-align: center; font-size: 60px; margin-bottom: 20px;">❌</div>
+            <h2 style="text-align: center; color: #dc2626;">결제 처리 실패</h2>
+
+            <div class="error-message" id="error-message"></div>
+
+            <div class="info-box" style="margin-top: 16px;">
+                <h3 style="margin-bottom: 12px; color: #334155;">전달된 파라미터</h3>
+                <div class="info-item">
+                    <span class="info-label">주문 ID:</span>
+                    <span id="error-order-id"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">결제 키:</span>
+                    <span id="error-payment-key" style="font-size: 12px; word-break: break-all;"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">금액:</span>
+                    <span id="error-amount"></span>
+                </div>
+            </div>
+
+            <button onclick="goToHome()">처음으로 돌아가기</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080';
+
+        // URL 파라미터 추출
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentKey = urlParams.get('paymentKey');
+        const orderId = urlParams.get('orderId');
+        const amount = urlParams.get('amount');
+
+        // 페이지 로드 시 결제 확인 API 호출
+        window.onload = async function() {
+            // 디버깅: URL과 파라미터 확인
+            console.log('현재 URL:', window.location.href);
+            console.log('URL 파라미터:', {
+                paymentKey: paymentKey,
+                orderId: orderId,
+                amount: amount
+            });
+
+            // JWT 토큰 확인
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                showError('로그인 정보가 없습니다. 다시 로그인해주세요.');
+                displayErrorParams();
+                return;
+            }
+
+            if (!paymentKey || !orderId || !amount) {
+                showError('결제 정보가 올바르지 않습니다.');
+                console.error('누락된 파라미터:', {
+                    paymentKey: paymentKey || 'MISSING',
+                    orderId: orderId || 'MISSING',
+                    amount: amount || 'MISSING'
+                });
+                displayErrorParams();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v2/payments/confirm`, { //
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        paymentKey: paymentKey,
+                        amount: parseInt(amount)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || '결제 확인 실패');
+                }
+
+                // 성공 처리
+                showSuccess(data.data);
+
+            } catch (error) {
+                showError(error.message);
+                displayErrorParams();
+            }
+        };
+
+        // 성공 화면 표시
+        function showSuccess(data) {
+            document.getElementById('loading-section').style.display = 'none';
+            document.getElementById('success-section').style.display = 'block';
+
+            document.getElementById('success-order-id').textContent = orderId;
+            document.getElementById('success-payment-key').textContent = paymentKey;
+            document.getElementById('success-amount').textContent = parseInt(amount).toLocaleString() + '원';
+            document.getElementById('success-response').textContent = JSON.stringify(data, null, 2);
+        }
+
+        // 에러 화면 표시
+        function showError(message) {
+            document.getElementById('loading-section').style.display = 'none';
+            document.getElementById('error-section').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+
+        // 에러 파라미터 표시
+        function displayErrorParams() {
+            document.getElementById('error-order-id').textContent = orderId || 'N/A';
+            document.getElementById('error-payment-key').textContent = paymentKey || 'N/A';
+            document.getElementById('error-amount').textContent = amount ? parseInt(amount).toLocaleString() + '원' : 'N/A';
+        }
+
+        // 처음으로 돌아가기
+        function goToHome() {
+            window.location.href = '/payment-test.html';
+        }
+    </script>
+</body>
+</html>
