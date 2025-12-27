@@ -39,13 +39,14 @@ public class OrderService {
 		Ticket draft = ticketService.getDraftTicket(orderRequestDto.eventId(), orderRequestDto.seatId(), userId);
 
 		// 이미 PENDING 상태의 Order가 있는지 확인
+		// 다중 요청 방어 로직
 		Optional<Order> existingOrder = orderRepository.findByTicketIdAndStatus(
 			draft.getId(),
 			OrderStatus.PENDING
 		);
 
 		if (existingOrder.isPresent()) {
-			// 기존 Order 재사용 (새로 만들지 않음!)
+			// 기존 Order 재사용 (새로 만들지 않음)
 			log.info("Duplicate order request, reusing existing orderId={}", existingOrder.get().getId());
 			return OrderResponseDto.from(existingOrder.get(), draft);
 		}
