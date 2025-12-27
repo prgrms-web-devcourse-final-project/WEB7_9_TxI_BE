@@ -65,30 +65,11 @@ public class EventOpenScheduler {
 	}
 
 	/**
-	 * PRE_CLOSED → QUEUE_READY (대기열 준비)
-	 * ticketOpenAt 10분 전에 대기열 준비 상태로 전환
-	 */
-	@Scheduled(cron = "${event.scheduler.status.cron:0 * * * * *}", zone = "Asia/Seoul")
-	@SchedulerLock(
-		name = "EventQueueReady",
-		lockAtMostFor = "2m",
-		lockAtLeastFor = "10s"
-	)
-	public void prepareQueue() {
-		processStatusTransition(
-			EventStatus.PRE_CLOSED,
-			EventStatus.QUEUE_READY,
-			"QueueReady",
-			(event, now) -> {
-				LocalDateTime queueReadyTime = event.getTicketOpenAt().minusMinutes(10);
-				return !queueReadyTime.isAfter(now);
-			}
-		);
-	}
-
-	/**
 	 * QUEUE_READY → OPEN (티켓팅 시작)
 	 * ticketOpenAt 시간이 되면 티켓팅 오픈
+	 *
+	 * 참고: PRE_CLOSED → QUEUE_READY 전환은 QueueShuffleScheduler에서 처리
+	 * (ticketOpenAt 1시간 전에 랜덤 큐 생성 후 QUEUE_READY로 상태 변경)
 	 */
 	@Scheduled(cron = "${event.scheduler.open.cron}", zone = "Asia/Seoul")
 	@SchedulerLock(

@@ -88,28 +88,6 @@ class EventOpenSchedulerTest {
 		assertThat(result.getStatus()).isEqualTo(EventStatus.PRE_CLOSED);
 	}
 
-	@Test
-	@DisplayName("PRE_CLOSED 상태 이벤트가 ticketOpenAt 10분 전이 되면 QUEUE_READY로 전환된다")
-	void prepareQueue_success() {
-		// given: ticketOpenAt - 10분이 과거인 PRE_CLOSED 상태 이벤트
-		LocalDateTime now = LocalDateTime.now();
-		Event event = createEvent(
-			EventStatus.PRE_CLOSED,
-			now.minusHours(3),    // preOpenAt
-			now.minusHours(2),    // preCloseAt
-			now.plusMinutes(5),   // ticketOpenAt: 5분 후 (10분 전은 과거)
-			now.plusHours(2),     // ticketCloseAt
-			now.plusDays(1)       // eventDate
-		);
-		eventRepository.save(event);
-
-		// when: 스케줄러 실행
-		scheduler.prepareQueue();
-
-		// then: QUEUE_READY 상태로 전환
-		Event result = eventRepository.findById(event.getId()).orElseThrow();
-		assertThat(result.getStatus()).isEqualTo(EventStatus.QUEUE_READY);
-	}
 
 	@Test
 	@DisplayName("QUEUE_READY 상태 이벤트가 ticketOpenAt 시간이 되면 OPEN으로 전환된다")
@@ -246,31 +224,9 @@ class EventOpenSchedulerTest {
 		assertThat(result.getStatus()).isEqualTo(EventStatus.PRE_OPEN);
 	}
 
-	@Test
-	@DisplayName("QUEUE_READY 스케줄러는 ticketOpenAt 10분 전 정확히 맞춰서도 전환된다")
-	void prepareQueue_exactTime_success() {
-		// given: ticketOpenAt - 10분이 정확히 현재 시간인 이벤트
-		LocalDateTime now = LocalDateTime.now();
-		Event event = createEvent(
-			EventStatus.PRE_CLOSED,
-			now.minusHours(3),
-			now.minusHours(2),
-			now.plusMinutes(10),   // ticketOpenAt: 정확히 10분 후
-			now.plusHours(2),
-			now.plusDays(1)
-		);
-		eventRepository.save(event);
-
-		// when: 스케줄러 실행
-		scheduler.prepareQueue();
-
-		// then: QUEUE_READY 상태로 전환
-		Event result = eventRepository.findById(event.getId()).orElseThrow();
-		assertThat(result.getStatus()).isEqualTo(EventStatus.QUEUE_READY);
-	}
 
 	@Test
-	@DisplayName("전체 이벤트 라이프사이클 상태 전환 통합 테스트")
+	@DisplayName("전체 이벤트 라이프사이클 상태 전환 통합 테스트 (QUEUE_READY 제외)")
 	void fullLifecycle_allTransitions_success() {
 		// given: 모든 시간이 과거인 READY 상태 이벤트
 		LocalDateTime now = LocalDateTime.now();
@@ -294,10 +250,9 @@ class EventOpenSchedulerTest {
 		result = eventRepository.findById(event.getId()).orElseThrow();
 		assertThat(result.getStatus()).isEqualTo(EventStatus.PRE_CLOSED);
 
-		// when & then: PRE_CLOSED → QUEUE_READY
-		scheduler.prepareQueue();
-		result = eventRepository.findById(event.getId()).orElseThrow();
-		assertThat(result.getStatus()).isEqualTo(EventStatus.QUEUE_READY);
+		// PRE_CLOSED → QUEUE_READY는 QueueShuffleScheduler에서 처리하므로 수동으로 상태 변경
+		result.changeStatus(EventStatus.QUEUE_READY);
+		eventRepository.save(result);
 
 		// when & then: QUEUE_READY → OPEN
 		scheduler.openTicketing();
@@ -320,7 +275,6 @@ class EventOpenSchedulerTest {
 		assertThatCode(() -> {
 			scheduler.openPreRegistration();
 			scheduler.closePreRegistration();
-			scheduler.prepareQueue();
 			scheduler.openTicketing();
 			scheduler.closeTicketing();
 		}).doesNotThrowAnyException();
@@ -509,74 +463,6 @@ class EventOpenSchedulerTest {
 		verify(spyEventRepository, times(1)).findByStatus(EventStatus.READY);
 	}
 
-	@Test
-	@DisplayName("prepareQueue lambda 조건: isBefore만 참인 경우")
-	void prepareQueue_condition_onlyIsBefore() {
-		// given: ticketOpenAt - 10분보다 과거 (isBefore=true, isEqual=false)
-		LocalDateTime now = LocalDateTime.now();
-		Event event = createEvent(
-			EventStatus.PRE_CLOSED,
-			now.minusHours(3),
-			now.minusHours(2),
-			now.plusMinutes(5),   // ticketOpenAt: 5분 후 (10분 전은 과거)
-			now.plusHours(2),
-			now.plusDays(1)
-		);
-		eventRepository.save(event);
-
-		// when
-		scheduler.prepareQueue();
-
-		// then
-		Event result = eventRepository.findById(event.getId()).orElseThrow();
-		assertThat(result.getStatus()).isEqualTo(EventStatus.QUEUE_READY);
-	}
-
-	@Test
-	@DisplayName("prepareQueue lambda 조건: isEqual인 경우")
-	void prepareQueue_condition_isEqual() {
-		// given: ticketOpenAt - 10분이 정확히 현재 시간
-		LocalDateTime now = LocalDateTime.now();
-		Event event = createEvent(
-			EventStatus.PRE_CLOSED,
-			now.minusHours(3),
-			now.minusHours(2),
-			now.plusMinutes(10),   // ticketOpenAt: 정확히 10분 후
-			now.plusHours(2),
-			now.plusDays(1)
-		);
-		eventRepository.save(event);
-
-		// when
-		scheduler.prepareQueue();
-
-		// then
-		Event result = eventRepository.findById(event.getId()).orElseThrow();
-		assertThat(result.getStatus()).isEqualTo(EventStatus.QUEUE_READY);
-	}
-
-	@Test
-	@DisplayName("prepareQueue lambda 조건: 둘 다 false인 경우 (미래)")
-	void prepareQueue_condition_future() {
-		// given: ticketOpenAt - 10분이 미래
-		LocalDateTime now = LocalDateTime.now();
-		Event event = createEvent(
-			EventStatus.PRE_CLOSED,
-			now.minusHours(3),
-			now.minusHours(2),
-			now.plusHours(1),   // ticketOpenAt: 1시간 후 (10분 전은 미래)
-			now.plusHours(2),
-			now.plusDays(1)
-		);
-		eventRepository.save(event);
-
-		// when
-		scheduler.prepareQueue();
-
-		// then: 상태 변경 없음
-		Event result = eventRepository.findById(event.getId()).orElseThrow();
-		assertThat(result.getStatus()).isEqualTo(EventStatus.PRE_CLOSED);
-	}
 
 	@Test
 	@DisplayName("closePreRegistration lambda 조건: isBefore만 참인 경우")

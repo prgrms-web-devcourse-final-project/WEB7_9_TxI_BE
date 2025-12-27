@@ -239,6 +239,64 @@ class EventServiceTest {
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.DUPLICATE_EVENT);
 		}
+
+		@Test
+		@DisplayName("이미지 URL이 null인 경우 이벤트 생성 성공")
+		void createEventWithNullImageUrl() {
+			// given
+			EventCreateRequest request = new EventCreateRequest(
+				"테스트 이벤트",
+				EventCategory.CONCERT,
+				"테스트 설명",
+				"테스트 장소",
+				null,
+				10000,
+				50000,
+				preOpenAt,
+				preCloseAt,
+				ticketOpenAt,
+				ticketCloseAt,
+				eventDate,
+				100
+			);
+
+			// when
+			EventResponse response = eventService.createEvent(request);
+
+			// then
+			assertThat(response.id()).isNotNull();
+			assertThat(response.title()).isEqualTo("테스트 이벤트");
+			verify(s3MoveService, never()).moveImage(anyLong(), anyString());
+		}
+
+		@Test
+		@DisplayName("이미지 URL이 빈 문자열인 경우 이벤트 생성 성공")
+		void createEventWithEmptyImageUrl() {
+			// given
+			EventCreateRequest request = new EventCreateRequest(
+				"테스트 이벤트",
+				EventCategory.CONCERT,
+				"테스트 설명",
+				"테스트 장소",
+				"",
+				10000,
+				50000,
+				preOpenAt,
+				preCloseAt,
+				ticketOpenAt,
+				ticketCloseAt,
+				eventDate,
+				100
+			);
+
+			// when
+			EventResponse response = eventService.createEvent(request);
+
+			// then
+			assertThat(response.id()).isNotNull();
+			assertThat(response.title()).isEqualTo("테스트 이벤트");
+			verify(s3MoveService, never()).moveImage(anyLong(), anyString());
+		}
 	}
 
 	@Nested
@@ -294,6 +352,100 @@ class EventServiceTest {
 			// DB 검증
 			Event updatedEvent = eventRepository.findById(existingEvent.getId()).orElseThrow();
 			assertThat(updatedEvent.getTitle()).isEqualTo("수정된 이벤트");
+		}
+
+		@Test
+		@DisplayName("이미지 URL이 temp로 시작하는 경우 이미지 이동 처리")
+		void updateEventWithTempImageUrl() {
+			// given
+			Event existingEvent = eventRepository.save(Event.builder()
+				.title("기존 이벤트")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("events/1/main.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.eventDate(now.plusDays(35))
+				.maxTicketAmount(100)
+				.status(EventStatus.READY)
+				.build());
+
+			EventUpdateRequest request = new EventUpdateRequest(
+				"수정된 이벤트",
+				EventCategory.POPUP,
+				"수정된 설명",
+				"수정된 장소",
+				"events/temp/new-image.jpg",
+				20000,
+				80000,
+				preOpenAt,
+				preCloseAt,
+				ticketOpenAt,
+				ticketCloseAt,
+				now.plusDays(35),
+				200,
+				EventStatus.PRE_OPEN
+			);
+
+			// when
+			EventResponse response = eventService.updateEvent(existingEvent.getId(), request);
+
+			// then
+			assertThat(response.title()).isEqualTo("수정된 이벤트");
+			verify(s3MoveService, times(1)).moveImage(existingEvent.getId(), "events/temp/new-image.jpg");
+		}
+
+		@Test
+		@DisplayName("이미지 URL이 null인 경우 기존 이미지 유지")
+		void updateEventWithNullImageUrl() {
+			// given
+			Event existingEvent = eventRepository.save(Event.builder()
+				.title("기존 이벤트")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("events/1/main.jpg")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.eventDate(now.plusDays(35))
+				.maxTicketAmount(100)
+				.status(EventStatus.READY)
+				.build());
+
+			EventUpdateRequest request = new EventUpdateRequest(
+				"수정된 이벤트",
+				EventCategory.POPUP,
+				"수정된 설명",
+				"수정된 장소",
+				null,
+				20000,
+				80000,
+				preOpenAt,
+				preCloseAt,
+				ticketOpenAt,
+				ticketCloseAt,
+				now.plusDays(35),
+				200,
+				EventStatus.PRE_OPEN
+			);
+
+			// when
+			EventResponse response = eventService.updateEvent(existingEvent.getId(), request);
+
+			// then
+			assertThat(response.title()).isEqualTo("수정된 이벤트");
+			Event updatedEvent = eventRepository.findById(existingEvent.getId()).orElseThrow();
+			assertThat(updatedEvent.getImageUrl()).isEqualTo("events/1/main.jpg");
+			verify(s3MoveService, never()).moveImage(anyLong(), anyString());
 		}
 
 		@Test
@@ -528,6 +680,66 @@ class EventServiceTest {
 			assertThatThrownBy(() -> eventService.getEvent(eventId))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.NOT_FOUND_EVENT);
+		}
+
+		@Test
+		@DisplayName("이미지 URL이 null인 경우 조회 성공")
+		void getEventWithNullImageUrl() {
+			// given
+			Event event = eventRepository.save(Event.builder()
+				.title("테스트 이벤트")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl(null)
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.eventDate(now.plusDays(35))
+				.maxTicketAmount(100)
+				.status(EventStatus.READY)
+				.build());
+
+			// when
+			EventResponse response = eventService.getEvent(event.getId());
+
+			// then
+			assertThat(response.id()).isEqualTo(event.getId());
+			assertThat(response.title()).isEqualTo("테스트 이벤트");
+			verify(s3PresignedService, never()).issueDownloadUrl(anyString());
+		}
+
+		@Test
+		@DisplayName("이미지 URL이 빈 문자열인 경우 조회 성공")
+		void getEventWithBlankImageUrl() {
+			// given
+			Event event = eventRepository.save(Event.builder()
+				.title("테스트 이벤트")
+				.category(EventCategory.CONCERT)
+				.description("테스트 설명")
+				.place("테스트 장소")
+				.imageUrl("")
+				.minPrice(10000)
+				.maxPrice(50000)
+				.preOpenAt(preOpenAt)
+				.preCloseAt(preCloseAt)
+				.ticketOpenAt(ticketOpenAt)
+				.ticketCloseAt(ticketCloseAt)
+				.eventDate(now.plusDays(35))
+				.maxTicketAmount(100)
+				.status(EventStatus.READY)
+				.build());
+
+			// when
+			EventResponse response = eventService.getEvent(event.getId());
+
+			// then
+			assertThat(response.id()).isEqualTo(event.getId());
+			assertThat(response.title()).isEqualTo("테스트 이벤트");
+			verify(s3PresignedService, never()).issueDownloadUrl(anyString());
 		}
 	}
 
