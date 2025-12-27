@@ -30,5 +30,18 @@ public interface OrderApi {
 	})
 	ApiResponse<OrderResponseDto> createOrder(@Valid @RequestBody OrderRequestDto orderRequestDto);
 
+	@Operation(
+		summary = "주문 생성 및 결제",
+		description = "새로운 주문을 생성합니다."
+	)
+	@ApiErrorCode({
+		"NOT_FOUND_EVENT",
+		"NOT_FOUND_SEAT",
+		"NOT_FOUND_USER",
+		"TICKET_NOT_IN_PROGRESS",
+		"TICKET_NOT_FOUND",
+		"UNAUTHORIZED_TICKET_ACCESS",
+		"INVALID_TICKET_STATE"
+	})
 	ApiResponse<V2_OrderResponseDto> v2_createOrder(@Valid @RequestBody OrderRequestDto orderRequestDto);
 }
