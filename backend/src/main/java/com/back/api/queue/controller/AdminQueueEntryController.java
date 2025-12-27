@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.queue.dto.request.ShuffleQueueRequest;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
+import com.back.api.queue.dto.response.ProcessEntriesResponse;
 import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.ShuffleQueueResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
@@ -78,6 +79,20 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 	) {
 		queueEntryRedisRepository.clearAll(eventId);
 		return ApiResponse.ok("대기열이 초기화되었습니다.", null);
+	}
+
+	@Override
+	@PostMapping("/users/{userId}/process-include")
+	public ApiResponse<ProcessEntriesResponse> processIncludingUser(
+		@PathVariable Long eventId,
+		@PathVariable Long userId
+	) {
+		ProcessEntriesResponse response = queueEntryProcessService.processTopEntriesIncludingMeForTest(
+			eventId,
+			userId
+		);
+
+		return ApiResponse.ok("해당 유저 포함 상위 대기자 입장 처리가 완료되었습니다.", response);
 	}
 
 }
