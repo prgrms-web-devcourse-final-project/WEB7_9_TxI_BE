@@ -89,6 +89,7 @@ public class SecurityConfig {
 				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 				.requestMatchers("/actuator/**").permitAll()    // 모니터링/Actuator 관련
 				.requestMatchers("/api/v1/**").authenticated()
+				.requestMatchers("/api/v2/**").authenticated()
 				.anyRequest().authenticated()
 			)
 			.csrf(csrf -> csrf
@@ -96,6 +97,7 @@ public class SecurityConfig {
 				.ignoringRequestMatchers("/swagger-ui/**") // Swagger UI는 CSRF 제외
 				.ignoringRequestMatchers("/ws/**")
 				.ignoringRequestMatchers("/api/v1/**")  // 임시 csrf 제외
+				.ignoringRequestMatchers("/api/v2/**")  // 임시 csrf 제외
 			)
 			.headers(headers -> headers
 				.frameOptions(frameOptions -> frameOptions.sameOrigin())  // H2 콘솔 iframe 허용
