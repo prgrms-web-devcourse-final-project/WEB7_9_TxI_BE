@@ -1,5 +1,6 @@
 package com.back.api.payment.order.service;
 
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -18,9 +19,11 @@ import com.back.global.error.code.PaymentErrorCode;
 import com.back.global.error.exception.ErrorException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
 	private final OrderRepository orderRepository;
 	private final TicketService ticketService;
@@ -34,6 +37,18 @@ public class OrderService {
 
 		// 티켓이 DRAFT 상태인지 확인
 		Ticket draft = ticketService.getDraftTicket(orderRequestDto.eventId(), orderRequestDto.seatId(), userId);
+
+		// 이미 PENDING 상태의 Order가 있는지 확인
+		Optional<Order> existingOrder = orderRepository.findByTicketIdAndStatus(
+			draft.getId(),
+			OrderStatus.PENDING
+		);
+
+		if (existingOrder.isPresent()) {
+			// 기존 Order 재사용 (새로 만들지 않음!)
+			log.info("Duplicate order request, reusing existing orderId={}", existingOrder.get().getId());
+			return OrderResponseDto.from(existingOrder.get(), draft);
+		}
 
 		// 금액 일치 여부 확인
 		Integer actualAmount = draft.getSeat().getPrice();
