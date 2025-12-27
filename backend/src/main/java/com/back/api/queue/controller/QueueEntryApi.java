@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.back.api.queue.dto.request.ProcessEntriesRequest;
+import com.back.api.queue.dto.response.MoveToBackResponse;
 import com.back.api.queue.dto.response.ProcessEntriesResponse;
 import com.back.api.queue.dto.response.QueueEntryStatusResponse;
 import com.back.global.config.swagger.ApiErrorCode;
@@ -86,6 +87,20 @@ public interface QueueEntryApi {
 		"NOT_INVALID_COUNT"
 	})
 	ApiResponse<ProcessEntriesResponse> processIncludingMe(
+		@Parameter(description = "이벤트 ID", example = "1")
+		@PathVariable Long eventId
+	);
+
+
+	@Operation(
+		summary = "사용자 대기열 맨 뒤로 이동",
+		description = "의도적으로 퇴장한 유저의 순번을 맨 뒤로 이동시킵니다."
+	)
+	@ApiErrorCode({
+		"NOT_FOUND_QUEUE_ENTRY",
+		"NOT_ENTERED_STATUS"
+	})
+	ApiResponse<MoveToBackResponse> moveToBack(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId
 	);
