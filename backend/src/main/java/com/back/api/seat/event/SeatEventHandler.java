@@ -18,7 +18,8 @@ public class SeatEventHandler {
 
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleSeatStatus(SeatStatusMessage msg) {
-		log.debug("SEAT_EVENT_RECEIVED eventId={} seatId={} status={}", msg.eventId(), msg.seatId(), msg.status());
+		log.debug("SEAT_EVENT_RECEIVED eventId={} seatId={} currentStatus={}", msg.eventId(), msg.seatId(),
+			msg.currentStatus());
 		publisher.publish(msg);
 	}
 }
