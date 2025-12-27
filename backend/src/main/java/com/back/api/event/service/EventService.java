@@ -33,7 +33,6 @@ public class EventService {
 	private final S3MoveService s3MoveService;
 	private final S3PresignedService s3PresignedService;
 
-
 	@Transactional
 	public EventResponse createEvent(EventCreateRequest request) {
 
@@ -156,9 +155,7 @@ public class EventService {
 
 	private void validateEventDates(LocalDateTime preOpenAt, LocalDateTime preCloseAt,
 		LocalDateTime ticketOpenAt, LocalDateTime ticketCloseAt) {
-		if (preOpenAt.isBefore(LocalDateTime.now())) {
-			throw new ErrorException(EventErrorCode.INVALID_EVENT_DATE);
-		}
+
 		if (preOpenAt.isAfter(preCloseAt)) {
 			throw new ErrorException(EventErrorCode.INVALID_EVENT_DATE);
 		}
@@ -190,7 +187,6 @@ public class EventService {
 		return eventRepository.findByStatus(status);
 	}
 
-
 	public List<Event> findEventsByTicketOpenAtBetweenAndStatus(
 		LocalDateTime start,
 		LocalDateTime end,
@@ -198,6 +194,5 @@ public class EventService {
 	) {
 		return eventRepository.findByTicketOpenAtBetweenAndStatus(start, end, status);
 	}
-
 
 }
