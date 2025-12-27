@@ -79,6 +79,7 @@ custom:
       - "X-Requested-With"
       - "Cache-Control"
       - "Pragma"
+      - "X-Recaptcha-Token"
 
   jwt:
     secret: ${JWT_SECRET}
