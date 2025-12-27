@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA Token Generator - 백엔드 테스트용</title>
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdqrjQsAAAAAH135gDhYqN6aLCcM4x3UhLKkZsY"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .info-box code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #e83e8c;
+            font-size: 13px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #token {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            word-break: break-all;
+            display: none;
+            border: 1px solid #dee2e6;
+        }
+
+        #token.show {
+            display: block;
+        }
+
+        .token-label {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .token-value {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 15px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #333;
+            border: 1px solid #dee2e6;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+
+        .success-msg {
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success-msg.show {
+            display: block;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .warning-box h4 {
+            margin-top: 0;
+            color: #856404;
+        }
+
+        .steps {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .steps h3 {
+            color: #0066cc;
+            margin-top: 0;
+        }
+
+        .steps ol {
+            padding-left: 20px;
+        }
+
+        .steps li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔐 reCAPTCHA Token Generator</h1>
+    <p class="subtitle">백엔드 API 테스트용 토큰 생성기</p>
+
+    <div class="info-box">
+        <h3>📌 사용 중인 키 정보</h3>
+        <p><strong>Site Key (프로덕션):</strong> <code>6LdqrjQsAAAAAH135gDhYqN6aLCcM4x3UhLKkZsY</code></p>
+        <p><strong>Secret Key (백엔드 .env):</strong> <code>6LdqrjQsAAAAAEBtE16lbtXPhlaKHjPLFfWYVu7s</code></p>
+        <p style="margin-bottom: 0; color: #666; font-size: 13px;">
+            ✅ 이 키들은 실제 프로덕션 키입니다. Google이 실제로 검증을 수행합니다.
+        </p>
+    </div>
+
+    <button onclick="generateToken()">🎯 토큰 생성하기</button>
+
+    <div id="token">
+        <div class="token-label">생성된 reCAPTCHA 토큰:</div>
+        <div class="token-value" style="position: relative;">
+            <span id="tokenValue"></span>
+            <button class="copy-btn" onclick="copyToken()">📋 복사</button>
+        </div>
+        <div class="success-msg" id="copyMsg">✅ 클립보드에 복사되었습니다!</div>
+    </div>
+
+    <div class="steps">
+        <h3>📋 Swagger로 테스트하는 방법</h3>
+        <ol>
+            <li><strong>"토큰 생성하기"</strong> 버튼을 클릭해서 토큰 발급</li>
+            <li>생성된 토큰을 <strong>복사</strong> (📋 복사 버튼 클릭)</li>
+            <li><code>http://localhost:8080/swagger-ui/index.html</code> 접속</li>
+            <li><strong>PreRegister API</strong> 섹션에서 <code>POST /api/v1/events/{eventId}/pre-registers</code> 선택</li>
+            <li><strong>"Try it out"</strong> 클릭</li>
+            <li><strong>X-Recaptcha-Token</strong> 필드에 복사한 토큰 붙여넣기</li>
+            <li><strong>eventId</strong> 입력 (예: 1)</li>
+            <li><strong>Execute</strong> 클릭</li>
+        </ol>
+    </div>
+
+    <div class="warning-box">
+        <h4>⚠️ 주의사항</h4>
+        <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+            <li><strong>토큰은 2분 후 만료</strong>됩니다. 오래된 토큰은 재생성하세요.</li>
+            <li><strong>한 번 사용한 토큰은 재사용 불가</strong>합니다. 새로운 API 테스트마다 토큰을 재생성하세요.</li>
+            <li><strong>실제 프로덕션 키로 변경</strong> 시, 이 HTML 파일의 Site Key를 교체하세요.</li>
+            <li>백엔드 <code>.env</code> 파일의 <code>GOOGLE_RECAPTCHA_SECRET_KEY</code>가 위의 Secret Key와 일치하는지 확인하세요.</li>
+        </ul>
+    </div>
+
+    <div class="info-box" style="margin-top: 20px;">
+        <h3>🔧 다른 프로덕션 키로 변경하는 방법</h3>
+        <p>1. <a href="https://www.google.com/recaptcha/admin" target="_blank">Google reCAPTCHA Admin Console</a>에서 Site
+            Key 발급</p>
+        <p>2. 이 HTML 파일의 <code>&lt;script&gt;</code> 태그에서 Site Key 교체:</p>
+        <code style="display: block; margin: 10px 0;">
+            &lt;script src="https://www.google.com/recaptcha/api.js?render=<strong
+                style="color: red;">YOUR_SITE_KEY</strong>"&gt;&lt;/script&gt;
+        </code>
+        <p>3. 백엔드 <code>.env</code> 파일에 Secret Key 설정:</p>
+        <code style="display: block; margin: 10px 0;">
+            GOOGLE_RECAPTCHA_SECRET_KEY=<strong style="color: red;">YOUR_SECRET_KEY</strong>
+        </code>
+    </div>
+</div>
+
+<script>
+    let currentToken = '';
+
+    function generateToken() {
+        // reCAPTCHA가 로드되었는지 확인
+        if (typeof grecaptcha === 'undefined') {
+            alert('❌ reCAPTCHA가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
+            return;
+        }
+
+        grecaptcha.ready(function () {
+            grecaptcha.execute('6LdqrjQsAAAAAH135gDhYqN6aLCcM4x3UhLKkZsY', {action: 'pre_register'})
+                .then(function (token) {
+                    currentToken = token;
+                    document.getElementById('tokenValue').textContent = token;
+                    document.getElementById('token').classList.add('show');
+                    console.log('✅ 토큰 생성 성공:', token);
+
+                    // 성공 애니메이션
+                    const tokenBox = document.getElementById('token');
+                    tokenBox.style.animation = 'slideIn 0.3s ease-out';
+                })
+                .catch(function (error) {
+                    alert('❌ 토큰 생성 실패: ' + error);
+                    console.error('토큰 생성 오류:', error);
+                });
+        });
+    }
+
+    function copyToken() {
+        if (!currentToken) {
+            alert('❌ 먼저 토큰을 생성해주세요.');
+            return;
+        }
+
+        navigator.clipboard.writeText(currentToken)
+            .then(function () {
+                const copyMsg = document.getElementById('copyMsg');
+                copyMsg.classList.add('show');
+
+                // 2초 후 메시지 숨김
+                setTimeout(function () {
+                    copyMsg.classList.remove('show');
+                }, 2000);
+
+                console.log('✅ 클립보드에 복사됨:', currentToken);
+            })
+            .catch(function (error) {
+                alert('❌ 복사 실패: ' + error);
+                console.error('복사 오류:', error);
+            });
+    }
+
+    // 페이지 로드 시 안내
+    console.log('📋 reCAPTCHA Token Generator 로드됨');
+    console.log('🔑 프로덕션 Site Key: 6LdqrjQsAAAAAH135gDhYqN6aLCcM4x3UhLKkZsY');
+    console.log('🔐 프로덕션 Secret Key: 6LdqrjQsAAAAAEBtE16lbtXPhlaKHjPLFfWYVu7s');
+    console.log('💡 "토큰 생성하기" 버튼을 클릭하세요!');
+
+    // 애니메이션 스타일 추가
+    const style = document.createElement('style');
+    style.textContent = `
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+    document.head.appendChild(style);
+</script>
+</body>
+</html>

@@ -336,7 +336,7 @@ class EventServiceTest {
 				preCloseAt,
 				ticketOpenAt,
 				ticketCloseAt,
-			now.plusDays(35),
+				now.plusDays(35),
 				200,
 				EventStatus.PRE_OPEN
 			);
@@ -529,7 +529,7 @@ class EventServiceTest {
 				preCloseAt,
 				ticketOpenAt, // 첫 번째 이벤트와 동일한 ticketOpenAt
 				ticketCloseAt,
-			now.plusDays(35),
+				now.plusDays(35),
 				200,
 				EventStatus.PRE_OPEN
 			);
@@ -574,7 +574,7 @@ class EventServiceTest {
 				preCloseAt,
 				ticketOpenAt, // 동일한 ticketOpenAt
 				ticketCloseAt,
-			now.plusDays(35),
+				now.plusDays(35),
 				200,
 				EventStatus.PRE_OPEN
 			);
