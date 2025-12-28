@@ -2,6 +2,8 @@ package com.back.domain.payment.payment.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,7 +17,7 @@ public class Payment {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "paymentKey", nullable = false)
+	@Column(name = "payment_key", nullable = false)
 	private String paymentKey;
 
 	@Column(name = "order_id", nullable = false)
@@ -27,6 +29,7 @@ public class Payment {
 	@Column(name = "method", nullable = false)
 	private String method;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false)
 	private ApproveStatus status;
 
