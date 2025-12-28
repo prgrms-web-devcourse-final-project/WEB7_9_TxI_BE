@@ -55,7 +55,7 @@ public class DraftTicketExpirationScheduler {
 
 		try {
 			MdcContext.putRunId(runId);
-			LocalDateTime expiredBefore = LocalDateTime.now().minusMinutes(15);
+			LocalDateTime expiredBefore = LocalDateTime.now().minusMinutes(5);
 
 			log.info(
 				"SCHED_START job=DraftTicketExpiration expiredBefore={}",

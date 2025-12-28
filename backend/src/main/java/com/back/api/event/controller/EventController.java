@@ -22,13 +22,13 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('NORMAL')")
 public class EventController implements EventApi {
 
 	private final EventService eventService;
 
 	@Override
 	@GetMapping("/{eventId}")
-	@PreAuthorize("hasRole('NORMAL')")
 	public ApiResponse<EventResponse> getEvent(
 		@PathVariable Long eventId) {
 		EventResponse response = eventService.getEvent(eventId);
@@ -37,7 +37,6 @@ public class EventController implements EventApi {
 
 	@Override
 	@GetMapping
-	@PreAuthorize("hasRole('NORMAL')")
 	public ApiResponse<Page<EventListResponse>> getEvents(
 		@RequestParam(required = false) EventStatus status,
 		@RequestParam(required = false) EventCategory category,

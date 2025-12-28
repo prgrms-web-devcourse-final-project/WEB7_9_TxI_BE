@@ -78,9 +78,9 @@ class DraftTicketExpirationSchedulerTest {
 	@Transactional
 	@DisplayName("좌석이 할당된 만료된 Draft 티켓을 정상적으로 처리한다")
 	void expireDraftTicket_withSeat_success() throws Exception {
-		// given: 15분 이상 경과한 Draft 티켓 생성 (좌석 할당됨)
+		// given: 5분 이상 경과한 Draft 티켓 생성 (좌석 할당됨)
 		Ticket ticket = ticketHelper.createDraftTicket(user, seat, event);
-		setCreatedAt(ticket, LocalDateTime.now().minusMinutes(20));
+		setCreatedAt(ticket, LocalDateTime.now().minusMinutes(10));
 
 		// 좌석을 RESERVED 상태로 변경
 		seat.markAsReserved();
@@ -107,7 +107,7 @@ class DraftTicketExpirationSchedulerTest {
 	@Transactional
 	@DisplayName("좌석이 없는 만료된 Draft 티켓도 정상적으로 처리한다")
 	void expireDraftTicket_withoutSeat_success() throws Exception {
-		// given: 15분 이상 경과한 Draft 티켓 생성 (좌석 없음)
+		// given: 5분 이상 경과한 Draft 티켓 생성 (좌석 없음)
 		Ticket ticket = Ticket.builder()
 			.owner(user)
 			.event(event)
@@ -115,7 +115,7 @@ class DraftTicketExpirationSchedulerTest {
 			.ticketStatus(TicketStatus.DRAFT)
 			.build();
 		ticketRepository.save(ticket);
-		setCreatedAt(ticket, LocalDateTime.now().minusMinutes(20));
+		setCreatedAt(ticket, LocalDateTime.now().minusMinutes(10));
 
 		// 트랜잭션 커밋하여 스케줄러가 데이터를 볼 수 있도록 함
 		TestTransaction.flagForCommit();
@@ -152,7 +152,7 @@ class DraftTicketExpirationSchedulerTest {
 	void expireDraftTicket_paidTicket_ignored() throws Exception {
 		// given: 만료 시간이 지난 PAID 티켓
 		Ticket ticket = ticketHelper.createPaidTicket(user, seat, event);
-		setCreatedAt(ticket, LocalDateTime.now().minusMinutes(20));
+		setCreatedAt(ticket, LocalDateTime.now().minusMinutes(10));
 
 		// 트랜잭션 커밋하여 스케줄러가 데이터를 볼 수 있도록 함
 		TestTransaction.flagForCommit();
@@ -179,9 +179,9 @@ class DraftTicketExpirationSchedulerTest {
 		Ticket ticket2 = ticketHelper.createDraftTicket(user, seat2, event);
 		Ticket ticket3 = ticketHelper.createDraftTicket(user, seat3, event);
 
-		setCreatedAt(ticket1, LocalDateTime.now().minusMinutes(20));
-		setCreatedAt(ticket2, LocalDateTime.now().minusMinutes(20));
-		setCreatedAt(ticket3, LocalDateTime.now().minusMinutes(20));
+		setCreatedAt(ticket1, LocalDateTime.now().minusMinutes(10));
+		setCreatedAt(ticket2, LocalDateTime.now().minusMinutes(10));
+		setCreatedAt(ticket3, LocalDateTime.now().minusMinutes(10));
 
 		// 좌석들을 RESERVED 상태로 변경
 		seat.markAsReserved();
@@ -230,8 +230,8 @@ class DraftTicketExpirationSchedulerTest {
 			.build();
 		ticketRepository.save(ticketWithoutSeat);
 
-		setCreatedAt(ticketWithSeat, LocalDateTime.now().minusMinutes(20));
-		setCreatedAt(ticketWithoutSeat, LocalDateTime.now().minusMinutes(20));
+		setCreatedAt(ticketWithSeat, LocalDateTime.now().minusMinutes(10));
+		setCreatedAt(ticketWithoutSeat, LocalDateTime.now().minusMinutes(10));
 
 		seat.markAsReserved();
 		seatRepository.save(seat);

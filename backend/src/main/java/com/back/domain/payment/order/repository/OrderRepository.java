@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.back.domain.payment.order.entity.Order;
+import com.back.domain.payment.order.entity.OrderStatus;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -20,4 +21,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 		WHERE o.id = :orderId
 		""")
 	Optional<Order> findByIdWithDetails(@Param("orderId") Long orderId);
+
+	Optional<Order> findByTicketIdAndStatus(Long ticketId, OrderStatus orderStatus);
 }

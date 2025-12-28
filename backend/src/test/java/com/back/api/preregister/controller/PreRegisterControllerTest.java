@@ -1,6 +1,8 @@
 package com.back.api.preregister.controller;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -18,6 +20,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,8 +33,11 @@ import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
+import com.back.global.error.code.CommonErrorCode;
 import com.back.global.error.code.EventErrorCode;
 import com.back.global.error.code.PreRegisterErrorCode;
+import com.back.global.error.exception.ErrorException;
+import com.back.global.recaptcha.service.ReCaptchaService;
 import com.back.support.data.TestUser;
 import com.back.support.factory.EventFactory;
 import com.back.support.factory.PreRegisterFactory;
@@ -70,6 +76,9 @@ class PreRegisterControllerTest {
 
 	@Autowired
 	private TestAuthHelper testAuthHelper;
+
+	@MockitoBean
+	private ReCaptchaService reCaptchaService;
 
 	String token;
 
@@ -245,6 +254,84 @@ class PreRegisterControllerTest {
 					PreRegisterErrorCode.INVALID_PRE_REGISTRATION_PERIOD.getMessage()));
 		}
 
+		@Test
+		@DisplayName("유효한 reCAPTCHA 토큰으로 사전등록 성공")
+		void register_Success_WithValidRecaptcha() throws Exception {
+			// given
+			String validRecaptchaToken = "valid-recaptcha-token";
+
+			// reCAPTCHA 검증 성공하도록 Mock 설정
+			doNothing().when(reCaptchaService).verifyToken(eq(validRecaptchaToken), isNull());
+
+			// when & then
+			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
+					.header("X-Recaptcha-Token", validRecaptchaToken))
+				.andDo(print())
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.message").value("사전등록이 완료되었습니다."))
+				.andExpect(jsonPath("$.data.eventId").value(testEvent.getId()))
+				.andExpect(jsonPath("$.data.userId").value(testUser.user().getId()))
+				.andExpect(jsonPath("$.data.status").value("REGISTERED"));
+
+			// reCAPTCHA 검증이 호출되었는지 확인
+			verify(reCaptchaService, times(1)).verifyToken(eq(validRecaptchaToken), isNull());
+		}
+
+		@Test
+		@DisplayName("reCAPTCHA 토큰이 없으면 400 에러")
+		void register_Fail_MissingRecaptchaToken() throws Exception {
+			// given
+			// reCAPTCHA 토큰 누락 시 예외 발생하도록 Mock 설정
+			doThrow(new ErrorException(CommonErrorCode.RECAPTCHA_TOKEN_MISSING))
+				.when(reCaptchaService).verifyToken(isNull(), isNull());
+
+			// when & then
+			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token))
+				.andDo(print())
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(CommonErrorCode.RECAPTCHA_TOKEN_MISSING.getMessage()));
+		}
+
+		@Test
+		@DisplayName("reCAPTCHA 점수가 낮으면 400 에러")
+		void register_Fail_LowRecaptchaScore() throws Exception {
+			// given
+			String lowScoreRecaptchaToken = "low-score-token";
+
+			// 낮은 점수로 검증 실패하도록 Mock 설정
+			doThrow(new ErrorException(CommonErrorCode.RECAPTCHA_SCORE_TOO_LOW))
+				.when(reCaptchaService).verifyToken(eq(lowScoreRecaptchaToken), isNull());
+
+			// when & then
+			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
+					.header("X-Recaptcha-Token", lowScoreRecaptchaToken))
+				.andDo(print())
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(CommonErrorCode.RECAPTCHA_SCORE_TOO_LOW.getMessage()));
+		}
+
+		@Test
+		@DisplayName("reCAPTCHA 검증 실패 시 400 에러")
+		void register_Fail_RecaptchaVerificationFailed() throws Exception {
+			// given
+			String invalidRecaptchaToken = "invalid-token";
+
+			// 검증 실패하도록 Mock 설정
+			doThrow(new ErrorException(CommonErrorCode.RECAPTCHA_VERIFICATION_FAILED))
+				.when(reCaptchaService).verifyToken(eq(invalidRecaptchaToken), isNull());
+
+			// when & then
+			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
+					.header("X-Recaptcha-Token", invalidRecaptchaToken))
+				.andDo(print())
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(CommonErrorCode.RECAPTCHA_VERIFICATION_FAILED.getMessage()));
+		}
+
 	}
 
 	@Nested
@@ -300,43 +387,67 @@ class PreRegisterControllerTest {
 				.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.ALREADY_CANCELED.getMessage()));
 		}
 	}
-/*
+
 	@Nested
-	@DisplayName("내 사전등록 조회 API (GET /api/v1/events/{eventId}/pre-registers/me)")
+	@DisplayName("내 사전등록 조회 API (GET /api/v1/pre-registers/me)")
 	class GetMyPreRegister {
 
 		@Test
-		@DisplayName("내 사전등록 조회 성공")
+		@DisplayName("내 사전등록 다건 조회 성공")
 		void getMyPreRegister_Success() throws Exception {
-			// given: 사전등록된 상태
-			testAuthHelper.authenticate(testUser.user());
+			// given: 여러 이벤트에 사전등록
+			Event event2 = EventFactory.fakePreOpenEvent();
+			eventRepository.save(event2);
 
-			PreRegister preRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
-			preRegisterRepository.save(preRegister);
+			PreRegister preRegister1 = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
+			PreRegister preRegister2 = PreRegisterFactory.fakePreRegister(event2, testUser.user());
+			preRegisterRepository.save(preRegister1);
+			preRegisterRepository.save(preRegister2);
 
 			// when & then
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/me", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/pre-registers/me")
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.message").value("사전등록 정보를 조회했습니다."))
-				.andExpect(jsonPath("$.data.eventId").value(testEvent.getId()))
-				.andExpect(jsonPath("$.data.userId").value(testUser.user().getId()))
-				.andExpect(jsonPath("$.data.status").value("REGISTERED"));
+				.andExpect(jsonPath("$.data").isArray())
+				.andExpect(jsonPath("$.data.length()").value(2));
 		}
 
 		@Test
-		@DisplayName("사전등록하지 않은 경우 404 에러")
-		void getMyPreRegister_Fail_NotFound() throws Exception {
+		@DisplayName("사전등록하지 않은 경우 빈 배열 반환")
+		void getMyPreRegister_Empty() throws Exception {
 			// when & then
-			testAuthHelper.authenticate(testUser.user());
-
-			mockMvc.perform(get("/api/v1/events/{eventId}/pre-registers/me", testEvent.getId()))
+			mockMvc.perform(get("/api/v1/pre-registers/me")
+					.header("Authorization", "Bearer " + token))
 				.andDo(print())
-				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.message").value(
-					PreRegisterErrorCode.NOT_FOUND_PRE_REGISTER.getMessage()));
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("사전등록 정보를 조회했습니다."))
+				.andExpect(jsonPath("$.data").isArray())
+				.andExpect(jsonPath("$.data.length()").value(0));
 		}
-	}*/
+
+		@Test
+		@DisplayName("취소된 사전등록도 포함하여 전체 조회")
+		void getMyPreRegister_IncludeCanceled() throws Exception {
+			// given
+			Event event2 = EventFactory.fakePreOpenEvent();
+			eventRepository.save(event2);
+
+			PreRegister activePreRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
+			PreRegister canceledPreRegister = PreRegisterFactory.fakeCanceledPreRegister(event2, testUser.user());
+			preRegisterRepository.save(activePreRegister);
+			preRegisterRepository.save(canceledPreRegister);
+
+			// when & then: 모든 상태 조회
+			mockMvc.perform(get("/api/v1/pre-registers/me")
+					.header("Authorization", "Bearer " + token))
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data").isArray())
+				.andExpect(jsonPath("$.data.length()").value(2));
+		}
+	}
 
 	@Nested
 	@DisplayName("사전등록 여부 확인 API (GET /api/v1/events/{eventId}/pre-registers/status)")

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.queue.dto.request.ShuffleQueueRequest;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
+import com.back.api.queue.dto.response.ProcessEntriesResponse;
 import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.ShuffleQueueResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
@@ -23,9 +24,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/admin/queues")
+@RequestMapping("/api/v1/admin/queues/{eventId}")
 @RequiredArgsConstructor
-//@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminQueueEntryController implements AdminQueueEntryApi {
 
 	private final QueueShuffleService queueShuffleService;
@@ -34,8 +35,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 
 	@Override
-	@PostMapping("/{eventId}/shuffle")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PostMapping("/shuffle")
 	public ApiResponse<ShuffleQueueResponse> shuffleQueue(
 		@PathVariable Long eventId,
 		@RequestBody @Valid ShuffleQueueRequest request
@@ -50,8 +50,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 	}
 
 	@Override
-	@GetMapping("/{eventId}/statistics")
-	@PreAuthorize("hasRole('ADMIN')")
+	@GetMapping("/statistics")
 	public ApiResponse<QueueStatisticsResponse> getQueueStatistics(
 		@PathVariable Long eventId
 	) {
@@ -61,8 +60,7 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 
 	//테스트용
 	@Override
-	@PostMapping("/{eventId}/users/{userId}/complete")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PostMapping("/users/{userId}/complete")
 	public ApiResponse<CompletedQueueResponse> completePayment(
 		@PathVariable Long eventId,
 		@PathVariable Long userId
@@ -75,13 +73,26 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 	}
 
 	@Override
-	@DeleteMapping("/{eventId}/reset")
-	@PreAuthorize("hasRole('ADMIN')")
+	@DeleteMapping("/reset")
 	public ApiResponse<Void> resetQueue(
 		@PathVariable Long eventId
 	) {
 		queueEntryRedisRepository.clearAll(eventId);
 		return ApiResponse.ok("대기열이 초기화되었습니다.", null);
+	}
+
+	@Override
+	@PostMapping("/users/{userId}/process-include")
+	public ApiResponse<ProcessEntriesResponse> processIncludingUser(
+		@PathVariable Long eventId,
+		@PathVariable Long userId
+	) {
+		ProcessEntriesResponse response = queueEntryProcessService.processTopEntriesIncludingMeForTest(
+			eventId,
+			userId
+		);
+
+		return ApiResponse.ok("해당 유저 포함 상위 대기자 입장 처리가 완료되었습니다.", response);
 	}
 
 }

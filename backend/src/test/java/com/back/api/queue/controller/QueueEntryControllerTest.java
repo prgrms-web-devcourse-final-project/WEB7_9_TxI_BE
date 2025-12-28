@@ -1,5 +1,6 @@
 package com.back.api.queue.controller;
 
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.config.TestRedisConfig;
 import com.back.domain.event.entity.Event;
 import com.back.domain.queue.entity.QueueEntry;
+import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
 import com.back.domain.user.entity.User;
@@ -312,7 +314,6 @@ public class QueueEntryControllerTest {
 				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
 			}
 
-
 			queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 70);
 
 			for (int i = 71; i <= 100; i++) {
@@ -422,5 +423,179 @@ public class QueueEntryControllerTest {
 				.andExpect(jsonPath("$.message").value("대기중 상태가 아닙니다."))
 				.andDo(print());
 		}
+	}
+
+	@Nested
+	@DisplayName("사용자 대기열 맨 뒤로 이동 API (/api/v1/queues/{eventId}/move-to-back)")
+	class MoveToBackTest   {
+
+		@Test
+		@DisplayName("입장 완료 상태에서 맨 뒤로 이동 - 성공")
+		void moveToBack_Success() throws Exception {
+
+			// given
+			for (int i = 1; i <= 3; i++) {
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				userRepository.save(user);
+				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
+			}
+
+			QueueEntry enteredEntry = queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 10);
+			enteredEntry.enterQueue();
+			queueEntryRepository.save(enteredEntry);
+			queueEntryRedisRepository.moveToEnteredQueue(testEvent.getId(), testUser.getId());
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/move-to-back", testEvent.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("대기열 맨 뒤로 이동되었습니다."))
+				.andExpect(jsonPath("$.data.userId").value(testUser.getId()))
+				.andExpect(jsonPath("$.data.previousRank").value(10))
+				.andExpect(jsonPath("$.data.newRank").value(11))
+				.andExpect(jsonPath("$.data.totalWaitingUsers").value(4))
+				.andDo(print());
+
+			// DB 검증
+			QueueEntry updatedEntry = queueEntryRepository
+				.findByEvent_IdAndUser_Id(testEvent.getId(), testUser.getId())
+				.orElseThrow();
+			assertThat(updatedEntry.getQueueEntryStatus()).isEqualTo(QueueEntryStatus.WAITING);
+			assertThat(updatedEntry.getQueueRank()).isEqualTo(11);
+		}
+
+		@Test
+		@DisplayName("여러 ENTERED 사용자 있을 때 - 전체 최대 rank 기준")
+		void moveToBack_WithMultipleEnteredUsers() throws Exception {
+
+			// given
+			for (int i = 1; i <= 3; i++) {
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				userRepository.save(user);
+				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
+			}
+
+			User user4 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			userRepository.save(user4);
+			QueueEntry entered1 = queueEntryHelper.createQueueEntryWithRedis(testEvent, user4, 100);
+			entered1.enterQueue();
+			queueEntryRepository.save(entered1);
+
+			QueueEntry entered2 = queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 150);
+			entered2.enterQueue();
+			queueEntryRepository.save(entered2);
+			queueEntryRedisRepository.moveToEnteredQueue(testEvent.getId(), testUser.getId());
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/move-to-back", testEvent.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.previousRank").value(150))
+				.andExpect(jsonPath("$.data.newRank").value(151))
+				.andExpect(jsonPath("$.data.totalWaitingUsers").value(4))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("대기자가 없을 때 - 맨 뒤로 이동")
+		void moveToBack_NoWaitingUsers() throws Exception {
+
+			// given
+			QueueEntry enteredEntry = queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 50);
+			enteredEntry.enterQueue();
+			queueEntryRepository.save(enteredEntry);
+			queueEntryRedisRepository.moveToEnteredQueue(testEvent.getId(), testUser.getId());
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/move-to-back", testEvent.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.previousRank").value(50))
+				.andExpect(jsonPath("$.data.newRank").value(51))
+				.andExpect(jsonPath("$.data.totalWaitingUsers").value(1))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("WAITING 상태에서 시도")
+		void moveToBack_NotEnteredStatus() throws Exception {
+
+			// given
+			queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 1);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/move-to-back", testEvent.getId()))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("입장 완료 상태가 아닙니다."))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("EXPIRED 상태에서 시도")
+		void moveToBack_ExpiredStatus() throws Exception {
+
+			// given
+			QueueEntry expiredEntry = queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 1);
+			expiredEntry.enterQueue();
+			expiredEntry.expire();
+			queueEntryRepository.save(expiredEntry);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/move-to-back", testEvent.getId()))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("입장 완료 상태가 아닙니다."))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("COMPLETED 상태에서 시도")
+		void moveToBack_CompletedStatus() throws Exception {
+
+			// given
+			QueueEntry completedEntry = queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 1);
+			completedEntry.enterQueue();
+			completedEntry.completePayment();
+			queueEntryRepository.save(completedEntry);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/move-to-back", testEvent.getId()))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("입장 완료 상태가 아닙니다."))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("QueueEntry 없음")
+		void moveToBack_NotFound() throws Exception {
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/move-to-back", testEvent.getId()))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value("큐 대기열 항목을 찾을 수 없습니다."))
+				.andDo(print());
+		}
+
+
+		@Test
+		@DisplayName("Redis 없어도 DB는 정상 업데이트")
+		void moveToBack_WithoutRedis_DbStillUpdated() throws Exception {
+			// given
+			// Redis에 추가 안 하고 DB만 있는 상황
+			QueueEntry enteredEntry = queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 10);
+			enteredEntry.enterQueue();
+			queueEntryRepository.save(enteredEntry);
+			// Redis에는 추가 안 함
+
+			// when & then
+			mockMvc.perform(post("/api/v1/queues/{eventId}/move-to-back", testEvent.getId()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.newRank").value(11))
+				.andDo(print());
+
+			QueueEntry updatedEntry = queueEntryRepository
+				.findByEvent_IdAndUser_Id(testEvent.getId(), testUser.getId())
+				.orElseThrow();
+			assertThat(updatedEntry.getQueueEntryStatus()).isEqualTo(QueueEntryStatus.WAITING);
+			assertThat(updatedEntry.getQueueRank()).isEqualTo(11);
+
+		}
+
 	}
 }

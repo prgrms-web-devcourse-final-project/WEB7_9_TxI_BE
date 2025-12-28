@@ -2,17 +2,15 @@ package com.back.global.config;
 
 import java.io.IOException;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -34,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity  // @PreAuthorize 사용을 위해 추가
+@Profile("!perf & !dev")
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -127,15 +126,7 @@ public class SecurityConfig {
 		return source;
 	}
 
-	@Bean
-	public PasswordEncoder passwordEncoder(
-		@Value("${security.password.bcrypt-strength}") int strength
-	) {
-		return new BCryptPasswordEncoder(strength);
-	}
-
-	private void writeError(HttpServletResponse response, ErrorCode
-		code) throws IOException {
+	private void writeError(HttpServletResponse response, ErrorCode code) throws IOException {
 		response.setStatus(code.getHttpStatus().value());
 		response.setContentType("application/json; charset=UTF-8");
 		ApiResponse<?> body = ApiResponse.fail(code);

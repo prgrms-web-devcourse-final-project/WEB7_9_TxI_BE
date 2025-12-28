@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.queue.dto.request.ProcessEntriesRequest;
+import com.back.api.queue.dto.response.MoveToBackResponse;
 import com.back.api.queue.dto.response.ProcessEntriesResponse;
 import com.back.api.queue.dto.response.QueueEntryStatusResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
@@ -20,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 
 
 @RestController
-@RequestMapping("/api/v1/queues")
+@RequestMapping("/api/v1/queues/{eventId}")
 @RequiredArgsConstructor
 public class QueueEntryController implements QueueEntryApi {
 
@@ -29,7 +30,7 @@ public class QueueEntryController implements QueueEntryApi {
 	private final QueueEntryProcessService queueEntryProcessService;
 
 	@Override
-	@GetMapping("/{eventId}/status")
+	@GetMapping("/status")
 	public ApiResponse<QueueEntryStatusResponse> getMyQueueEntryStatus(
 		@PathVariable Long eventId
 	) {
@@ -40,7 +41,7 @@ public class QueueEntryController implements QueueEntryApi {
 	}
 
 	@Override
-	@GetMapping("/{eventId}/exists")
+	@GetMapping("/exists")
 	public ApiResponse<Boolean> existsInQueue(
 		@PathVariable Long eventId
 	) {
@@ -50,7 +51,7 @@ public class QueueEntryController implements QueueEntryApi {
 	}
 
 	@Override
-	@PostMapping("/{eventId}/process-entries")
+	@PostMapping("/process-entries")
 	public ApiResponse<ProcessEntriesResponse> processTopEntries(
 		@PathVariable Long eventId,
 		@RequestBody(required = false) @Valid ProcessEntriesRequest request
@@ -67,7 +68,7 @@ public class QueueEntryController implements QueueEntryApi {
 	}
 
 	@Override
-	@PostMapping("/{eventId}/process-until-me")
+	@PostMapping("/process-until-me")
 	public ApiResponse<ProcessEntriesResponse> processUntilMe(
 		@PathVariable Long eventId
 	) {
@@ -82,7 +83,7 @@ public class QueueEntryController implements QueueEntryApi {
 	}
 
 	@Override
-	@PostMapping("/{eventId}/process-include-me")
+	@PostMapping("/process-include-me")
 	public ApiResponse<ProcessEntriesResponse> processIncludingMe(
 		@PathVariable Long eventId
 	) {
@@ -94,6 +95,21 @@ public class QueueEntryController implements QueueEntryApi {
 		);
 
 		return ApiResponse.ok("나를 포함한 내 앞 사용들이 모두 입장 처리가 완료되었습니다.", response);
+	}
+
+	@Override
+	@PostMapping("/move-to-back")
+	public ApiResponse<MoveToBackResponse> moveToBack(
+		@PathVariable Long eventId
+	) {
+		Long userId = httpRequestContext.getUserId();
+
+		MoveToBackResponse response = queueEntryProcessService.moveToBackQueue(
+			eventId,
+			userId
+		);
+
+		return ApiResponse.ok("대기열 맨 뒤로 이동되었습니다.", response);
 	}
 
 }

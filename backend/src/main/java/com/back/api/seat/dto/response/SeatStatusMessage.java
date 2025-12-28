@@ -8,7 +8,8 @@ import lombok.Builder;
 public record SeatStatusMessage(
 	Long eventId,
 	Long seatId,
-	String status,
+	String seatCode,
+	String currentStatus,
 	int price,
 	String grade
 ) {
@@ -16,6 +17,7 @@ public record SeatStatusMessage(
 		return new SeatStatusMessage(
 			seat.getEvent().getId(),
 			seat.getId(),
+			seat.getSeatCode(),
 			seat.getSeatStatus().name(),
 			seat.getPrice(),
 			seat.getGrade().name()

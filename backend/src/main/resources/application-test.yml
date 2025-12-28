@@ -57,3 +57,4 @@ google:
 toss:
   payments:
     secret: toss-secret-test
+    secret-key: ${RECAPTCHA_SECRET_KEY}

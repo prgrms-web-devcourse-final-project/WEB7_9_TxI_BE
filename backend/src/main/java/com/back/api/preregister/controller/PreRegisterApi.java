@@ -3,6 +3,7 @@ package com.back.api.preregister.controller;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.global.config.swagger.ApiErrorCode;
@@ -40,7 +41,7 @@ public interface PreRegisterApi {
 
 	@Operation(
 		summary = "사전등록",
-		description = "이벤트에 사전등록합니다. (인증 제외)",
+		description = "이벤트에 사전등록합니다. (인증 제외). reCAPTCHA v3 토큰을 헤더(X-Recaptcha-Token)로 전달해야 합니다.",
 		security = @SecurityRequirement(name = "bearerAuth")
 	)
 	@ApiErrorCode({
@@ -51,11 +52,16 @@ public interface PreRegisterApi {
 		"INVALID_USER_INFO",
 		"TERMS_NOT_AGREED",
 		"PRIVACY_NOT_AGREED",
+		"RECAPTCHA_TOKEN_MISSING",
+		"RECAPTCHA_VERIFICATION_FAILED",
+		"RECAPTCHA_SCORE_TOO_LOW",
 		"UNAUTHORIZED"
 	})
 	ApiResponse<PreRegisterResponse> register(
 		@Parameter(description = "이벤트 ID", example = "1")
-		@PathVariable Long eventId
+		@PathVariable Long eventId,
+		@Parameter(description = "reCAPTCHA v3 토큰", example = "03AGdBq24...")
+		@RequestHeader(value = "X-Recaptcha-Token", required = false) String recaptchaToken
 	);
 
 	@Operation(
