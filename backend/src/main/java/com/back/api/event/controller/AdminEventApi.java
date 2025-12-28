@@ -66,4 +66,15 @@ public interface AdminEventApi {
 			+ "각 이벤트별 상태, 사전등록 인원 수, 총 판매 좌석, 총 판매 금액을 포함합니다."
 	)
 	ApiResponse<List<AdminEventDashboardResponse>> getAllEventsDashboard();
+
+
+	@Operation(
+		summary = "이벤트 단건 조회 (관리자)",
+		description = "이벤트 ID로 상세 정보를 조회합니다."
+	)
+	@ApiErrorCode("NOT_FOUND_EVENT")
+	ApiResponse<EventResponse> getEvent(
+		@Parameter(description = "조회할 이벤트 ID", example = "1")
+		@PathVariable Long eventId);
+
 }

@@ -54,4 +54,14 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 	// 관리자 대시보드용 - 이벤트별 특정 상태 좌석의 총 판매 금액 조회
 	@Query("SELECT COALESCE(SUM(s.price), 0) FROM Seat s WHERE s.event.id = :eventId AND s.seatStatus = :seatStatus")
 	Long sumPriceByEventIdAndSeatStatus(@Param("eventId") Long eventId, @Param("seatStatus") SeatStatus seatStatus);
+
+	@Query("""
+          SELECT s
+          FROM Seat s
+          WHERE s.event.id = :eventId
+          ORDER BY s.grade ASC, 
+                   CAST(SUBSTRING(s.seatCode, LOCATE('-', s.seatCode) + 1) AS INTEGER) ASC
+       """)
+	List<Seat> findSortedSeatListByEventIdForAdmin(Long eventId);
+
 }

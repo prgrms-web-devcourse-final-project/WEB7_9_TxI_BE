@@ -232,7 +232,7 @@ public class AdminSeatService {
 		if (!eventRepository.existsById(eventId)) {
 			throw new ErrorException(SeatErrorCode.NOT_FOUND_EVENT);
 		}
-		return seatRepository.findSortedSeatListByEventId(eventId);
+		return seatRepository.findSortedSeatListByEventIdForAdmin(eventId);
 	}
 
 }
