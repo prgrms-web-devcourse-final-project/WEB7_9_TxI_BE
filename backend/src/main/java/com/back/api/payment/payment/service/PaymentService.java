@@ -172,7 +172,8 @@ public class PaymentService {
 		// Order status PENDING -> PAID, paymentKey DB 저장 (주문 상태 업테이트)
 		order.markPaid(result.paymentKey());
 
-		order.getTicket().getSeat().markAsReserved();
+		//DataInit으로 만든 테스트 데이터 사용한 결제 테스트에서 활용, 대신 큐 완료 부분 주석 필요
+		//order.getTicket().getSeat().markAsReserved();
 
 		// Ticket 발급
 		Ticket ticket = ticketService.confirmPayment(
