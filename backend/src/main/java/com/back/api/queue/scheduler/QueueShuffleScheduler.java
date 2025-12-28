@@ -24,12 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 
 /*
  * 대기열 셔플 스케줄러
- * ticketOpenAt 1시간 전 대기열 셔플 자동 실행 -> 이벤트 상태 PREOPEN에서 READY로 변경
+ * ticketOpenAt 1시간 전 대기열 셔플 자동 실행 -> 이벤트 상태 PRE_CLOSED에서 QUEUE_READY로 변경
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"perf"})
+@Profile({"perf", "dev"})
 public class QueueShuffleScheduler {
 	private static final String JOB_NAME = "QueueShuffle";
 
@@ -68,7 +68,7 @@ public class QueueShuffleScheduler {
 			List<Event> eventList = eventService.findEventsByTicketOpenAtBetweenAndStatus(
 				rangeStart,
 				rangeEnd,
-				EventStatus.PRE_OPEN
+				EventStatus.PRE_CLOSED
 			);
 
 			if (eventList.isEmpty()) {

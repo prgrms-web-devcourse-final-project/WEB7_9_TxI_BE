@@ -20,6 +20,11 @@ public enum CommonErrorCode implements ErrorCode {
 	// ===== HTTP METHOD 오류 =====
 	METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 HTTP 메서드입니다."),
 
+	// ===== reCAPTCHA 관련 =====
+	RECAPTCHA_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST, "reCAPTCHA 검증에 실패했습니다."),
+	RECAPTCHA_SCORE_TOO_LOW(HttpStatus.BAD_REQUEST, "봇으로 의심되는 활동이 감지되었습니다."),
+	RECAPTCHA_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "reCAPTCHA 토큰이 누락되었습니다."),
+
 	// ===== 서버 내부 오류 =====
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
 

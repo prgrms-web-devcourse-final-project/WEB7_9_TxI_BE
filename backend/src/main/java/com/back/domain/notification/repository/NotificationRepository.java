@@ -9,7 +9,7 @@ import com.back.domain.notification.entity.Notification;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-	List<Notification> findByUserIdOrderByCreateAtDesc(Long userId);
+	List<Notification> findTop20ByUserIdOrderByCreateAtDesc(Long userId);
 
 	long countByUserIdAndIsReadFalse(Long userId);
 

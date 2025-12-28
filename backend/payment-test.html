@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>토스페이먼츠 결제 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #1e293b;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #334155;
+            font-size: 18px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+        }
+
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .info-box {
+            background-color: #f1f5f9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+        }
+
+        .info-label {
+            font-weight: 600;
+        }
+
+        .status {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status.success {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status.error {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status.info {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+
+        #payment-widget {
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>토스페이먼츠 결제 테스트</h1>
+
+    <!-- 1. 로그인 섹션 -->
+    <div class="section">
+        <h2>1. 로그인</h2>
+        <div id="login-form">
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" value="test1@test.com"/>
+            </div>
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" value="abc12345"/>
+            </div>
+            <button onclick="login()">로그인</button>
+            <div id="login-error" class="error-message hidden"></div>
+        </div>
+        <div id="login-status" class="info-box hidden">
+            <div class="info-item">
+                <span class="info-label">상태:</span>
+                <span class="status success">로그인됨</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">사용자 이메일:</span>
+                <span id="user-email"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 주문 생성 섹션 -->
+    <div class="section">
+        <h2>2. 주문 생성</h2>
+        <div class="form-group">
+            <label for="eventId">이벤트 ID</label>
+            <input type="number" id="eventId" value="1"/>
+        </div>
+        <div class="form-group">
+            <label for="seatId">좌석 ID</label>
+            <input type="number" id="seatId" value="1"/>
+        </div>
+        <div class="form-group">
+            <label for="amount">금액 (원)</label>
+            <input type="number" id="amount" value="10"/>
+        </div>
+        <button onclick="createOrder()" id="create-order-btn" disabled>주문 생성</button>
+        <div id="order-error" class="error-message hidden"></div>
+        <div id="order-info" class="info-box hidden">
+            <div class="info-item">
+                <span class="info-label">주문 ID:</span>
+                <span id="order-id"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">주문명:</span>
+                <span id="order-name"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">금액:</span>
+                <span id="order-amount"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 토스페이먼츠 결제 위젯 -->
+    <div class="section" id="payment-section" style="display: none;">
+        <h2>3. 결제</h2>
+        <div id="payment-widget"></div>
+        <button onclick="requestPayment()" id="payment-btn" style="margin-top: 20px;">결제하기</button>
+    </div>
+</div>
+
+<!-- 토스페이먼츠 SDK -->
+<script src="https://js.tosspayments.com/v2/standard"></script>
+<script>
+    const API_BASE_URL = 'http://localhost:8080';
+    const TOSS_CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm'; // 토스페이먼츠 테스트 클라이언트 키
+
+    let accessToken = localStorage.getItem('accessToken');
+    let orderData = null;
+    let paymentWidget = null;
+    let tossPayments = null;
+
+    // 페이지 로드 시 로그인 상태 확인
+    window.onload = function () {
+        if (accessToken) {
+            showLoginStatus();
+            document.getElementById('create-order-btn').disabled = false;
+        }
+    };
+
+    // 로그인 함수
+    async function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({email, password})
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || '로그인 실패');
+            }
+
+            accessToken = data.data.tokens.accessToken;
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('userEmail', email);
+
+            document.getElementById('login-error').classList.add('hidden');
+            showLoginStatus();
+            document.getElementById('create-order-btn').disabled = false;
+
+        } catch (error) {
+            document.getElementById('login-error').textContent = error.message;
+            document.getElementById('login-error').classList.remove('hidden');
+        }
+    }
+
+    // 로그인 상태 표시
+    function showLoginStatus() {
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('login-status').classList.remove('hidden');
+        document.getElementById('user-email').textContent = localStorage.getItem('userEmail');
+    }
+
+    // 주문 생성 함수
+    async function createOrder() {
+        const eventId = parseInt(document.getElementById('eventId').value);
+        const seatId = parseInt(document.getElementById('seatId').value);
+        const amount = parseInt(document.getElementById('amount').value);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v2/orders/prepare`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({eventId, seatId, amount})
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || '주문 생성 실패');
+            }
+
+            orderData = data.data;
+
+            document.getElementById('order-error').classList.add('hidden');
+            document.getElementById('order-info').classList.remove('hidden');
+            document.getElementById('order-id').textContent = orderData.orderId;
+            document.getElementById('order-name').textContent = orderData.orderName;
+            document.getElementById('order-amount').textContent = orderData.amount.toLocaleString() + '원';
+
+            // 토스페이먼츠 위젯 초기화
+            await initializePaymentWidget();
+
+        } catch (error) {
+            document.getElementById('order-error').textContent = error.message;
+            document.getElementById('order-error').classList.remove('hidden');
+        }
+    }
+
+    // 토스페이먼츠 위젯 초기화 (공식 방식)
+    async function initializePaymentWidget() {
+        try {
+            console.log('결제 위젯 초기화 시작...');
+            console.log('orderData:', orderData);
+
+            // TossPayments 객체 생성
+            tossPayments = TossPayments(TOSS_CLIENT_KEY);
+
+            // 위젯 생성 (비회원)
+            paymentWidget = tossPayments.widgets({
+                customerKey: TossPayments.ANONYMOUS
+            });
+
+            console.log('위젯 생성 완료');
+
+            // 결제 금액 설정
+            await paymentWidget.setAmount({
+                currency: 'KRW',
+                value: orderData.amount
+            });
+
+            console.log('금액 설정 완료');
+
+            // 결제 수단 UI 렌더링
+            await paymentWidget.renderPaymentMethods({
+                selector: '#payment-widget',
+                variantKey: 'DEFAULT'
+            });
+
+            console.log('결제 수단 렌더링 완료');
+
+            // 결제 섹션 표시
+            document.getElementById('payment-section').style.display = 'block';
+
+        } catch (error) {
+            console.error('결제 위젯 초기화 실패:', error);
+            alert('결제 위젯 오류: ' + error.message);
+        }
+    }
+
+    // 결제 요청
+    async function requestPayment() {
+        if (!paymentWidget || !orderData) {
+            alert('먼저 주문을 생성해주세요.');
+            return;
+        }
+
+        try {
+            console.log('결제 요청 시작...');
+
+            await paymentWidget.requestPayment({
+                orderId: orderData.orderId,
+                orderName: orderData.orderName,
+                successUrl: window.location.origin + '/payment-success',  // .html 제거
+                failUrl: window.location.origin + '/payment-test',
+                customerEmail: localStorage.getItem('userEmail'),
+                customerName: '테스트유저',
+            });
+
+            console.log('결제 요청 완료');
+
+        } catch (error) {
+            console.error('결제 요청 실패:', error);
+            alert('결제 요청 중 오류가 발생했습니다: ' + error.message);
+        }
+    }
+</script>
+</body>
+</html>

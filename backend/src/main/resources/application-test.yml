@@ -47,3 +47,13 @@ cloud:
     presigned:
       put-expire-minutes: 5
       get-expire-minutes: 10
+
+# reCAPTCHA
+google:
+  captcha:
+    secret-key: test-secret-key
+
+# TossPayments
+toss:
+  payments:
+    secret: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6

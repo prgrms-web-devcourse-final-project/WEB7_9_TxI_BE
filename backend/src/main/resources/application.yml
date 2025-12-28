@@ -79,6 +79,7 @@ custom:
       - "X-Requested-With"
       - "Cache-Control"
       - "Pragma"
+      - "X-Recaptcha-Token"
 
   jwt:
     secret: ${JWT_SECRET}
@@ -157,4 +158,12 @@ cloud:
       put-expire-minutes: 5
       get-expire-minutes: 10
 
+# reCAPTCHA
+google:
+  captcha:
+    secret-key: ${RECAPTCHA_SECRET_KEY}
 
+# TossPayments
+toss:
+  payments:
+    secret: ${TOSS_SECRET_KEY}
