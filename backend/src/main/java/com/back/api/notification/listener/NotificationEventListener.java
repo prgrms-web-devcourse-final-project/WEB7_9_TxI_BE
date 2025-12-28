@@ -34,12 +34,13 @@ public class NotificationEventListener {
 			Notification notification = Notification.builder()
 				.user(
 					userRepository.findById(message.getUserId())
-					.orElseThrow(() -> new NoSuchElementException("ID " + message.getUserId() + "에 해당하는 사용자가 존재하지 않습니다."))
+						.orElseThrow(
+							() -> new NoSuchElementException("ID " + message.getUserId() + "에 해당하는 사용자가 존재하지 않습니다."))
 				)
 				.type(message.getNotificationType())
 				.typeDetail(message.getTypeDetail())
-				.domainName(message.getFromWhere())
-				.domainId(message.getWhereId())
+				.domainName(message.getDomainName())
+				.domainId(message.getDomainId())
 				.title(message.getTitle())
 				.message(message.getMessage())
 				.isRead(false)
@@ -49,7 +50,7 @@ public class NotificationEventListener {
 			log.info("알림 생성 완료 - userId: {}, type: {}, from: {}",
 				message.getUserId(),
 				message.getNotificationType(),
-				message.getFromWhere());
+				message.getDomainName());
 
 			// 웹소켓으로 실시간 알림 전송
 			sendNotificationViaWebSocket(message.getUserId(), notification);

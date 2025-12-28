@@ -32,7 +32,7 @@ import com.back.domain.notification.enums.NotificationTypeDetails;
 import com.back.domain.notification.enums.NotificationTypes;
 import com.back.domain.notification.repository.NotificationRepository;
 import com.back.domain.notification.systemMessage.OrderFailedMessage;
-import com.back.domain.notification.systemMessage.OrdersSuccessMessage;
+import com.back.domain.notification.systemMessage.OrderSuccessMessage;
 import com.back.domain.notification.systemMessage.PreRegisterDoneMessage;
 import com.back.domain.notification.systemMessage.QueueEntriesMessage;
 import com.back.domain.user.entity.User;
@@ -119,7 +119,7 @@ class NotificationEventListenerTest {
 
 			// when: 이벤트 발행 (별도 트랜잭션으로 커밋되어야 AFTER_COMMIT 리스너 실행)
 			transactionHelper.executeInNewTransaction(() -> {
-				OrdersSuccessMessage message = new OrdersSuccessMessage(
+				OrderSuccessMessage message = new OrderSuccessMessage(
 					testUser.getId(),
 					1L,
 					99000L,
@@ -160,7 +160,7 @@ class NotificationEventListenerTest {
 
 			// when
 			transactionHelper.executeInNewTransaction(() -> {
-				OrdersSuccessMessage message = new OrdersSuccessMessage(
+				OrderSuccessMessage message = new OrderSuccessMessage(
 					testUser.getId(),
 					1L,
 					99000L,
@@ -193,7 +193,7 @@ class NotificationEventListenerTest {
 
 			// when
 			transactionHelper.executeInNewTransaction(() -> {
-				OrdersSuccessMessage message = new OrdersSuccessMessage(
+				OrderSuccessMessage message = new OrderSuccessMessage(
 					testUser.getId(),
 					1L,
 					99000L,
@@ -432,7 +432,7 @@ class NotificationEventListenerTest {
 
 			// when
 			transactionHelper.executeInNewTransaction(() -> {
-				OrdersSuccessMessage message = new OrdersSuccessMessage(
+				OrderSuccessMessage message = new OrderSuccessMessage(
 					nonExistentUserId,
 					1L,
 					99000L,
@@ -470,7 +470,7 @@ class NotificationEventListenerTest {
 
 			// when
 			transactionHelper.executeInNewTransaction(() -> {
-				OrdersSuccessMessage message = new OrdersSuccessMessage(
+				OrderSuccessMessage message = new OrderSuccessMessage(
 					testUser.getId(),
 					1L,
 					99000L,
@@ -502,7 +502,7 @@ class NotificationEventListenerTest {
 
 			// when: 4가지 메시지 타입 연속 발행
 			transactionHelper.executeInNewTransaction(() -> {
-				eventPublisher.publishEvent(new OrdersSuccessMessage(
+				eventPublisher.publishEvent(new OrderSuccessMessage(
 					testUser.getId(), 1L, 99000L, testEvent.getTitle()));
 				eventPublisher.publishEvent(new OrderFailedMessage(
 					testUser.getId(), 154000L, 51L, testEvent.getTitle()));
