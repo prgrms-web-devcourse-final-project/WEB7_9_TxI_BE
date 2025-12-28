@@ -48,6 +48,11 @@ cloud:
       put-expire-minutes: 5
       get-expire-minutes: 10
 
+# reCAPTCHA
+google:
+  captcha:
+    secret-key: test-secret-key
+
 # TossPayments
 toss:
   payments:
