@@ -12,6 +12,11 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "사전등록 생성 요청 (SMS 본인 인증)")
 public record PreRegisterCreateRequest(
 
+	@Schema(description = "이름 (회원정보의 fullName과 대조)", example = "홍길동")
+	@NotBlank(message = "이름은 필수입니다.")
+	@Size(min = 2, max = 30, message = "이름은 2자 이상 30자 이하여야 합니다.")
+	String fullName,
+
 	@Schema(description = "휴대폰 번호 (하이픈 제거)", example = "01012345678")
 	@NotBlank(message = "휴대폰 번호는 필수입니다.")
 	@Pattern(regexp = "^01[0-9]{8,9}$", message = "올바른 휴대폰 번호 형식이 아닙니다.")

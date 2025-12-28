@@ -119,6 +119,7 @@ class PreRegisterControllerTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -146,66 +147,92 @@ class PreRegisterControllerTest {
 			assertThat(savedPreRegister.getPreRegisterAgreePrivacy()).isTrue();
 		}
 
-		// 인증 없는 사전 등록을 위해 임시 주석 처리
-		// @Test
-		// @DisplayName("생년월일이 일치하지 않으면 400 에러 (본인 인증 실패)")
-		// void register_Fail_InvalidBirthDate() throws Exception {
-		// 	// given: 잘못된 생년월일
-		// 	testAuthHelper.authenticate(testUser.user());
-		// 	setSmsVerified(DEFAULT_PHONE_NUMBER);
-		//
-		// 	PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
-		// 		LocalDate.of(2000, 1, 1)  // 실제 생년월일과 다름
-		// 	);
-		//
-		// 	// when & then
-		// 	mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
-		// 			.contentType(MediaType.APPLICATION_JSON)
-		// 			.content(objectMapper.writeValueAsString(request)))
-		// 		.andDo(print())
-		// 		.andExpect(status().isBadRequest())
-		// 		.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.INVALID_USER_INFO.getMessage()));
-		// }
-		//
-		// @Test
-		// @DisplayName("이용약관 미동의 시 400 에러")
-		// void register_Fail_TermsNotAgreed() throws Exception {
-		// 	// given: 이용약관 미동의
-		// 	testAuthHelper.authenticate(testUser.user());
-		// 	setSmsVerified(DEFAULT_PHONE_NUMBER);
-		//
-		// 	PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutTerms(
-		// 		testUser.user().getBirthDate()
-		// 	);
-		//
-		// 	// when & then
-		// 	mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
-		// 			.contentType(MediaType.APPLICATION_JSON)
-		// 			.content(objectMapper.writeValueAsString(request)))
-		// 		.andDo(print())
-		// 		.andExpect(status().isBadRequest())
-		// 		.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.TERMS_NOT_AGREED.getMessage()));
-		// }
-		//
-		// @Test
-		// @DisplayName("개인정보 수집 미동의 시 400 에러")
-		// void register_Fail_PrivacyNotAgreed() throws Exception {
-		// 	// given: 개인정보 수집 미동의
-		// 	testAuthHelper.authenticate(testUser.user());
-		// 	setSmsVerified(DEFAULT_PHONE_NUMBER);
-		//
-		// 	PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutPrivacy(
-		// 		testUser.user().getBirthDate()
-		// 	);
-		//
-		// 	// when & then
-		// 	mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
-		// 			.contentType(MediaType.APPLICATION_JSON)
-		// 			.content(objectMapper.writeValueAsString(request)))
-		// 		.andDo(print())
-		// 		.andExpect(status().isBadRequest())
-		// 		.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.PRIVACY_NOT_AGREED.getMessage()));
-		// }
+		@Test
+		@DisplayName("생년월일이 일치하지 않으면 400 에러 (본인 인증 실패)")
+		void register_Fail_InvalidBirthDate() throws Exception {
+			// given: 잘못된 생년월일
+			setSmsVerified(DEFAULT_PHONE_NUMBER);
+
+			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
+				java.time.LocalDate.of(2000, 1, 1)  // 실제 생년월일과 다름
+			);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+				.andDo(print())
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.INVALID_USER_INFO.getMessage()));
+		}
+
+		@Test
+		@DisplayName("이용약관 미동의 시 400 에러")
+		void register_Fail_TermsNotAgreed() throws Exception {
+			// given: 이용약관 미동의
+			setSmsVerified(DEFAULT_PHONE_NUMBER);
+
+			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutTerms(
+				testUser.user().getFullName(),
+				testUser.user().getBirthDate()
+			);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+				.andDo(print())
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.TERMS_NOT_AGREED.getMessage()));
+		}
+
+		@Test
+		@DisplayName("개인정보 수집 미동의 시 400 에러")
+		void register_Fail_PrivacyNotAgreed() throws Exception {
+			// given: 개인정보 수집 미동의
+			setSmsVerified(DEFAULT_PHONE_NUMBER);
+
+			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutPrivacy(
+				testUser.user().getFullName(),
+				testUser.user().getBirthDate()
+			);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+				.andDo(print())
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(PreRegisterErrorCode.PRIVACY_NOT_AGREED.getMessage()));
+		}
+
+		@Test
+		@DisplayName("SMS 인증 미완료 시 400 에러")
+		void register_Fail_SmsNotVerified() throws Exception {
+			// given: SMS 인증을 하지 않음 (Redis에 인증 플래그 없음)
+			String unverifiedPhoneNumber = "01099999999";
+			PreRegisterCreateRequest request = new PreRegisterCreateRequest(
+				testUser.user().getFullName(),
+				unverifiedPhoneNumber,
+				testUser.user().getBirthDate(),
+				true,
+				true
+			);
+
+			// when & then
+			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+				.andDo(print())
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(
+					PreRegisterErrorCode.SMS_VERIFICATION_NOT_COMPLETED.getMessage()));
+		}
 
 		@Test
 		@DisplayName("중복 등록 시 400 에러")
@@ -217,6 +244,7 @@ class PreRegisterControllerTest {
 			preRegisterRepository.save(existingPreRegister);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -240,6 +268,7 @@ class PreRegisterControllerTest {
 			eventRepository.save(closedEvent);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -259,6 +288,12 @@ class PreRegisterControllerTest {
 		void register_Success_WithValidRecaptcha() throws Exception {
 			// given
 			String validRecaptchaToken = "valid-recaptcha-token";
+			setSmsVerified(DEFAULT_PHONE_NUMBER);
+
+			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
+				testUser.user().getBirthDate()
+			);
 
 			// reCAPTCHA 검증 성공하도록 Mock 설정
 			doNothing().when(reCaptchaService).verifyToken(eq(validRecaptchaToken), isNull());
@@ -266,7 +301,9 @@ class PreRegisterControllerTest {
 			// when & then
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
 					.header("Authorization", "Bearer " + token)
-					.header("X-Recaptcha-Token", validRecaptchaToken))
+					.header("X-Recaptcha-Token", validRecaptchaToken)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.message").value("사전등록이 완료되었습니다."))
@@ -282,13 +319,22 @@ class PreRegisterControllerTest {
 		@DisplayName("reCAPTCHA 토큰이 없으면 400 에러")
 		void register_Fail_MissingRecaptchaToken() throws Exception {
 			// given
+			setSmsVerified(DEFAULT_PHONE_NUMBER);
+
+			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
+				testUser.user().getBirthDate()
+			);
+
 			// reCAPTCHA 토큰 누락 시 예외 발생하도록 Mock 설정
 			doThrow(new ErrorException(CommonErrorCode.RECAPTCHA_TOKEN_MISSING))
 				.when(reCaptchaService).verifyToken(isNull(), isNull());
 
 			// when & then
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
-					.header("Authorization", "Bearer " + token))
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value(CommonErrorCode.RECAPTCHA_TOKEN_MISSING.getMessage()));
@@ -299,6 +345,12 @@ class PreRegisterControllerTest {
 		void register_Fail_LowRecaptchaScore() throws Exception {
 			// given
 			String lowScoreRecaptchaToken = "low-score-token";
+			setSmsVerified(DEFAULT_PHONE_NUMBER);
+
+			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
+				testUser.user().getBirthDate()
+			);
 
 			// 낮은 점수로 검증 실패하도록 Mock 설정
 			doThrow(new ErrorException(CommonErrorCode.RECAPTCHA_SCORE_TOO_LOW))
@@ -307,7 +359,9 @@ class PreRegisterControllerTest {
 			// when & then
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
 					.header("Authorization", "Bearer " + token)
-					.header("X-Recaptcha-Token", lowScoreRecaptchaToken))
+					.header("X-Recaptcha-Token", lowScoreRecaptchaToken)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value(CommonErrorCode.RECAPTCHA_SCORE_TOO_LOW.getMessage()));
@@ -318,6 +372,12 @@ class PreRegisterControllerTest {
 		void register_Fail_RecaptchaVerificationFailed() throws Exception {
 			// given
 			String invalidRecaptchaToken = "invalid-token";
+			setSmsVerified(DEFAULT_PHONE_NUMBER);
+
+			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
+				testUser.user().getBirthDate()
+			);
 
 			// 검증 실패하도록 Mock 설정
 			doThrow(new ErrorException(CommonErrorCode.RECAPTCHA_VERIFICATION_FAILED))
@@ -326,7 +386,9 @@ class PreRegisterControllerTest {
 			// when & then
 			mockMvc.perform(post("/api/v1/events/{eventId}/pre-registers", testEvent.getId())
 					.header("Authorization", "Bearer " + token)
-					.header("X-Recaptcha-Token", invalidRecaptchaToken))
+					.header("X-Recaptcha-Token", invalidRecaptchaToken)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
 				.andDo(print())
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value(CommonErrorCode.RECAPTCHA_VERIFICATION_FAILED.getMessage()));
@@ -558,6 +620,7 @@ class PreRegisterControllerTest {
 		void scenario_CancelAndReRegister() throws Exception {
 			// given: 먼저 사전등록
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -609,6 +672,7 @@ class PreRegisterControllerTest {
 			eventRepository.flush();
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
