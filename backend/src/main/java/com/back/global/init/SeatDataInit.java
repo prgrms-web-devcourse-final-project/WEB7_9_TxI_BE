@@ -63,7 +63,7 @@ public class SeatDataInit implements ApplicationRunner {
 				.event(event)
 				.seatCode("VIP-" + i)
 				.grade(SeatGrade.VIP)
-				.price(154000)
+				.price(10)
 				.build());
 		}
 

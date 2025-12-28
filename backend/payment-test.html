@@ -160,11 +160,11 @@
         <div id="login-form">
             <div class="form-group">
                 <label for="email">이메일</label>
-                <input type="email" id="email" value="test1@test.com" />
+                <input type="email" id="email" value="test1@test.com"/>
             </div>
             <div class="form-group">
                 <label for="password">비밀번호</label>
-                <input type="password" id="password" value="abc12345" />
+                <input type="password" id="password" value="abc12345"/>
             </div>
             <button onclick="login()">로그인</button>
             <div id="login-error" class="error-message hidden"></div>
@@ -186,15 +186,15 @@
         <h2>2. 주문 생성</h2>
         <div class="form-group">
             <label for="eventId">이벤트 ID</label>
-            <input type="number" id="eventId" value="1" />
+            <input type="number" id="eventId" value="1"/>
         </div>
         <div class="form-group">
             <label for="seatId">좌석 ID</label>
-            <input type="number" id="seatId" value="1" />
+            <input type="number" id="seatId" value="1"/>
         </div>
         <div class="form-group">
             <label for="amount">금액 (원)</label>
-            <input type="number" id="amount" value="154000" />
+            <input type="number" id="amount" value="10"/>
         </div>
         <button onclick="createOrder()" id="create-order-btn" disabled>주문 생성</button>
         <div id="order-error" class="error-message hidden"></div>
@@ -234,7 +234,7 @@
     let tossPayments = null;
 
     // 페이지 로드 시 로그인 상태 확인
-    window.onload = function() {
+    window.onload = function () {
         if (accessToken) {
             showLoginStatus();
             document.getElementById('create-order-btn').disabled = false;
@@ -252,7 +252,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({email, password})
             });
 
             const data = await response.json();
@@ -295,7 +295,7 @@
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${accessToken}`
                 },
-                body: JSON.stringify({ eventId, seatId, amount })
+                body: JSON.stringify({eventId, seatId, amount})
             });
 
             const data = await response.json();

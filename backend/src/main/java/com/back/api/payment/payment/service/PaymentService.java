@@ -172,7 +172,7 @@ public class PaymentService {
 		// Order status PENDING -> PAID, paymentKey DB 저장 (주문 상태 업테이트)
 		order.markPaid(result.paymentKey());
 
-		//DataInit으로 만든 테스트 데이터 사용한 결제 테스트에서 활용, 대신 큐 완료 부분 주석 필요
+		// 테스트용 : DataInit으로 만든 테스트 데이터 사용한 결제 테스트에서 사용
 		//order.getTicket().getSeat().markAsReserved();
 
 		// Ticket 발급
@@ -181,7 +181,7 @@ public class PaymentService {
 			userId
 		);
 
-		// Queue 완료
+		// Queue 완료 // 테스트 데이터로 진행 시 : 큐 대기열이 없으므로 이부분도 주석처리
 		queueEntryProcessService.completePayment(
 			ticket.getEvent().getId(),
 			userId
