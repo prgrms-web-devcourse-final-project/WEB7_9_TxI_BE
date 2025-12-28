@@ -50,4 +50,5 @@ cloud:
 
 # TossPayments
 toss:
-  secret: toss-secret-test
+  payments:
+    secret: toss-secret-test

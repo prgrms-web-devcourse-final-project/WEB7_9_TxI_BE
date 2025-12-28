@@ -154,4 +154,5 @@ cloud:
 
 # TossPayments
 toss:
-  secret: ${TOSS_SECRET_KEY}
+  payments:
+    secret: ${TOSS_SECRET_KEY}
