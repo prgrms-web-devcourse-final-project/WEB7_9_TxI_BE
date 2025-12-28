@@ -157,6 +157,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			cookieManager.deleteAuthCookies(request, response);
 		}
 
+		log.error("CustomAuthenticationFilter: ", error);
 		writeError(response, error.getErrorCode());
 	}
 
@@ -200,6 +201,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			return accessToken;
 		}
 
+		log.info("Expired Access Token → Try to Issue new Access Token, expired access token: {}",
+			accessToken);
 		String refreshTokenStr = resolveCookie(request, CookieManager.REFRESH_TOKEN_COOKIE);
 
 		if (StringUtils.isBlank(refreshTokenStr) || jwtProvider.isExpired(refreshTokenStr)) {

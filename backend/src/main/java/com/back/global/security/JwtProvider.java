@@ -13,9 +13,11 @@ import com.back.domain.user.entity.UserRole;
 import com.back.global.utils.JwtUtil;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Getter
+@Slf4j
 public class JwtProvider {
 
 	@Value("${custom.jwt.secret}")
@@ -59,6 +61,7 @@ public class JwtProvider {
 		claims.put(CLAIM_SESSION_ID, sessionId);
 		claims.put(CLAIM_TOKEN_VERSION, tokenVersion);
 
+		log.info("Generate Token({}), userId: {}", tokenType, user.getId());
 		return JwtUtil.sign(secret, durationSeconds, claims);
 	}
 
