@@ -43,24 +43,9 @@ public class V2_Order extends BaseEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false)
-	@Builder.Default
 	private OrderStatus status = PENDING;
 
-	/**
-	 * ticket에 포함되는 정보, 임시 주석처리
-	 // @ManyToOne(fetch = FetchType.LAZY)
-	 // @JoinColumn(name = "event_id", nullable = false)
-	 // private Event event; //클라이언트로부터 받아야함
-	 //
-	 // @ManyToOne(fetch = FetchType.LAZY)
-	 // @JoinColumn(name = "user_id", nullable = false)
-	 // private User user; //클라이언트로부터 받아야함 //v2에서는 직접 받지 않고 스프링시큐리티를 통해 JWT로부터 추출하는 방식으로 전환할 예정
-	 //
-	 // @OneToOne
-	 // @JoinColumn(name = "seat_id", nullable = false)
-	 // private Seat seat; //클라이언트로부터 받아야함
-	 * */
-	@Column(name = "paymentKey", nullable = true)
+	@Column(name = "payment_key", nullable = true)
 	private String paymentKey; // TossPaymentKey
 
 	@PrePersist
