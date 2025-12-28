@@ -10,7 +10,7 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class TossPaymentConfig {
 
-	@Value("${TOSS_SECRET_KEY}")
+	@Value("${toss.secret}")
 	private String secretKey;
 
 	@Bean

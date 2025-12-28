@@ -151,3 +151,7 @@ cloud:
     presigned:
       put-expire-minutes: 5
       get-expire-minutes: 10
+
+# TossPayments
+toss:
+  secret: ${TOSS_SECRET_KEY}
