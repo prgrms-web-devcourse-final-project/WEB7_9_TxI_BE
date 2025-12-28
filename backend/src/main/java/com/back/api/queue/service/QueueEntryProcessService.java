@@ -17,6 +17,7 @@ import com.back.api.queue.dto.response.MoveToBackResponse;
 import com.back.api.queue.dto.response.ProcessEntriesResponse;
 import com.back.api.queue.dto.response.WaitingQueueBatchEventResponse;
 import com.back.api.queue.dto.response.WaitingQueueResponse;
+import com.back.api.ticket.service.TicketService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.notification.systemMessage.QueueEntriesMessage;
@@ -51,6 +52,7 @@ public class QueueEntryProcessService {
 	private final QueueSchedulerProperties properties;
 	private final QueueEntryReadService queueEntryReadService;
 	private final EventRepository eventRepository;
+	private final TicketService ticketService;
 
 
 	/* ==================== 입장 처리 ==================== */
@@ -102,9 +104,9 @@ public class QueueEntryProcessService {
 		Long totalWaitingCount;
 
 		try {
-			totalWaitingCount =  queueEntryRedisRepository.getTotalWaitingCount(eventId);
+			totalWaitingCount = queueEntryRedisRepository.getTotalWaitingCount(eventId);
 		} catch (Exception e) {
-			log.warn("Redis 조회 실패, DB로부터 대기 중 인원 수 조회 시도 - eventId: {}", eventId,  e);
+			log.warn("Redis 조회 실패, DB로부터 대기 중 인원 수 조회 시도 - eventId: {}", eventId, e);
 			totalWaitingCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
 				eventId,
 				QueueEntryStatus.WAITING
@@ -121,13 +123,12 @@ public class QueueEntryProcessService {
 		try {
 			currentEnteredCount = queueEntryRedisRepository.getTotalEnteredCount(eventId);
 		} catch (Exception e) {
-			log.warn("Redis 조회 실패, DB로부터 입장 완료된 인원 수 조회 시도 - eventId: {}", eventId,  e);
+			log.warn("Redis 조회 실패, DB로부터 입장 완료된 인원 수 조회 시도 - eventId: {}", eventId, e);
 			currentEnteredCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
 				eventId,
 				QueueEntryStatus.ENTERED
 			);
 		}
-
 
 		int maxEnteredLimit = properties.getEntry().getMaxEnteredLimit();
 
@@ -153,8 +154,6 @@ public class QueueEntryProcessService {
 		log.info("입장 처리 - eventId: {}, 대기: {}명, 입장완료: {}명, 빈자리: {}명, 배치사이즈: {}명, 입장시킬인원: {}명",
 			eventId, totalWaitingCount, currentEnteredCount, availableEnteredCount, batchSize, entryCount);
 
-
-
 		List<Long> userIds;
 		try {
 			Set<Object> topWaitingUsers = queueEntryRedisRepository.getTopWaitingUsers(eventId, entryCount);
@@ -162,7 +161,7 @@ public class QueueEntryProcessService {
 				.map(obj -> Long.parseLong(obj.toString()))
 				.toList();
 		} catch (Exception e) {
-			log.warn("Redis 조회 실패, DB로부터 상위 대기 인원 조회 시도 - eventId: {}", eventId,  e);
+			log.warn("Redis 조회 실패, DB로부터 상위 대기 인원 조회 시도 - eventId: {}", eventId, e);
 			userIds = queueEntryRepository.findTopNWaitingUsers(eventId, entryCount);
 		}
 
@@ -358,7 +357,6 @@ public class QueueEntryProcessService {
 
 	/* ==================== 결제 완료 처리 ==================== */
 
-
 	@Transactional
 	public void completePayment(Long eventId, Long userId) {
 
@@ -443,6 +441,8 @@ public class QueueEntryProcessService {
 
 		int previousRank = queueEntry.getQueueRank();
 
+		ticketService.releaseDraftTicketAndSeat(eventId, userId);
+
 		Long maxRank = queueEntryRepository.findMaxRankInQueue(eventId)
 			.orElse(0L);
 
@@ -469,7 +469,6 @@ public class QueueEntryProcessService {
 		return MoveToBackResponse.from(userId, previousRank, newRank, (int)totalWaiting);
 
 	}
-
 
 	private void validateEntry(QueueEntry queueEntry) {
 		QueueEntryStatus status = queueEntry.getQueueEntryStatus();
@@ -519,7 +518,6 @@ public class QueueEntryProcessService {
 		}
 	}
 
-
 	private void updateRedis(Long eventId, Long userId) {
 		try {
 			queueEntryRedisRepository.moveToEnteredQueue(eventId, userId);
@@ -530,7 +528,6 @@ public class QueueEntryProcessService {
 			log.error("eventId {} - Redis 업데이트 실패", eventId);
 		}
 	}
-
 
 	private void publishEnteredEvent(QueueEntry queueEntry) {
 		EnteredQueueResponse response = EnteredQueueResponse.from(
