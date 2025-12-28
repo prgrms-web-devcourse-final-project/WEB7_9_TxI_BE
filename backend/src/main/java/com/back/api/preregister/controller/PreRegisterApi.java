@@ -3,8 +3,10 @@ package com.back.api.preregister.controller;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
+import com.back.api.preregister.dto.request.PreRegisterCreateRequest;
 import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "PreRegister API", description = "사전등록 API")
 public interface PreRegisterApi {
@@ -61,7 +64,8 @@ public interface PreRegisterApi {
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
 		@Parameter(description = "reCAPTCHA v3 토큰", example = "03AGdBq24...")
-		@RequestHeader(value = "X-Recaptcha-Token", required = false) String recaptchaToken
+		@RequestHeader(value = "X-Recaptcha-Token", required = false) String recaptchaToken,
+		@Valid @RequestBody PreRegisterCreateRequest request
 	);
 
 	@Operation(
@@ -111,3 +115,4 @@ public interface PreRegisterApi {
 		@PathVariable Long eventId
 	);
 }
+

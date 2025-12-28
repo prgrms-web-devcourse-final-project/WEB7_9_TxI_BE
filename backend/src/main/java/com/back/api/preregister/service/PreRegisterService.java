@@ -97,11 +97,17 @@ public class PreRegisterService {
 
 	// 인증 제외한 사전 등록
 	@Transactional
-	public PreRegisterResponse quickPreRegister(Long eventId, Long userId) {
+	public PreRegisterResponse quickPreRegister(Long eventId, Long userId, PreRegisterCreateRequest request) {
 		Event event = findEventById(eventId);
 		User user = findUserById(userId);
 
 		validatePreRegistrationPeriod(event);
+
+		// 본인 인증 정보 검증 (회원가입 정보와 대조)
+		validateUserInfo(user, request);
+
+		// 약관 동의 검증
+		validateAgreements(request);
 
 		// 기존 사전등록 확인 (CANCELED 상태면 재활용)
 		Optional<PreRegister> existingPreRegister = preRegisterRepository.findByEvent_IdAndUser_Id(eventId, userId);
@@ -123,8 +129,8 @@ public class PreRegisterService {
 		PreRegister preRegister = PreRegister.builder()
 			.event(event)
 			.user(user)
-			.preRegisterAgreeTerms(true)
-			.preRegisterAgreePrivacy(true)
+			.preRegisterAgreeTerms(request.agreeTerms())
+			.preRegisterAgreePrivacy(request.agreePrivacy())
 			.build();
 
 		PreRegister savedPreRegister = preRegisterRepository.save(preRegister);
@@ -236,3 +242,4 @@ public class PreRegisterService {
 		log.info("SMS 인증 완료 확인 - 전화번호: {}", phoneNumber);
 	}
 }
+
