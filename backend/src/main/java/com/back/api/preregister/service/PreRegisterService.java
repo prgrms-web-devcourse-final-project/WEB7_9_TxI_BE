@@ -102,7 +102,6 @@ public class PreRegisterService {
 		return PreRegisterResponse.from(savedPreRegister);
 	}
 
-
 	@Transactional
 	public void cancel(Long eventId, Long userId) {
 		PreRegister preRegister = findPreRegister(eventId, userId);
@@ -195,11 +194,8 @@ public class PreRegisterService {
 		String verified = redisTemplate.opsForValue().get(verifiedKey);
 
 		if (verified == null || !Boolean.parseBoolean(verified)) {
-			log.warn("SMS 인증 미완료 - 전화번호: {}", phoneNumber);
 			throw new ErrorException(PreRegisterErrorCode.SMS_VERIFICATION_NOT_COMPLETED);
 		}
-
-		log.info("SMS 인증 확인 - 전화번호: {}", phoneNumber);
 	}
 
 	/**
@@ -209,7 +205,6 @@ public class PreRegisterService {
 	private void deleteSmsVerificationFlag(String phoneNumber) {
 		String verifiedKey = SMS_VERIFIED_PREFIX + phoneNumber;
 		redisTemplate.delete(verifiedKey);
-		log.info("SMS 인증 플래그 삭제 - 전화번호: {}", phoneNumber);
 	}
 }
 

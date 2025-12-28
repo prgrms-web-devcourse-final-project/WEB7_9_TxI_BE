@@ -26,10 +26,29 @@ public class SmsService {
 	private static final String SMS_VERIFIED_PREFIX = "SMS_VERIFIED:";
 
 	/**
+	 * 전화번호 마스킹 처리 (중간 4자리를 ****로 변환)
+	 * 예: 01012345678 -> 010****5678
+	 * @param phoneNum 원본 전화번호
+	 * @return 마스킹된 전화번호
+	 */
+	private String maskPhoneNumber(String phoneNum) {
+		if (phoneNum == null || phoneNum.length() < 8) {
+			return phoneNum;
+		}
+
+		// 01012345678 -> 010****5678 형태로 변환
+		int length = phoneNum.length();
+		String prefix = phoneNum.substring(0, 3);  // 010
+		String suffix = phoneNum.substring(length - 4);  // 5678
+		return prefix + "****" + suffix;
+	}
+
+	/**
 	 * 인증번호 발송
 	 * @param phoneNum 수신 전화번호 (하이픈 제거된 형태)
+	 * @return 인증번호 유효 시간(초)
 	 */
-	public void sendVerificationCode(String phoneNum) {
+	public Long sendVerificationCode(String phoneNum) {
 		// 6자리 랜덤 인증번호 생성
 		Random random = new Random();
 		int verificationCode = random.nextInt(900000) + 100000;
@@ -39,7 +58,7 @@ public class SmsService {
 		try {
 			smsUtil.sendOne(phoneNum, verificationCodeStr);
 		} catch (Exception e) {
-			log.error("SMS 발송 실패 - 전화번호: {}, 오류: {}", phoneNum, e.getMessage());
+			log.error("SMS 발송 실패 - 전화번호: {}, 오류: {}", maskPhoneNumber(phoneNum), e.getMessage());
 			throw new ErrorException(SmsErrorCode.SMS_SEND_FAILED);
 		}
 
@@ -47,11 +66,13 @@ public class SmsService {
 		try {
 			String redisKey = REDIS_KEY_PREFIX + phoneNum;
 			redisTemplate.opsForValue().set(redisKey, verificationCodeStr, Duration.ofSeconds(VERIFICATION_CODE_TTL));
-			log.info("인증번호 발송 및 Redis 저장 완료 - 전화번호: {}", phoneNum);
+			log.info("인증번호 발송 및 Redis 저장 완료 - 전화번호: {}", maskPhoneNumber(phoneNum));
 		} catch (Exception e) {
-			log.error("Redis 저장 실패 - 전화번호: {}, 오류: {}", phoneNum, e.getMessage());
+			log.error("Redis 저장 실패 - 전화번호: {}, 오류: {}", maskPhoneNumber(phoneNum), e.getMessage());
 			throw new ErrorException(SmsErrorCode.SMS_SEND_FAILED);
 		}
+
+		return VERIFICATION_CODE_TTL;
 	}
 
 	/**
@@ -65,7 +86,7 @@ public class SmsService {
 		String storedCode = redisTemplate.opsForValue().get(redisKey);
 
 		if (storedCode == null) {
-			log.warn("인증번호 만료 또는 존재하지 않음 - 전화번호: {}", phoneNum);
+			log.warn("인증번호 만료 또는 존재하지 않음 - 전화번호: {}", maskPhoneNumber(phoneNum));
 			throw new ErrorException(SmsErrorCode.VERIFICATION_CODE_NOT_FOUND);
 		}
 
@@ -79,9 +100,9 @@ public class SmsService {
 			String verifiedKey = SMS_VERIFIED_PREFIX + phoneNum;
 			redisTemplate.opsForValue().set(verifiedKey, "true", Duration.ofSeconds(VERIFIED_FLAG_TTL));
 
-			log.info("SMS 인증 성공 및 완료 플래그 저장 - 전화번호: {}", phoneNum);
+			log.info("SMS 인증 성공 및 완료 플래그 저장 - 전화번호: {}", maskPhoneNumber(phoneNum));
 		} else {
-			log.warn("SMS 인증 실패 - 전화번호: {}, 입력값: {}", phoneNum, verificationCode);
+			log.warn("SMS 인증 실패 - 전화번호: {}, 입력값: {}", maskPhoneNumber(phoneNum), verificationCode);
 			throw new ErrorException(SmsErrorCode.VERIFICATION_CODE_MISMATCH);
 		}
 
