@@ -226,4 +226,13 @@ public class AdminSeatService {
 				SeatErrorCode.DUPLICATE_SEAT_CODE);
 		}
 	}
+
+	@Transactional(readOnly = true)
+	public List<Seat> getSeatsByEvent(Long eventId) {
+		if (!eventRepository.existsById(eventId)) {
+			throw new ErrorException(SeatErrorCode.NOT_FOUND_EVENT);
+		}
+		return seatRepository.findSortedSeatListByEventId(eventId);
+	}
+
 }

@@ -99,4 +99,14 @@ public interface AdminSeatApi {
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId
 	);
+
+
+	@Operation(
+		summary = "이벤트별 좌석 목록 조회",
+		description = "특정 이벤트의 모든 좌석 목록을 조회합니다."
+	)
+	@ApiErrorCode("NOT_FOUND_EVENT")
+	public ApiResponse<List<SeatResponse>> getSeatsByEvent(
+		@PathVariable Long eventId
+	);
 }

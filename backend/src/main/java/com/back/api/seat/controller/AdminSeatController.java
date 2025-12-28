@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -108,5 +109,19 @@ public class AdminSeatController implements AdminSeatApi {
 		adminSeatService.deleteAllEventSeats(eventId);
 
 		return ApiResponse.noContent("이벤트의 모든 좌석을 삭제했습니다.");
+	}
+
+	@Override
+	@GetMapping
+	public ApiResponse<List<SeatResponse>> getSeatsByEvent(
+		@PathVariable Long eventId
+	) {
+
+		List<Seat> seats = adminSeatService.getSeatsByEvent(eventId);
+
+		return ApiResponse.ok(
+			"좌석 목록을 조회했습니다.",
+			seats.stream().map(SeatResponse::from).toList()
+		);
 	}
 }
