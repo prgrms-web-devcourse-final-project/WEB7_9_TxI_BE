@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -94,6 +95,7 @@ class PreRegisterServiceTest {
 		void register_Success() {
 			// given
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -127,6 +129,7 @@ class PreRegisterServiceTest {
 		void register_Fail_InvalidBirthDate() {
 			// given: 잘못된 생년월일
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				LocalDate.of(2000, 1, 1)  // 실제 생년월일과 다름
 			);
 
@@ -145,6 +148,7 @@ class PreRegisterServiceTest {
 		void register_Fail_TermsNotAgreed() {
 			// given
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutTerms(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -163,6 +167,7 @@ class PreRegisterServiceTest {
 		void register_Fail_PrivacyNotAgreed() {
 			// given
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutPrivacy(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -184,6 +189,7 @@ class PreRegisterServiceTest {
 			preRegisterRepository.save(existingPreRegister);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -220,6 +226,7 @@ class PreRegisterServiceTest {
 			eventRepository.save(futureEvent);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -256,6 +263,7 @@ class PreRegisterServiceTest {
 			eventRepository.save(closedEvent);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -274,6 +282,7 @@ class PreRegisterServiceTest {
 		void register_Fail_EventNotFound() {
 			// given
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -292,6 +301,7 @@ class PreRegisterServiceTest {
 		void register_Fail_UserNotFound() {
 			// given
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -320,6 +330,7 @@ class PreRegisterServiceTest {
 			userRepository.save(userWithoutBirthDate);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				userWithoutBirthDate.getFullName(),
 				LocalDate.of(2000, 1, 1)
 			);
 
@@ -339,6 +350,7 @@ class PreRegisterServiceTest {
 			// given: SMS 인증을 하지 않음 (Redis에 인증 플래그 없음)
 			String unverifiedPhoneNumber = "01099999999";
 			PreRegisterCreateRequest request = new PreRegisterCreateRequest(
+				testUser.user().getFullName(),
 				unverifiedPhoneNumber,
 				testUser.user().getBirthDate(),
 				true,
@@ -353,6 +365,54 @@ class PreRegisterServiceTest {
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.SMS_VERIFICATION_NOT_COMPLETED.getMessage());
+		}
+
+		@Test
+		@DisplayName("이름이 일치하지 않으면 INVALID_USER_INFO 예외 발생")
+		void register_Fail_InvalidFullName() {
+			// given: 잘못된 이름
+			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				"잘못된이름",
+				testUser.user().getBirthDate()
+			);
+
+			// when & then
+			assertThatThrownBy(() -> preRegisterService.register(
+				testEvent.getId(),
+				testUser.user().getId(),
+				request
+			))
+				.isInstanceOf(ErrorException.class)
+				.hasMessage(PreRegisterErrorCode.INVALID_USER_INFO.getMessage());
+		}
+
+		@Test
+		@DisplayName("사용자 이름이 null이면 INVALID_USER_INFO 예외 발생")
+		void register_Fail_UserFullNameNull() {
+			// given: 이름이 null인 사용자
+			User userWithoutFullName = User.builder()
+				.email("noname@test.com")
+				.password("encodedPassword")
+				.fullName(null)  // 이름 null
+				.nickname("TestNickname998")
+				.birthDate(LocalDate.of(1990, 1, 1))
+				.role(UserRole.NORMAL)
+				.build();
+			userRepository.save(userWithoutFullName);
+
+			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				"홍길동",
+				LocalDate.of(1990, 1, 1)
+			);
+
+			// when & then
+			assertThatThrownBy(() -> preRegisterService.register(
+				testEvent.getId(),
+				userWithoutFullName.getId(),
+				request
+			))
+				.isInstanceOf(ErrorException.class)
+				.hasMessage(PreRegisterErrorCode.INVALID_USER_INFO.getMessage());
 		}
 	}
 
@@ -421,6 +481,61 @@ class PreRegisterServiceTest {
 	}
 
 	@Nested
+	@DisplayName("내 사전등록 조회 (getMyPreRegister)")
+	class GetMyPreRegister {
+
+		@Test
+		@DisplayName("내 사전등록 목록 조회 성공")
+		void getMyPreRegister_Success() {
+			// given: 여러 이벤트에 사전등록
+			Event event2 = EventFactory.fakePreOpenEvent();
+			eventRepository.save(event2);
+
+			PreRegister preRegister1 = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
+			PreRegister preRegister2 = PreRegisterFactory.fakePreRegister(event2, testUser.user());
+			preRegisterRepository.save(preRegister1);
+			preRegisterRepository.save(preRegister2);
+
+			// when
+			List<PreRegisterResponse> responses = preRegisterService.getMyPreRegister(testUser.user().getId());
+
+			// then
+			assertThat(responses).hasSize(2);
+			assertThat(responses).extracting(PreRegisterResponse::eventId)
+				.containsExactlyInAnyOrder(testEvent.getId(), event2.getId());
+		}
+
+		@Test
+		@DisplayName("사전등록하지 않은 경우 빈 배열 반환")
+		void getMyPreRegister_Empty() {
+			// when
+			List<PreRegisterResponse> responses = preRegisterService.getMyPreRegister(testUser.user().getId());
+
+			// then
+			assertThat(responses).isEmpty();
+		}
+
+		@Test
+		@DisplayName("취소된 사전등록도 포함하여 조회")
+		void getMyPreRegister_IncludeCanceled() {
+			// given
+			Event event2 = EventFactory.fakePreOpenEvent();
+			eventRepository.save(event2);
+
+			PreRegister activePreRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
+			PreRegister canceledPreRegister = PreRegisterFactory.fakeCanceledPreRegister(event2, testUser.user());
+			preRegisterRepository.save(activePreRegister);
+			preRegisterRepository.save(canceledPreRegister);
+
+			// when
+			List<PreRegisterResponse> responses = preRegisterService.getMyPreRegister(testUser.user().getId());
+
+			// then: 모든 상태 조회
+			assertThat(responses).hasSize(2);
+		}
+	}
+
+	@Nested
 	@DisplayName("사전등록 여부 확인 (isRegistered)")
 	class IsRegistered {
 
@@ -482,48 +597,6 @@ class PreRegisterServiceTest {
 			assertThat(isRegistered).isFalse();
 		}
 	}
-/*
-	@Nested
-	@DisplayName("내 사전등록 조회 (getMyPreRegister)")
-	class GetMyPreRegister {
-
-		@Test
-		@DisplayName("내 사전등록 조회 성공")
-		void getMyPreRegister_Success() {
-			// given: 사전등록된 상태
-			PreRegister preRegister = PreRegister.builder()
-				.event(testEvent)
-				.user(testUser.user())
-				.preRegisterAgreeTerms(true)
-				.preRegisterAgreePrivacy(true)
-				.build();
-			preRegisterRepository.save(preRegister);
-
-			// when
-			PreRegisterResponse response = preRegisterService.getMyPreRegister(
-				testEvent.getId(),
-				testUser.user().getId()
-			);
-
-			// then
-			assertThat(response.id()).isNotNull();
-			assertThat(response.eventId()).isEqualTo(testEvent.getId());
-			assertThat(response.userId()).isEqualTo(testUser.user().getId());
-			assertThat(response.createdAt()).isNotNull();
-		}
-
-		@Test
-		@DisplayName("사전등록하지 않은 경우 NOT_FOUND_PRE_REGISTER 예외 발생")
-		void getMyPreRegister_Fail_NotFound() {
-			// when & then
-			assertThatThrownBy(() -> preRegisterService.getMyPreRegister(
-				testEvent.getId(),
-				testUser.user().getId()
-			))
-				.isInstanceOf(ErrorException.class)
-				.hasMessage(PreRegisterErrorCode.NOT_FOUND_PRE_REGISTER.getMessage());
-		}
-	}*/
 
 	@Nested
 	@DisplayName("사전등록 현황 조회 (getRegistrationCount)")
@@ -611,18 +684,21 @@ class PreRegisterServiceTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user1.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
+					user1.user().getFullName(),
 					user1.user().getBirthDate()
 				));
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user2.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
+					user2.user().getFullName(),
 					user2.user().getBirthDate()
 				));
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user3.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
+					user3.user().getFullName(),
 					user3.user().getBirthDate()
 				));
 
@@ -692,30 +768,35 @@ class PreRegisterServiceTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user1.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
+					user1.user().getFullName(),
 					user1.user().getBirthDate()
 				));
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user2.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
+					user2.user().getFullName(),
 					user2.user().getBirthDate()
 				));
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user3.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
+					user3.user().getFullName(),
 					user3.user().getBirthDate()
 				));
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user4.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
+					user4.user().getFullName(),
 					user4.user().getBirthDate()
 				));
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user5.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
+					user5.user().getFullName(),
 					user5.user().getBirthDate()
 				));
 
@@ -746,6 +827,7 @@ class PreRegisterServiceTest {
 		void scenario_CancelAndReRegister() {
 			// given: 먼저 사전등록
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -792,6 +874,7 @@ class PreRegisterServiceTest {
 			eventRepository.flush();
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -811,6 +894,7 @@ class PreRegisterServiceTest {
 			// given
 			Long nonExistentEventId = 99999L;
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -830,6 +914,7 @@ class PreRegisterServiceTest {
 			// given
 			Long nonExistentUserId = 99999L;
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				"홍길동",
 				LocalDate.of(1990, 1, 1)
 			);
 

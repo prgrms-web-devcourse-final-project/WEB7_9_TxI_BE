@@ -119,6 +119,7 @@ class PreRegisterControllerTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -153,6 +154,7 @@ class PreRegisterControllerTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				java.time.LocalDate.of(2000, 1, 1)  // 실제 생년월일과 다름
 			);
 
@@ -173,6 +175,7 @@ class PreRegisterControllerTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutTerms(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -193,6 +196,7 @@ class PreRegisterControllerTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutPrivacy(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -212,6 +216,7 @@ class PreRegisterControllerTest {
 			// given: SMS 인증을 하지 않음 (Redis에 인증 플래그 없음)
 			String unverifiedPhoneNumber = "01099999999";
 			PreRegisterCreateRequest request = new PreRegisterCreateRequest(
+				testUser.user().getFullName(),
 				unverifiedPhoneNumber,
 				testUser.user().getBirthDate(),
 				true,
@@ -239,6 +244,7 @@ class PreRegisterControllerTest {
 			preRegisterRepository.save(existingPreRegister);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -262,6 +268,7 @@ class PreRegisterControllerTest {
 			eventRepository.save(closedEvent);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -284,6 +291,7 @@ class PreRegisterControllerTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -314,6 +322,7 @@ class PreRegisterControllerTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -339,6 +348,7 @@ class PreRegisterControllerTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -365,6 +375,7 @@ class PreRegisterControllerTest {
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -609,6 +620,7 @@ class PreRegisterControllerTest {
 		void scenario_CancelAndReRegister() throws Exception {
 			// given: 먼저 사전등록
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
@@ -660,6 +672,7 @@ class PreRegisterControllerTest {
 			eventRepository.flush();
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
+				testUser.user().getFullName(),
 				testUser.user().getBirthDate()
 			);
 
