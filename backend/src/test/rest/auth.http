@@ -17,8 +17,8 @@ POST {{BASE_URL}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "test@test.com",
-  "password": "qwer1234"
+  "email": "admin@test.com",
+  "password": "admin1234"
 }
 
 > {%

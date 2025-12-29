@@ -1,11 +1,14 @@
 package com.back.api.queue.controller;
 
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.back.api.queue.dto.request.ShuffleQueueRequest;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
 import com.back.api.queue.dto.response.ProcessEntriesResponse;
+import com.back.api.queue.dto.response.QueueEntryListResponse;
 import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.ShuffleQueueResponse;
 import com.back.global.config.swagger.ApiErrorCode;
@@ -93,4 +96,15 @@ public interface AdminQueueEntryApi {
 		@PathVariable Long userId
 	);
 
+	@Operation(summary = "대기열 목록 조회", description = "특정 이벤트의 전체 대기열을 페이징하여 조회합니다.")
+	ApiResponse<Page<QueueEntryListResponse>> getQueueEntriesByEventId(
+		@Parameter(description = "이벤트 ID")
+		@PathVariable Long eventId,
+
+		@Parameter(description = "페이지 번호 (0부터 시작)")
+		@RequestParam(defaultValue = "0") int page,
+
+		@Parameter(description = "페이지 크기")
+		@RequestParam(defaultValue = "20") int size
+	);
 }

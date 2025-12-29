@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -49,5 +51,17 @@ public interface QueueEntryRepository extends JpaRepository<QueueEntry, Long> {
 	Optional<Long> findMaxRankInQueue(
 		@Param("eventId") Long eventId
 	);
+
+	@Query("SELECT q FROM QueueEntry q "
+		+ "JOIN FETCH q.user u "
+		+ "JOIN FETCH q.event e "
+		+ "WHERE q.event.id = :eventId "
+		+ "ORDER BY q.queueRank ASC"
+	)
+	Page<QueueEntry> findByEventIdWithUserAndEvent(
+		@Param("eventId") Long eventId,
+		Pageable pageable
+	);
+
 
 }
