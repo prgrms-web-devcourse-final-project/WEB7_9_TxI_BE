@@ -25,6 +25,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.preregister.dto.request.PreRegisterCreateRequest;
+import com.back.api.s3.service.S3MoveService;
+import com.back.api.s3.service.S3PresignedService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.preregister.entity.PreRegister;
@@ -80,6 +82,12 @@ class PreRegisterControllerTest {
 	@MockitoBean
 	private ReCaptchaService reCaptchaService;
 
+	@MockitoBean
+	private S3MoveService s3MoveService;
+
+	@MockitoBean
+	private S3PresignedService s3PresignedService;
+
 	String token;
 
 	private static final String DEFAULT_PHONE_NUMBER = "01012345678";
@@ -99,6 +107,13 @@ class PreRegisterControllerTest {
 
 		testEvent = EventFactory.fakePreOpenEvent();
 		eventRepository.save(testEvent);
+
+		when(s3MoveService.moveImage(anyLong(), anyString()))
+			.thenReturn("events/1/main.jpg");
+
+		when(s3PresignedService.issueDownloadUrl(anyString()))
+			.thenReturn("https://s3.amazonaws.com/bucket/events/1/main.jpg?signature=xxx");
+
 
 		token = testAuthHelper.issueAccessToken(testUser.user());
 	}
