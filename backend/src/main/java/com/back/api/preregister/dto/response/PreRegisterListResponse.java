@@ -20,7 +20,10 @@ public record PreRegisterListResponse(
 	LocalDateTime createdAt,
 
 	@Schema(description = "사전 등록 상태", example = "REGISTERED")
-	PreRegisterStatus preRegisterStatus
+	PreRegisterStatus preRegisterStatus,
+
+	@Schema(description = "티켓 오픈 날짜", example = "2025-02-20T10:00:00")
+	LocalDateTime ticketOpenAt
 
 ) {
 
@@ -29,7 +32,8 @@ public record PreRegisterListResponse(
 			preRegister.getId(),
 			preRegister.getUser().getEmail(),
 			preRegister.getCreateAt(),
-			preRegister.getPreRegisterStatus()
+			preRegister.getPreRegisterStatus(),
+			preRegister.getEvent().getTicketOpenAt()
 		);
 	}
 }

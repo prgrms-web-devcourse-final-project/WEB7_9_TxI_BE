@@ -71,4 +71,23 @@ public record EventListResponse(
 			event.getCreateAt()
 		);
 	}
+
+	public static EventListResponse from(Event event, String imageUrl) {
+		return new EventListResponse(
+			event.getId(),
+			event.getTitle(),
+			event.getCategory(),
+			event.getPlace(),
+			imageUrl,
+			event.getMinPrice(),
+			event.getMaxPrice(),
+			event.getPreOpenAt(),
+			event.getPreCloseAt(),
+			event.getTicketOpenAt(),
+			event.getTicketCloseAt(),
+			event.getEventDate(),
+			event.getStatus(),
+			event.getCreateAt()
+		);
+	}
 }
