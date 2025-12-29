@@ -69,7 +69,8 @@ public class AdminEventService {
 					event.getStatus(),
 					preRegisterCount,
 					totalSoldSeats,
-					totalSalesAmount != null ? totalSalesAmount : 0L
+					totalSalesAmount != null ? totalSalesAmount : 0L,
+					event.isDeleted()
 				);
 			})
 			.collect(Collectors.toList());

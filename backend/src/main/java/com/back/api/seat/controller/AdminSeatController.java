@@ -2,6 +2,7 @@ package com.back.api.seat.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.seat.dto.request.AutoCreateSeatsRequest;
@@ -113,15 +115,14 @@ public class AdminSeatController implements AdminSeatApi {
 
 	@Override
 	@GetMapping
-	public ApiResponse<List<SeatResponse>> getSeatsByEvent(
-		@PathVariable Long eventId
+	public ApiResponse<Page<SeatResponse>> getSeatsByEventWithPaging(
+		@PathVariable Long eventId,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "20") int size
 	) {
 
-		List<Seat> seats = adminSeatService.getSeatsByEvent(eventId);
+		Page<SeatResponse> response = adminSeatService.getSeatsByEventWithPaging(eventId, page, size);
 
-		return ApiResponse.ok(
-			"좌석 목록을 조회했습니다.",
-			seats.stream().map(SeatResponse::from).toList()
-		);
+		return ApiResponse.ok("좌석 목록을 조회했습니다.", response);
 	}
 }

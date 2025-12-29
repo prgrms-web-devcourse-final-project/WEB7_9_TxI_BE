@@ -2,8 +2,10 @@ package com.back.api.seat.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.back.api.seat.dto.request.AutoCreateSeatsRequest;
 import com.back.api.seat.dto.request.BulkCreateSeatsRequest;
@@ -106,7 +108,14 @@ public interface AdminSeatApi {
 		description = "특정 이벤트의 모든 좌석 목록을 조회합니다."
 	)
 	@ApiErrorCode("NOT_FOUND_EVENT")
-	public ApiResponse<List<SeatResponse>> getSeatsByEvent(
-		@PathVariable Long eventId
+	ApiResponse<Page<SeatResponse>> getSeatsByEventWithPaging(
+		@Parameter(description = "이벤트 ID", example = "1")
+		@PathVariable Long eventId,
+
+		@Parameter(description = "페이지 번호 (0부터 시작)")
+		@RequestParam(defaultValue = "0") int page,
+
+		@Parameter(description = "페이지 크기")
+		@RequestParam(defaultValue = "20") int size
 	);
 }

@@ -54,7 +54,10 @@ public record EventResponse(
 
 	@Schema(description = "이벤트 상태 (READY: 준비중, PRE_OPEN: 사전등록중, QUEUE_READY: 대기열 준비, OPEN: 티켓팅 진행중, CLOSED: 마감)",
 		example = "PRE_OPEN")
-	EventStatus status
+	EventStatus status,
+
+	@Schema(description = "삭제 여부", example = "false")
+	Boolean deleted
 ) {
 
 	public static EventResponse from(Event event) {
@@ -77,7 +80,8 @@ public record EventResponse(
 			event.getTicketCloseAt(),
 			event.getEventDate(),
 			event.getMaxTicketAmount(),
-			event.getStatus()
+			event.getStatus(),
+			event.isDeleted()
 		);
 	}
 }

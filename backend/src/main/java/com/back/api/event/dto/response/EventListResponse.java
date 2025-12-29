@@ -51,7 +51,10 @@ public record EventListResponse(
 	EventStatus status,
 
 	@Schema(description = "생성일시", example = "2025-12-01T10:00:00")
-	LocalDateTime createdAt
+	LocalDateTime createdAt,
+
+	@Schema(description = "삭제 여부", example = "false")
+	Boolean deleted
 ) {
 	public static EventListResponse from(Event event) {
 		return new EventListResponse(
@@ -68,7 +71,8 @@ public record EventListResponse(
 			event.getTicketCloseAt(),
 			event.getEventDate(),
 			event.getStatus(),
-			event.getCreateAt()
+			event.getCreateAt(),
+			event.isDeleted()
 		);
 	}
 
@@ -87,7 +91,8 @@ public record EventListResponse(
 			event.getTicketCloseAt(),
 			event.getEventDate(),
 			event.getStatus(),
-			event.getCreateAt()
+			event.getCreateAt(),
+			event.isDeleted()
 		);
 	}
 }

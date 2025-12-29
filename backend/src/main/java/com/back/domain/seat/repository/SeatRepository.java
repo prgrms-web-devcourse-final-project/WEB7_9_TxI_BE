@@ -3,6 +3,8 @@ package com.back.domain.seat.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -56,12 +58,16 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 	Long sumPriceByEventIdAndSeatStatus(@Param("eventId") Long eventId, @Param("seatStatus") SeatStatus seatStatus);
 
 	@Query("""
-          SELECT s
-          FROM Seat s
-          WHERE s.event.id = :eventId
-          ORDER BY s.grade ASC, 
-                   CAST(SUBSTRING(s.seatCode, LOCATE('-', s.seatCode) + 1) AS INTEGER) ASC
-       """)
-	List<Seat> findSortedSeatListByEventIdForAdmin(Long eventId);
+		SELECT s
+		FROM Seat s
+		WHERE s.event.id = :eventId
+		ORDER BY s.grade ASC,
+				 REGEXP_REPLACE(s.seatCode, '[0-9]', '', 'g') ASC,
+				 CAST(REGEXP_REPLACE(s.seatCode, '[^0-9]', '', 'g') AS INTEGER) ASC
+		""")
+	Page<Seat> findSortedSeatPageByEventIdForAdmin(
+		@Param("eventId") Long eventId,
+		Pageable pageable
+	);
 
 }
