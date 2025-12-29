@@ -34,11 +34,7 @@ public class SeatService {
 	 */
 	@Transactional(readOnly = true)
 	public List<Seat> getSeatsByEvent(Long eventId, Long userId) {
-		// 이벤트 존재 여부 확인
-		if (!eventRepository.existsById(eventId)) {
-			throw new ErrorException(SeatErrorCode.NOT_FOUND_EVENT);
-		}
-		// TODO: Q ENTERED 상태인지 확인
+		// Q ENTERED 상태인지 확인
 		if (!queueEntryReadService.isUserEntered(eventId, userId)) {
 			throw new ErrorException(SeatErrorCode.NOT_IN_QUEUE);
 		}
