@@ -45,7 +45,7 @@ class SmsServiceTest {
 	@MockitoBean
 	private SmsUtilInterface smsUtil;
 
-	@org.junit.jupiter.api.BeforeEach
+	@BeforeEach
 	void setUpSmsService() {
 		// test 프로파일에서는 TestSmsService가 빈으로 등록되므로,
 		// SmsService를 직접 테스트하기 위해 수동으로 인스턴스 생성
