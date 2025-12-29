@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.api.event.dto.request.EventCreateRequest;
 import com.back.api.event.dto.request.EventUpdateRequest;
 import com.back.api.s3.service.S3MoveService;
+import com.back.api.s3.service.S3PresignedService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
@@ -55,6 +56,9 @@ class AdminEventControllerTest {
 	@MockitoBean
 	private S3MoveService s3MoveService;
 
+	@MockitoBean
+	private S3PresignedService s3PresignedService;
+
 	@Autowired
 	private TestAuthHelper authHelper;
 
@@ -78,6 +82,10 @@ class AdminEventControllerTest {
 		eventDate = now.plusDays(15);
 		when(s3MoveService.moveImage(anyLong(), anyString()))
 			.thenReturn("events/1/main.jpg");
+
+		when(s3PresignedService.issueDownloadUrl(anyString()))
+			.thenReturn("https://s3.amazonaws.com/bucket/events/1/main.jpg?signature=xxx");
+
 
 		token = authHelper.issueAccessToken(UserRole.ADMIN);
 	}
