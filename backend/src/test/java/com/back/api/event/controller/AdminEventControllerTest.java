@@ -282,7 +282,6 @@ class AdminEventControllerTest {
 	@Nested
 	@DisplayName("전체 이벤트 대시보드 조회 API (GET /api/v1/admin/events/dashboard)")
 	class GetAllEventsDashboard {
-
 		@Test
 		@DisplayName("모든 이벤트의 대시보드 정보를 조회한다")
 		void getAllEventsDashboard_Success() throws Exception {
