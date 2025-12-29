@@ -167,12 +167,18 @@ public class QueueEntryReadService {
 			QueueEntryStatus.EXPIRED
 		);
 
+		long completedCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+			eventId,
+			QueueEntryStatus.COMPLETED
+		);
+
 		return QueueStatisticsResponse.from(
 			eventId,
 			totalWaitingCount,
 			waitingCount,
 			enteredCount,
-			expiredCount
+			expiredCount,
+			completedCount
 		);
 	}
 

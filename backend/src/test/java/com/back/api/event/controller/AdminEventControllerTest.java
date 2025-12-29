@@ -307,4 +307,54 @@ class AdminEventControllerTest {
 				.andExpect(jsonPath("$.data", hasSize(0)));
 		}
 	}
+
+	@Nested
+	@DisplayName("단일 이벤트 조회 API (GET /api/v1/admin/events/{eventId})")
+	class GetEvent {
+
+		@Test
+		@DisplayName("존재하는 이벤트 조회 성공")
+		void getEvent_Success() throws Exception {
+			// given
+			Event event = EventFactory.fakeEvent("조회할 이벤트");
+			Event savedEvent = eventRepository.save(event);
+
+			// when & then
+			mockMvc.perform(get("/api/v1/admin/events/{eventId}", savedEvent.getId())
+					.header("Authorization", "Bearer " + token))
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("이벤트를 조회했습니다."))
+				.andExpect(jsonPath("$.data.id").value(savedEvent.getId()))
+				.andExpect(jsonPath("$.data.title").value("조회할 이벤트"))
+				.andExpect(jsonPath("$.data.category").exists())
+				.andExpect(jsonPath("$.data.description").exists());
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 이벤트 조회 시 404 에러")
+		void getEvent_NotFound() throws Exception {
+			// when & then
+			mockMvc.perform(get("/api/v1/admin/events/{eventId}", 999999L)
+					.header("Authorization", "Bearer " + token))
+				.andDo(print())
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value(EventErrorCode.NOT_FOUND_EVENT.getMessage()));
+		}
+
+		@Test
+		@DisplayName("삭제된 이벤트 조회 시 404 에러")
+		void getEvent_Deleted() throws Exception {
+			// given
+			Event event = EventFactory.fakeEvent("삭제될 이벤트");
+			Event savedEvent = eventRepository.save(event);
+			eventRepository.delete(savedEvent);  // soft delete
+
+			// when & then
+			mockMvc.perform(get("/api/v1/admin/events/{eventId}", savedEvent.getId())
+					.header("Authorization", "Bearer " + token))
+				.andDo(print())
+				.andExpect(status().isNotFound());
+		}
+	}
 }

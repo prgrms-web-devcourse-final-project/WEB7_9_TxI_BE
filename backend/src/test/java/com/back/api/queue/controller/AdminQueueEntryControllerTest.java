@@ -1,5 +1,6 @@
 package com.back.api.queue.controller;
 
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -286,6 +287,83 @@ public class AdminQueueEntryControllerTest {
 				.andDo(print());
 		}
 
+	}
+
+	@Nested
+	@DisplayName("이벤트별 대기열 목록 조회 API (/api/v1/admin/queues/{eventId})")
+	class GetQueueEntriesTests {
+
+		@Test
+		@DisplayName("이벤트별 대기열 목록 조회 성공 (페이징)")
+		void getQueueEntries_Success() throws Exception {
+			// given
+			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			userRepository.saveAll(List.of(user1, user2, user3));
+
+			queueEntryHelper.createQueueEntry(testEvent, user1, 1);
+			queueEntryHelper.createQueueEntry(testEvent, user2, 2);
+			queueEntryHelper.createQueueEntry(testEvent, user3, 3);
+
+			// when then
+			mockMvc.perform(get("/api/v1/admin/queues/{eventId}", testEvent.getId())
+					.header("Authorization", "Bearer " + accessToken)
+					.param("page", "0")
+					.param("size", "20"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("이벤트 대기열 목록을 조회했습니다."))
+				.andExpect(jsonPath("$.data.content").isArray())
+				.andExpect(jsonPath("$.data.content", hasSize(3)))
+				.andExpect(jsonPath("$.data.totalElements").value(3))
+				.andExpect(jsonPath("$.data.pageable").exists())
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("빈 대기열 조회")
+		void getQueueEntries_Empty() throws Exception {
+			// when then
+			mockMvc.perform(get("/api/v1/admin/queues/{eventId}", testEvent.getId())
+					.header("Authorization", "Bearer " + accessToken)
+					.param("page", "0")
+					.param("size", "20"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content", hasSize(0)))
+				.andExpect(jsonPath("$.data.totalElements").value(0))
+				.andDo(print());
+		}
+
+		@Test
+		@DisplayName("페이지 크기 변경하여 조회")
+		void getQueueEntries_CustomPageSize() throws Exception {
+			// given
+			for (int i = 1; i <= 25; i++) {
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				userRepository.save(user);
+				queueEntryHelper.createQueueEntry(testEvent, user, i);
+			}
+
+			// when then - 첫 페이지 (10개)
+			mockMvc.perform(get("/api/v1/admin/queues/{eventId}", testEvent.getId())
+					.header("Authorization", "Bearer " + accessToken)
+					.param("page", "0")
+					.param("size", "10"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content", hasSize(10)))
+				.andExpect(jsonPath("$.data.totalElements").value(25))
+				.andExpect(jsonPath("$.data.totalPages").value(3))
+				.andDo(print());
+
+			// when then - 두 번째 페이지
+			mockMvc.perform(get("/api/v1/admin/queues/{eventId}", testEvent.getId())
+					.header("Authorization", "Bearer " + accessToken)
+					.param("page", "1")
+					.param("size", "10"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content", hasSize(10)))
+				.andDo(print());
+		}
 	}
 
 	// DTO record for request body

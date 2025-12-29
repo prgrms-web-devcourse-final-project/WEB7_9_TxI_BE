@@ -31,6 +31,8 @@ public class AdminPreRegisterService {
 	}
 
 	public Long getPreRegisterCountByEventId(Long eventId) {
+		Event event = eventService.getEventEntity(eventId);
+		
 		return preRegisterRepository.countByEvent_IdAndPreRegisterStatus(
 			eventId,
 			PreRegisterStatus.REGISTERED
