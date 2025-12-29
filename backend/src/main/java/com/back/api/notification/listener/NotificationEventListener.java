@@ -71,29 +71,29 @@ public class NotificationEventListener {
 	 * @param notification 전송할 알림 엔티티
 	 */
 	private void sendNotificationViaWebSocket(Long userId, Notification notification) {
-		// 사용자 온라인 여부 확인
-		if (!sessionManager.isUserOnline(userId)) {
+		log.info("=== 웹소켓 전송 시작 - userId: {}", userId);
+
+		boolean isOnline = sessionManager.isUserOnline(userId);
+		log.info("=== 사용자 온라인 상태: {}", isOnline);
+
+		if (!isOnline) {
 			log.debug("사용자 오프라인 - 웹소켓 전송 생략 - userId: {}", userId);
 			return;
 		}
 
 		try {
-			// DTO 변환
 			NotificationResponseDto dto = NotificationResponseDto.from(notification);
 
-			// 웹소켓 전송
-			messagingTemplate.convertAndSendToUser(
-				userId.toString(),
-				"/notifications",
-				dto
-			);
+			// convertAndSendToUser 대신 직접 경로로 전송
+			String directDestination = "/user/" + userId + "/notifications";
+			log.info("=== 직접 전송 - destination: {}", directDestination);
 
-			log.info("웹소켓 전송 성공 - userId: {}, notificationId: {}", userId, notification.getId());
+			messagingTemplate.convertAndSend(directDestination, dto);
+
+			log.info("=== 웹소켓 전송 성공 - userId: {}, notificationId: {}", userId, notification.getId());
 
 		} catch (Exception e) {
-			log.warn("웹소켓 전송 실패 - userId: {}, notificationId: {}, error: {}",
-				userId, notification.getId(), e.getMessage());
-			// 전송 실패해도 DB에는 저장되어 있으므로 예외를 던지지 않음
+			log.error("=== 웹소켓 전송 실패 - userId: {}, error: {}", userId, e.getMessage(), e);
 		}
 	}
 }
