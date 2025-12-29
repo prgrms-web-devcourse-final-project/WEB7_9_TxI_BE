@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.api.queue.service.QueueEntryReadService;
 import com.back.api.seat.dto.response.SeatStatusMessage;
 import com.back.domain.seat.entity.Seat;
+import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.repository.SeatRepository;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.exception.ErrorException;
@@ -29,15 +30,19 @@ public class SeatService {
 
 	/**
 	 * 이벤트의 좌석 목록 조회
+	 * @param grade null이면 전체 조회, 값이 있으면 해당 grade만 조회
 	 */
 	@Transactional(readOnly = true)
-	public List<Seat> getSeatsByEvent(Long eventId, Long userId) {
+	public List<Seat> getSeatsByEvent(Long eventId, Long userId, SeatGrade grade) {
 		// Q ENTERED 상태인지 확인
 		if (!queueEntryReadService.isUserEntered(eventId, userId)) {
 			throw new ErrorException(SeatErrorCode.NOT_IN_QUEUE);
 		}
 
-		return seatRepository.findSortedSeatListByEventId(eventId);
+		// grade가 null이면 전체 조회, 아니면 grade별 조회
+		return grade == null
+			? seatRepository.findAllSeatsByEventId(eventId)
+			: seatRepository.findSeatsByEventIdAndGrade(eventId, grade);
 	}
 
 	/**

@@ -96,8 +96,8 @@ class SeatServiceUnitTest {
 	class GetSeatsByEventTest {
 
 		@Test
-		@DisplayName("정상적으로 좌석 목록 조회")
-		void getSeatsByEvent_Success() {
+		@DisplayName("전체 좌석 조회 성공 (grade = null)")
+		void getSeatsByEvent_AllSeats_Success() {
 			// given
 			List<Seat> expectedSeats = List.of(
 				Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000),
@@ -106,16 +106,41 @@ class SeatServiceUnitTest {
 			);
 
 			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
-			given(seatRepository.findSortedSeatListByEventId(eventId)).willReturn(expectedSeats);
+			given(seatRepository.findAllSeatsByEventId(eventId)).willReturn(expectedSeats);
 
 			// when
-			List<Seat> result = seatService.getSeatsByEvent(eventId, userId);
+			List<Seat> result = seatService.getSeatsByEvent(eventId, userId, null);
 
 			// then
 			assertThat(result).hasSize(3);
 			assertThat(result).isEqualTo(expectedSeats);
 			then(queueEntryReadService).should().isUserEntered(eventId, userId);
-			then(seatRepository).should().findSortedSeatListByEventId(eventId);
+			then(seatRepository).should().findAllSeatsByEventId(eventId);
+			then(seatRepository).should(never()).findSeatsByEventIdAndGrade(any(), any());
+		}
+
+		@Test
+		@DisplayName("특정 grade 좌석만 조회 성공")
+		void getSeatsByEvent_ByGrade_Success() {
+			// given
+			List<Seat> expectedSeats = List.of(
+				Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000),
+				Seat.createSeat(testEvent, "A2", SeatGrade.VIP, 150000)
+			);
+
+			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
+			given(seatRepository.findSeatsByEventIdAndGrade(eventId, SeatGrade.VIP)).willReturn(expectedSeats);
+
+			// when
+			List<Seat> result = seatService.getSeatsByEvent(eventId, userId, SeatGrade.VIP);
+
+			// then
+			assertThat(result).hasSize(2);
+			assertThat(result).isEqualTo(expectedSeats);
+			assertThat(result).allMatch(seat -> seat.getGrade() == SeatGrade.VIP);
+			then(queueEntryReadService).should().isUserEntered(eventId, userId);
+			then(seatRepository).should().findSeatsByEventIdAndGrade(eventId, SeatGrade.VIP);
+			then(seatRepository).should(never()).findAllSeatsByEventId(any());
 		}
 
 		@Test
@@ -125,12 +150,13 @@ class SeatServiceUnitTest {
 			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(false);
 
 			// when & then
-			assertThatThrownBy(() -> seatService.getSeatsByEvent(eventId, userId))
+			assertThatThrownBy(() -> seatService.getSeatsByEvent(eventId, userId, null))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.NOT_IN_QUEUE);
 
 			then(queueEntryReadService).should().isUserEntered(eventId, userId);
-			then(seatRepository).should(never()).findSortedSeatListByEventId(any());
+			then(seatRepository).should(never()).findAllSeatsByEventId(any());
+			then(seatRepository).should(never()).findSeatsByEventIdAndGrade(any(), any());
 		}
 	}
 

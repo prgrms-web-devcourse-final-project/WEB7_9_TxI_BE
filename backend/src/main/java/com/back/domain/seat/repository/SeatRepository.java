@@ -14,13 +14,25 @@ import com.back.domain.seat.entity.SeatStatus;
 
 public interface SeatRepository extends JpaRepository<Seat, Long> {
 
+	// 전체 좌석 조회
 	@Query("""
 			SELECT s
 			FROM Seat s
+			JOIN FETCH s.event
 			WHERE s.event.id = :eventId
 			ORDER BY s.grade ASC, s.seatCode ASC
 		""")
-	List<Seat> findSortedSeatListByEventId(Long eventId);
+	List<Seat> findAllSeatsByEventId(Long eventId);
+
+	// Grade별 좌석 조회
+	@Query("""
+			SELECT s
+			FROM Seat s
+			JOIN FETCH s.event
+			WHERE s.event.id = :eventId AND s.grade = :grade
+			ORDER BY s.seatCode ASC
+		""")
+	List<Seat> findSeatsByEventIdAndGrade(Long eventId, SeatGrade grade);
 
 	Optional<Seat> findByEventIdAndId(Long eventId, Long seatId);
 
