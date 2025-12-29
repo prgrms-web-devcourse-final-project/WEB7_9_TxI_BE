@@ -105,7 +105,6 @@ class SeatServiceUnitTest {
 				Seat.createSeat(testEvent, "B1", SeatGrade.R, 100000)
 			);
 
-			given(eventRepository.existsById(eventId)).willReturn(true);
 			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
 			given(seatRepository.findSortedSeatListByEventId(eventId)).willReturn(expectedSeats);
 
@@ -115,31 +114,14 @@ class SeatServiceUnitTest {
 			// then
 			assertThat(result).hasSize(3);
 			assertThat(result).isEqualTo(expectedSeats);
-			then(eventRepository).should().existsById(eventId);
 			then(queueEntryReadService).should().isUserEntered(eventId, userId);
 			then(seatRepository).should().findSortedSeatListByEventId(eventId);
-		}
-
-		@Test
-		@DisplayName("존재하지 않는 이벤트의 좌석 조회에 실패")
-		void getSeatsByEvent_EventNotFound_ThrowsException() {
-			// given
-			given(eventRepository.existsById(eventId)).willReturn(false);
-
-			// when & then
-			assertThatThrownBy(() -> seatService.getSeatsByEvent(eventId, userId))
-				.isInstanceOf(ErrorException.class)
-				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.NOT_FOUND_EVENT);
-
-			then(queueEntryReadService).should(never()).isUserEntered(any(), any());
-			then(seatRepository).should(never()).findSortedSeatListByEventId(any());
 		}
 
 		@Test
 		@DisplayName("큐에 입장하지 않은 사용자의 좌석 조회에 실패")
 		void getSeatsByEvent_NotInQueue_ThrowsException() {
 			// given
-			given(eventRepository.existsById(eventId)).willReturn(true);
 			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(false);
 
 			// when & then
@@ -147,7 +129,6 @@ class SeatServiceUnitTest {
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.NOT_IN_QUEUE);
 
-			then(eventRepository).should().existsById(eventId);
 			then(queueEntryReadService).should().isUserEntered(eventId, userId);
 			then(seatRepository).should(never()).findSortedSeatListByEventId(any());
 		}

@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.queue.service.QueueEntryReadService;
 import com.back.api.seat.dto.response.SeatStatusMessage;
-import com.back.domain.event.repository.EventRepository;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.repository.SeatRepository;
 import com.back.global.error.code.SeatErrorCode;
@@ -25,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 public class SeatService {
 
 	private final SeatRepository seatRepository;
-	private final EventRepository eventRepository;
 	private final QueueEntryReadService queueEntryReadService;
 	private final EventPublisher eventPublisher;
 
