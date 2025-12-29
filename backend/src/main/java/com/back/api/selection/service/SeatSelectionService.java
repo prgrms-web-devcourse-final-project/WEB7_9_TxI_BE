@@ -28,6 +28,8 @@ public class SeatSelectionService {
 	 * 좌석 선택 + DraftTicket 생성/업데이트
 	 * - 기존 Draft가 있으면 재사용 (좌석만 변경)
 	 * - 없으면 새로 생성
+	 *
+	 * 안전성 보장: 새 좌석 예약 성공 후에만 기존 좌석 해제
 	 */
 	@Transactional
 	public Ticket selectSeatAndCreateTicket(Long eventId, Long seatId, Long userId) {
@@ -37,17 +39,18 @@ public class SeatSelectionService {
 
 		// Draft Ticket 조회 또는 생성 (1개 보장)
 		Ticket ticket = ticketService.getOrCreateDraft(eventId, userId);
+		Seat oldSeat = ticket.getSeat();
 
-		// 기존 좌석이 있으면 먼저 해제
-		if (ticket.hasSeat()) {
-			seatService.markSeatAsAvailable(ticket.getSeat());
-		}
-
-		// 새 좌석 예약
+		// 새 좌석 먼저 예약 (실패 시 기존 좌석 유지)
 		Seat newSeat = seatService.reserveSeat(eventId, seatId, userId);
 
 		// Ticket에 좌석 할당
 		ticket.assignSeat(newSeat);
+
+		// 새 좌석 예약 성공했을 때만 기존 좌석 해제
+		if (oldSeat != null) {
+			seatService.markSeatAsAvailable(oldSeat);
+		}
 
 		return ticket;
 	}
