@@ -98,7 +98,7 @@ public interface AdminQueueEntryApi {
 
 	@Operation(summary = "대기열 목록 조회", description = "특정 이벤트의 전체 대기열을 페이징하여 조회합니다.")
 	ApiResponse<Page<QueueEntryListResponse>> getQueueEntriesByEventId(
-		@Parameter(description = "이벤트 ID")
+		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId,
 
 		@Parameter(description = "페이지 번호 (0부터 시작)")
