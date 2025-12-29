@@ -135,7 +135,7 @@ class NotificationServiceTest {
 		@DisplayName("알림 목록 조회 성공 - 5개 반환")
 		void getNotifications_Success() {
 			// given
-			given(notificationRepository.findByUserIdOrderByCreateAtDesc(USER_ID))
+			given(notificationRepository.findTop20ByUserIdOrderByCreateAtDesc(USER_ID))
 				.willReturn(testNotifications);
 
 			// when
@@ -146,14 +146,14 @@ class NotificationServiceTest {
 			assertThat(result).extracting("title")
 				.containsExactly("알림 제목 1", "알림 제목 2", "알림 제목 3", "알림 제목 4", "알림 제목 5");
 			verify(notificationRepository, times(1))
-				.findByUserIdOrderByCreateAtDesc(USER_ID);
+				.findTop20ByUserIdOrderByCreateAtDesc(USER_ID);
 		}
 
 		@Test
 		@DisplayName("알림이 없는 경우 - 빈 리스트 반환")
 		void getNotifications_EmptyList() {
 			// given
-			given(notificationRepository.findByUserIdOrderByCreateAtDesc(USER_ID))
+			given(notificationRepository.findTop20ByUserIdOrderByCreateAtDesc(USER_ID))
 				.willReturn(List.of());
 
 			// when
@@ -162,7 +162,7 @@ class NotificationServiceTest {
 			// then
 			assertThat(result).isEmpty();
 			verify(notificationRepository, times(1))
-				.findByUserIdOrderByCreateAtDesc(USER_ID);
+				.findTop20ByUserIdOrderByCreateAtDesc(USER_ID);
 		}
 
 		@Test
@@ -170,7 +170,7 @@ class NotificationServiceTest {
 		void getNotifications_DtoMapping() {
 			// given
 			Notification notification = testNotifications.get(0);
-			given(notificationRepository.findByUserIdOrderByCreateAtDesc(USER_ID))
+			given(notificationRepository.findTop20ByUserIdOrderByCreateAtDesc(USER_ID))
 				.willReturn(List.of(notification));
 
 			// when

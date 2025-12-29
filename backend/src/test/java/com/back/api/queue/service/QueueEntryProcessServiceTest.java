@@ -23,6 +23,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
 import com.back.api.queue.dto.response.EnteredQueueResponse;
 import com.back.api.queue.dto.response.ExpiredQueueResponse;
+import com.back.api.queue.dto.response.MoveToBackResponse;
+import com.back.api.ticket.service.TicketService;
 import com.back.config.TestRedisConfig;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
@@ -61,6 +63,9 @@ class QueueEntryProcessServiceTest {
 	@Mock
 	private EventRepository eventRepository;
 
+	@Mock
+	private TicketService ticketService;
+
 	private QueueSchedulerProperties queueSchedulerProperties;
 
 	private Event testEvent;
@@ -88,7 +93,8 @@ class QueueEntryProcessServiceTest {
 			eventPublisher,
 			queueSchedulerProperties,
 			queueEntryReadService,
-			eventRepository
+			eventRepository,
+			ticketService
 		);
 
 		testEvent = EventFactory.fakeEvent("TestEvent");
@@ -782,4 +788,130 @@ class QueueEntryProcessServiceTest {
 			then(eventPublisher).should(never()).publishEvent(any());
 		}
 	}
+
+	@Nested
+	@DisplayName("moveToBackQueue 테스트")
+	class MoveToBackQueueTest {
+
+		@Test
+		@DisplayName("ENTERED 상태에서 맨 뒤로 이동 - 성공")
+		void moveToBackQueue_Success() {
+
+			//given
+			testQueueEntry.enterQueue();
+
+			given(queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId))
+				.willReturn(Optional.of(testQueueEntry));
+			given(queueEntryRepository.findMaxRankInQueue(eventId))
+				.willReturn(Optional.of(10L));
+			given(queueEntryRepository.countByEvent_IdAndQueueEntryStatus(eventId, QueueEntryStatus.WAITING))
+				.willReturn(3L);
+			given(queueEntryRepository.save(any(QueueEntry.class)))
+				.willAnswer(invocation -> invocation.getArgument(0));
+
+			// when
+			MoveToBackResponse response = queueEntryProcessService.moveToBackQueue(eventId, userId);
+
+			// then
+			assertThat(response.userId()).isEqualTo(userId);
+			assertThat(response.previousRank()).isEqualTo(5);
+			assertThat(response.newRank()).isEqualTo(11);
+			assertThat(response.totalWaitingUsers()).isEqualTo(3);
+			assertThat(testQueueEntry.getQueueEntryStatus()).isEqualTo(QueueEntryStatus.WAITING);
+			assertThat(testQueueEntry.getQueueRank()).isEqualTo(11);
+			assertThat(testQueueEntry.getEnteredAt()).isNull();
+			assertThat(testQueueEntry.getExpiredAt()).isNull();
+
+			then(queueEntryRepository).should().save(testQueueEntry);
+			then(queueEntryRedisRepository).should().removeFromEnteredQueue(eventId, userId);
+			then(queueEntryRedisRepository).should().addToWaitingQueue(eventId, userId, 11);
+
+		}
+
+		@Test
+		@DisplayName("여러 ENTERED 사용자 있을 때 - 전체 최대 rank 기준으로 맨 뒤 배정")
+		void moveToBackQueue_WithMultipleEnteredUsers() {
+
+			// given
+			testQueueEntry.enterQueue();
+
+			given(queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId))
+				.willReturn(Optional.of(testQueueEntry));
+			given(queueEntryRepository.findMaxRankInQueue(eventId))
+				.willReturn(Optional.of(150L)); // ENTERED 사용자 중 최대 rank
+			given(queueEntryRepository.countByEvent_IdAndQueueEntryStatus(eventId, QueueEntryStatus.WAITING))
+				.willReturn(140L); // WAITING 사용자 수
+			given(queueEntryRepository.save(any(QueueEntry.class)))
+				.willAnswer(invocation -> invocation.getArgument(0));
+
+			// when
+			MoveToBackResponse response = queueEntryProcessService.moveToBackQueue(eventId, userId);
+
+			// then
+			assertThat(response.newRank()).isEqualTo(151);
+			assertThat(response.totalWaitingUsers()).isEqualTo(140);
+		}
+
+		@Test
+		@DisplayName("WAITING 상태에서 맨 뒤로 이동 시도 - 실패")
+		void moveToBackQueue_NotEnteredStatus_Waiting() {
+
+			//given
+			given(queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId))
+				.willReturn(Optional.of(testQueueEntry));
+
+			// when & then
+			assertThatThrownBy(() ->
+				queueEntryProcessService.moveToBackQueue(eventId, userId)
+			)
+				.isInstanceOf(ErrorException.class)
+				.hasFieldOrPropertyWithValue("errorCode", QueueEntryErrorCode.NOT_ENTERED_STATUS);
+
+			then(queueEntryRepository).should(never()).save(any());
+		}
+
+		@Test
+		@DisplayName("EXPIRED 상태에서 맨 뒤로 이동 시도 - 실패")
+		void moveToBackQueue_NotEnteredStatus_Expired() {
+
+			// given
+			testQueueEntry.enterQueue();
+			testQueueEntry.expire();
+
+			given(queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId))
+				.willReturn(Optional.of(testQueueEntry));
+
+			// when & then
+			assertThatThrownBy(() ->
+				queueEntryProcessService.moveToBackQueue(eventId, userId)
+			)
+				.isInstanceOf(ErrorException.class)
+				.hasFieldOrPropertyWithValue("errorCode", QueueEntryErrorCode.NOT_ENTERED_STATUS);
+
+			then(queueEntryRepository).should(never()).save(any());
+		}
+
+		@Test
+		@DisplayName("COMPLETED 상태에서 맨 뒤로 이동 시도 - 실패")
+		void moveToBackQueue_NotEnteredStatus_Completed() {
+
+			// given
+			testQueueEntry.enterQueue();
+			testQueueEntry.completePayment();
+
+			given(queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId))
+				.willReturn(Optional.of(testQueueEntry));
+
+			// when & then
+			assertThatThrownBy(() ->
+				queueEntryProcessService.moveToBackQueue(eventId, userId)
+			)
+				.isInstanceOf(ErrorException.class)
+				.hasFieldOrPropertyWithValue("errorCode", QueueEntryErrorCode.NOT_ENTERED_STATUS);
+
+			then(queueEntryRepository).should(never()).save(any());
+		}
+
+	}
+
 }

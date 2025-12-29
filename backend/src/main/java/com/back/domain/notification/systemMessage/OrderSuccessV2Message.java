@@ -1,17 +1,17 @@
 package com.back.domain.notification.systemMessage;
 
-import static com.back.domain.notification.enums.DomainName.*;
 import static com.back.domain.notification.enums.NotificationTypeDetails.*;
 
+import com.back.domain.notification.enums.DomainName;
 import com.back.domain.notification.enums.NotificationTypeDetails;
 import com.back.domain.notification.enums.NotificationTypes;
 
-public class OrdersSuccessMessage extends NotificationMessage {
+public class OrderSuccessV2Message extends NotificationMessage {
 	private final Long amount;
 	private final String eventName;
 
-	public OrdersSuccessMessage(Long userId, Long orderId, Long amount, String eventName) {
-		super(userId, ORDERS, orderId);
+	public OrderSuccessV2Message(Long userId, String orderId, Long amount, String eventName) {
+		super(userId, DomainName.ORDERS, orderId);
 		this.amount = amount;
 		this.eventName = eventName;
 	}

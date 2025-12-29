@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.back.api.queue.dto.request.ShuffleQueueRequest;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
+import com.back.api.queue.dto.response.ProcessEntriesResponse;
 import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.ShuffleQueueResponse;
 import com.back.global.config.swagger.ApiErrorCode;
@@ -72,6 +73,24 @@ public interface AdminQueueEntryApi {
 	ApiResponse<Void> resetQueue(
 		@Parameter(description = "이벤트 ID", example = "1")
 		@PathVariable Long eventId
+	);
+
+
+	@Operation(
+		summary = "[테스트용] 특정 사용자 포함 상위 대기자 모두 입장 처리",
+		description = "관리자가 특정 사용자와 그 사용자 앞의 모든 대기자를 입장 처리합니다."
+	)
+	@ApiErrorCode({
+		"NOT_FOUND_QUEUE_ENTRY",
+		"NOT_WAITING_STATUS",
+		"NOT_INVALID_COUNT"
+	})
+	ApiResponse<ProcessEntriesResponse> processIncludingUser(
+		@Parameter(description = "이벤트 ID", example = "1")
+		@PathVariable Long eventId,
+
+		@Parameter(description = "사용자 ID", example = "1")
+		@PathVariable Long userId
 	);
 
 }

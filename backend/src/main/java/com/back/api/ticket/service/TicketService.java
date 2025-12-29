@@ -1,6 +1,7 @@
 package com.back.api.ticket.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +24,14 @@ import com.back.global.error.code.TicketErrorCode;
 import com.back.global.error.exception.ErrorException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 티켓 상태 변경 담당 서비스
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TicketService {
 
 	private final TicketRepository ticketRepository;
@@ -200,6 +203,33 @@ public class TicketService {
 		// 부가 책임: 좌석이 있으면 해제
 		if (ticket.getSeat() != null) {
 			seatService.markSeatAsAvailable(ticket.getSeat());
+		}
+	}
+
+	public void releaseDraftTicketAndSeat(Long eventId, Long userId) {
+		try {
+			Optional<Ticket> draftTicketOpt =
+				ticketRepository.findByEventIdAndOwnerIdAndTicketStatus(
+					eventId, userId, TicketStatus.DRAFT
+				);
+
+			if (draftTicketOpt.isEmpty()) {
+				return;
+			}
+
+			Ticket draftTicket = draftTicketOpt.get();
+			draftTicket.cancel();
+
+			if (draftTicket.getSeat() != null) {
+				seatService.markSeatAsAvailable(draftTicket.getSeat());
+			}
+
+		} catch (Exception e) {
+			log.warn(
+				"Draft ticket release failed on queue demotion (scheduler will handle) " +
+					"- eventId={}, userId={}",
+				eventId, userId, e
+			);
 		}
 	}
 }

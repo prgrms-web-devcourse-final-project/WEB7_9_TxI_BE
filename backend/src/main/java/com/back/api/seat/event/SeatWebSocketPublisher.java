@@ -17,7 +17,8 @@ public class SeatWebSocketPublisher {
 
 	public void publish(SeatStatusMessage msg) {
 		String destination = "/topic/events/" + msg.eventId() + "/seats";
-		log.debug("WS_PUBLISH destination={} eventId={} seatId={} currentStatus={}", destination, msg.eventId(), msg.seatId(),
+		log.debug("WS_PUBLISH destination={} eventId={} seatId={} currentStatus={}", destination, msg.eventId(),
+			msg.seatId(),
 			msg.currentStatus());
 		messagingTemplate.convertAndSend(destination, msg);
 		log.debug("WS_PUBLISH_COMPLETE destination={}", destination);

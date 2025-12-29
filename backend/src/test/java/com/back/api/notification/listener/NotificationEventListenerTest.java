@@ -32,7 +32,7 @@ import com.back.domain.notification.enums.NotificationTypeDetails;
 import com.back.domain.notification.enums.NotificationTypes;
 import com.back.domain.notification.repository.NotificationRepository;
 import com.back.domain.notification.systemMessage.OrderFailedMessage;
-import com.back.domain.notification.systemMessage.OrdersSuccessMessage;
+import com.back.domain.notification.systemMessage.OrderSuccessMessage;
 import com.back.domain.notification.systemMessage.PreRegisterDoneMessage;
 import com.back.domain.notification.systemMessage.QueueEntriesMessage;
 import com.back.domain.user.entity.User;
@@ -119,7 +119,7 @@ class NotificationEventListenerTest {
 
 			// when: 이벤트 발행 (별도 트랜잭션으로 커밋되어야 AFTER_COMMIT 리스너 실행)
 			transactionHelper.executeInNewTransaction(() -> {
-				OrdersSuccessMessage message = new OrdersSuccessMessage(
+				OrderSuccessMessage message = new OrderSuccessMessage(
 					testUser.getId(),
 					1L,
 					99000L,
@@ -132,7 +132,7 @@ class NotificationEventListenerTest {
 			await().atMost(5, SECONDS).untilAsserted(() -> {
 				// DB 저장 확인
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 				assertThat(notifications).hasSize(1);
 
 				Notification saved = notifications.get(0);
@@ -160,7 +160,7 @@ class NotificationEventListenerTest {
 
 			// when
 			transactionHelper.executeInNewTransaction(() -> {
-				OrdersSuccessMessage message = new OrdersSuccessMessage(
+				OrderSuccessMessage message = new OrderSuccessMessage(
 					testUser.getId(),
 					1L,
 					99000L,
@@ -173,7 +173,7 @@ class NotificationEventListenerTest {
 			await().atMost(3, SECONDS).untilAsserted(() -> {
 				// DB 저장 확인
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 				assertThat(notifications).hasSize(1);
 
 				// 웹소켓 미전송 확인
@@ -184,6 +184,7 @@ class NotificationEventListenerTest {
 				);
 			});
 		}
+
 		@Test
 		@DisplayName("알림 타입 및 상세 정보 검증")
 		void publishOrdersSuccessMessage_VerifyNotificationTypeDetails() {
@@ -192,7 +193,7 @@ class NotificationEventListenerTest {
 
 			// when
 			transactionHelper.executeInNewTransaction(() -> {
-				OrdersSuccessMessage message = new OrdersSuccessMessage(
+				OrderSuccessMessage message = new OrderSuccessMessage(
 					testUser.getId(),
 					1L,
 					99000L,
@@ -204,7 +205,7 @@ class NotificationEventListenerTest {
 			// then
 			await().atMost(3, SECONDS).untilAsserted(() -> {
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 
 				Notification saved = notifications.get(0);
 				assertThat(saved.getType()).isEqualTo(NotificationTypes.PAYMENT);
@@ -239,7 +240,7 @@ class NotificationEventListenerTest {
 			// then
 			await().atMost(3, SECONDS).untilAsserted(() -> {
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 				assertThat(notifications).hasSize(1);
 
 				Notification saved = notifications.get(0);
@@ -274,7 +275,7 @@ class NotificationEventListenerTest {
 			// then
 			await().atMost(3, SECONDS).untilAsserted(() -> {
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 
 				Notification saved = notifications.get(0);
 				assertThat(saved.getType()).isEqualTo(NotificationTypes.PAYMENT);
@@ -307,7 +308,7 @@ class NotificationEventListenerTest {
 			// then
 			await().atMost(3, SECONDS).untilAsserted(() -> {
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 				assertThat(notifications).hasSize(1);
 
 				Notification saved = notifications.get(0);
@@ -341,7 +342,7 @@ class NotificationEventListenerTest {
 			// then
 			await().atMost(3, SECONDS).untilAsserted(() -> {
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 
 				Notification saved = notifications.get(0);
 				assertThat(saved.getType()).isEqualTo(NotificationTypes.PRE_REGISTER);
@@ -374,7 +375,7 @@ class NotificationEventListenerTest {
 			// then
 			await().atMost(3, SECONDS).untilAsserted(() -> {
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 				assertThat(notifications).hasSize(1);
 
 				Notification saved = notifications.get(0);
@@ -408,7 +409,7 @@ class NotificationEventListenerTest {
 			// then
 			await().atMost(3, SECONDS).untilAsserted(() -> {
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 
 				Notification saved = notifications.get(0);
 				assertThat(saved.getType()).isEqualTo(NotificationTypes.QUEUE_ENTRIES);
@@ -431,7 +432,7 @@ class NotificationEventListenerTest {
 
 			// when
 			transactionHelper.executeInNewTransaction(() -> {
-				OrdersSuccessMessage message = new OrdersSuccessMessage(
+				OrderSuccessMessage message = new OrderSuccessMessage(
 					nonExistentUserId,
 					1L,
 					99000L,
@@ -443,7 +444,7 @@ class NotificationEventListenerTest {
 			// then: 알림이 생성되지 않음
 			await().atMost(3, SECONDS).untilAsserted(() -> {
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(nonExistentUserId);
+					.findTop20ByUserIdOrderByCreateAtDesc(nonExistentUserId);
 				assertThat(notifications).isEmpty();
 
 				// 웹소켓도 전송되지 않음
@@ -469,7 +470,7 @@ class NotificationEventListenerTest {
 
 			// when
 			transactionHelper.executeInNewTransaction(() -> {
-				OrdersSuccessMessage message = new OrdersSuccessMessage(
+				OrderSuccessMessage message = new OrderSuccessMessage(
 					testUser.getId(),
 					1L,
 					99000L,
@@ -481,7 +482,7 @@ class NotificationEventListenerTest {
 			// then: DB에는 저장됨 (웹소켓 실패가 DB 저장에 영향 없음)
 			await().atMost(3, SECONDS).untilAsserted(() -> {
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 				assertThat(notifications).hasSize(1);
 
 				// 웹소켓 전송 시도는 있었음
@@ -501,7 +502,7 @@ class NotificationEventListenerTest {
 
 			// when: 4가지 메시지 타입 연속 발행
 			transactionHelper.executeInNewTransaction(() -> {
-				eventPublisher.publishEvent(new OrdersSuccessMessage(
+				eventPublisher.publishEvent(new OrderSuccessMessage(
 					testUser.getId(), 1L, 99000L, testEvent.getTitle()));
 				eventPublisher.publishEvent(new OrderFailedMessage(
 					testUser.getId(), 154000L, 51L, testEvent.getTitle()));
@@ -514,7 +515,7 @@ class NotificationEventListenerTest {
 			// then: 4개 모두 저장됨
 			await().atMost(5, SECONDS).untilAsserted(() -> {
 				List<Notification> notifications = notificationRepository
-					.findByUserIdOrderByCreateAtDesc(testUser.getId());
+					.findTop20ByUserIdOrderByCreateAtDesc(testUser.getId());
 				assertThat(notifications).hasSize(4);
 
 				// 각 타입별 확인

@@ -20,7 +20,6 @@ import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.AuthErrorCode;
-import com.back.global.error.exception.ErrorException;
 import com.back.global.security.CustomAuthenticationFilter;
 import com.back.global.security.JwtProvider;
 import com.back.support.data.TestUser;
@@ -75,9 +74,11 @@ class SessionMissingOnRefreshRotateTest {
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
-		assertThatThrownBy(() -> filter.doFilter(request, response, new MockFilterChain()))
-			.isInstanceOf(ErrorException.class)
-			.extracting("errorCode")
-			.isEqualTo(AuthErrorCode.UNAUTHORIZED);
+		// when
+		filter.doFilter(request, response, new MockFilterChain());
+
+		// then
+		assertThat(response.getStatus()).isEqualTo(AuthErrorCode.UNAUTHORIZED.getHttpStatus().value());
+		assertThat(response.getContentAsString()).contains(AuthErrorCode.UNAUTHORIZED.getMessage());
 	}
 }

@@ -16,6 +16,7 @@ import com.back.api.auth.dto.response.UserResponse;
 import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.auth.entity.RefreshToken;
 import com.back.domain.auth.repository.ActiveSessionRepository;
+import com.back.domain.auth.repository.RefreshTokenRedisRepository;
 import com.back.domain.auth.repository.RefreshTokenRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
@@ -24,6 +25,7 @@ import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.global.http.HttpRequestContext;
+import com.back.global.utils.TokenHash;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,6 +39,7 @@ public class AuthService {
 	private final HttpRequestContext requestContext;
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final ActiveSessionRepository activeSessionRepository;
+	private final RefreshTokenRedisRepository refreshTokenRedisRepository;
 
 	@Transactional
 	public AuthResponse signup(SignupRequest request) {
@@ -63,7 +66,7 @@ public class AuthService {
 
 		User savedUser = userRepository.save(user);
 
-		JwtDto tokens = setSessionAndCookie(savedUser);
+		JwtDto tokens = loginAsSingleDevice(savedUser);
 
 		return buildAuthResponse(savedUser, tokens);
 	}
@@ -77,7 +80,7 @@ public class AuthService {
 			throw new ErrorException(AuthErrorCode.LOGIN_FAILED);
 		}
 
-		JwtDto tokens = setSessionAndCookie(user);
+		JwtDto tokens = loginAsSingleDevice(user);
 
 		return buildAuthResponse(user, tokens);
 	}
@@ -89,11 +92,17 @@ public class AuthService {
 			throw new ErrorException(AuthErrorCode.REFRESH_TOKEN_REQUIRED);
 		}
 
+		long userId = requestContext.getUserId();
+
+		String refreshHash = TokenHash.sha256(refreshTokenStr);
+
 		RefreshToken refreshToken = refreshTokenRepository
-			.findByTokenAndUserIdAndRevokedFalse(refreshTokenStr, requestContext.getUserId())
-			.orElseThrow(() -> new ErrorException(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND));
+			.findByTokenAndUserIdAndRevokedFalse(refreshHash, requestContext.getUserId())
+			.orElseThrow(() -> new ErrorException(AuthErrorCode.ACCESS_OTHER_DEVICE));
 
 		refreshToken.revoke();
+
+		refreshTokenRedisRepository.delete(userId);
 
 		requestContext.deleteAuthCookies();
 	}
@@ -107,15 +116,18 @@ public class AuthService {
 		}
 	}
 
-	private JwtDto setSessionAndCookie(User user) {
+	private JwtDto loginAsSingleDevice(User user) {
 		ActiveSession session = activeSessionRepository.findByUserIdForUpdate(user.getId())
 			.orElseGet(() -> activeSessionRepository.save(ActiveSession.create(user)));
 
 		session.rotate();
 
-		refreshTokenRepository.revokeAllActiveByUserId(user.getId());
+		ActiveSession saved = activeSessionRepository.saveAndFlush(session);
 
-		JwtDto tokens = authTokenService.issueTokens(user, session.getSessionId(), session.getTokenVersion());
+		refreshTokenRepository.revokeAllActiveByUserId(user.getId());
+		refreshTokenRedisRepository.delete(user.getId());
+
+		JwtDto tokens = authTokenService.issueTokens(user, saved.getSessionId(), saved.getTokenVersion());
 
 		requestContext.setAccessTokenCookie(tokens.accessToken());
 		requestContext.setRefreshTokenCookie(tokens.refreshToken());

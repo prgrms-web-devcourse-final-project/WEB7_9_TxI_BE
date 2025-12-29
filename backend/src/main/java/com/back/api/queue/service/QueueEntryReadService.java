@@ -78,7 +78,7 @@ public class QueueEntryReadService {
 
 		// 1순위 사용자 처리
 		if (waitingAhead == 0) {
-			estimatedWaitTime = 3;
+			estimatedWaitTime = 1;
 			progress = 99;
 		} else {
 			estimatedWaitTime = waitingAhead * 3;

@@ -49,8 +49,8 @@ public class PreRegisterService {
 		// 사전등록 기간 검증
 		validatePreRegistrationPeriod(event);
 
-		// SMS 인증 완료 여부 검증
-		validateSmsVerification(request.phoneNumber());
+		// SMS 인증 완료 여부 검증 (플래그 삭제하지 않고 검증만)
+		validateSmsVerificationWithoutDelete(request.phoneNumber());
 
 		// 본인 인증 정보 검증 (회원가입 정보와 대조)
 		validateUserInfo(user, request);
@@ -71,6 +71,10 @@ public class PreRegisterService {
 
 			// CANCELED 상태면 재등록 (상태만 변경)
 			preRegister.reRegister();
+
+			// 모든 검증 통과 후 SMS 인증 플래그 삭제
+			deleteSmsVerificationFlag(request.phoneNumber());
+
 			return PreRegisterResponse.from(preRegister);
 		}
 
@@ -84,50 +88,8 @@ public class PreRegisterService {
 
 		PreRegister savedPreRegister = preRegisterRepository.save(preRegister);
 
-		eventPublisher.publishEvent(
-			new PreRegisterDoneMessage(
-				userId,
-				savedPreRegister.getId(),
-				event.getTitle()
-			)
-		);
-
-		return PreRegisterResponse.from(savedPreRegister);
-	}
-
-	// 인증 제외한 사전 등록
-	@Transactional
-	public PreRegisterResponse quickPreRegister(Long eventId, Long userId) {
-		Event event = findEventById(eventId);
-		User user = findUserById(userId);
-
-		validatePreRegistrationPeriod(event);
-
-		// 기존 사전등록 확인 (CANCELED 상태면 재활용)
-		Optional<PreRegister> existingPreRegister = preRegisterRepository.findByEvent_IdAndUser_Id(eventId, userId);
-
-		if (existingPreRegister.isPresent()) {
-			PreRegister preRegister = existingPreRegister.get();
-
-			// REGISTERED 상태면 중복 등록 예외
-			if (preRegister.isRegistered()) {
-				throw new ErrorException(PreRegisterErrorCode.ALREADY_PRE_REGISTERED);
-			}
-
-			// CANCELED 상태면 재등록 (상태만 변경)
-			preRegister.reRegister();
-			return PreRegisterResponse.from(preRegister);
-		}
-
-		// 새로운 사전등록 생성
-		PreRegister preRegister = PreRegister.builder()
-			.event(event)
-			.user(user)
-			.preRegisterAgreeTerms(true)
-			.preRegisterAgreePrivacy(true)
-			.build();
-
-		PreRegister savedPreRegister = preRegisterRepository.save(preRegister);
+		// 모든 검증 통과 후 SMS 인증 플래그 삭제
+		deleteSmsVerificationFlag(request.phoneNumber());
 
 		eventPublisher.publishEvent(
 			new PreRegisterDoneMessage(
@@ -139,6 +101,7 @@ public class PreRegisterService {
 
 		return PreRegisterResponse.from(savedPreRegister);
 	}
+
 
 	@Transactional
 	public void cancel(Long eventId, Long userId) {
@@ -193,10 +156,15 @@ public class PreRegisterService {
 
 	/**
 	 * 본인 인증 정보 검증 (회원가입 정보와 대조)
+	 * - 이름 (fullName) 일치 여부
 	 * - 생년월일 일치 여부
-	 * - 이름은 User 엔티티에서 자동으로 가져옴
 	 */
 	private void validateUserInfo(User user, PreRegisterCreateRequest request) {
+		// 이름 검증 (fullName)
+		if (user.getFullName() == null || !user.getFullName().equals(request.fullName())) {
+			throw new ErrorException(PreRegisterErrorCode.INVALID_USER_INFO);
+		}
+
 		// 생년월일 검증
 		if (user.getBirthDate() == null || !user.getBirthDate().equals(request.birthDate())) {
 			throw new ErrorException(PreRegisterErrorCode.INVALID_USER_INFO);
@@ -218,11 +186,11 @@ public class PreRegisterService {
 	}
 
 	/**
-	 * SMS 인증 완료 여부 검증
+	 * SMS 인증 완료 여부 검증 (플래그 삭제하지 않음)
 	 * - SMS 인증을 통과한 경우 Redis에 인증 완료 플래그가 저장됨
-	 * - 인증 완료 후 사전등록 시 해당 플래그를 검증
+	 * - 검증만 수행하고 플래그는 삭제하지 않음 (사전등록 성공 시에만 삭제)
 	 */
-	private void validateSmsVerification(String phoneNumber) {
+	private void validateSmsVerificationWithoutDelete(String phoneNumber) {
 		String verifiedKey = SMS_VERIFIED_PREFIX + phoneNumber;
 		String verified = redisTemplate.opsForValue().get(verifiedKey);
 
@@ -231,8 +199,17 @@ public class PreRegisterService {
 			throw new ErrorException(PreRegisterErrorCode.SMS_VERIFICATION_NOT_COMPLETED);
 		}
 
-		// 인증 완료 플래그 삭제 (재사용 방지)
+		log.info("SMS 인증 확인 - 전화번호: {}", phoneNumber);
+	}
+
+	/**
+	 * SMS 인증 플래그 삭제
+	 * - 사전등록 성공 후 재사용 방지를 위해 인증 플래그 삭제
+	 */
+	private void deleteSmsVerificationFlag(String phoneNumber) {
+		String verifiedKey = SMS_VERIFIED_PREFIX + phoneNumber;
 		redisTemplate.delete(verifiedKey);
-		log.info("SMS 인증 완료 확인 - 전화번호: {}", phoneNumber);
+		log.info("SMS 인증 플래그 삭제 - 전화번호: {}", phoneNumber);
 	}
 }
+

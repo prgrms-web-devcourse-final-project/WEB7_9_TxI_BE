@@ -16,7 +16,7 @@ import com.back.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/tickets")
+@RequestMapping("/api/v1/tickets/my")
 @RequiredArgsConstructor
 public class TicketController implements TicketApi {
 
@@ -24,7 +24,7 @@ public class TicketController implements TicketApi {
 	private final HttpRequestContext httpRequestContext;
 
 	@Override
-	@GetMapping("/my")
+	@GetMapping
 	public ApiResponse<List<TicketResponse>> getMyTickets() {
 		Long userId = httpRequestContext.getUserId();
 
@@ -34,7 +34,7 @@ public class TicketController implements TicketApi {
 	}
 
 	@Override
-	@GetMapping("/my/{ticketId}/details")
+	@GetMapping("/{ticketId}/details")
 	public ApiResponse<TicketResponse> getMyTicketDetails(
 		@PathVariable Long ticketId
 	) {

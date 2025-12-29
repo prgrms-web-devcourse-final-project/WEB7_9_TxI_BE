@@ -44,6 +44,9 @@ public class RefreshToken extends BaseEntity {
 	@Column(name = "token", nullable = false, length = 512)
 	private String token;
 
+	@Column(name = "jti", length = 36)
+	private String jti;
+
 	@Column(name = "issued_at")
 	private LocalDateTime issuedAt;
 
@@ -66,6 +69,7 @@ public class RefreshToken extends BaseEntity {
 	private RefreshToken(
 		User user,
 		String token,
+		String jti,
 		LocalDateTime issuedAt,
 		LocalDateTime expiresAt,
 		String sessionId,
@@ -76,6 +80,7 @@ public class RefreshToken extends BaseEntity {
 	) {
 		this.user = user;
 		this.token = token;
+		this.jti = jti;
 		this.issuedAt = issuedAt;
 		this.expiresAt = expiresAt;
 		this.sessionId = sessionId;
