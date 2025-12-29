@@ -30,6 +30,10 @@ spring:
       host: localhost
       port: 6379
       password: ${REDIS_PASSWORD:}
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
 
 server:
   tomcat:
