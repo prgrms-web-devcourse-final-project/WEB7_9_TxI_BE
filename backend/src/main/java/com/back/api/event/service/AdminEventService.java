@@ -16,8 +16,6 @@ import com.back.domain.preregister.entity.PreRegisterStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
-import com.back.global.error.code.EventErrorCode;
-import com.back.global.error.exception.ErrorException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -71,9 +69,15 @@ public class AdminEventService {
 					event.getStatus(),
 					preRegisterCount,
 					totalSoldSeats,
-					totalSalesAmount != null ? totalSalesAmount : 0L
+					totalSalesAmount != null ? totalSalesAmount : 0L,
+					event.isDeleted()
 				);
 			})
 			.collect(Collectors.toList());
+	}
+
+	@Transactional(readOnly = true)
+	public EventResponse getEventForAdmin(Long eventId) {
+		return eventService.getEvent(eventId);
 	}
 }

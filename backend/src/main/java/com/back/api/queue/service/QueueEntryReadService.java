@@ -1,14 +1,20 @@
 package com.back.api.queue.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.event.service.EventService;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
 import com.back.api.queue.dto.response.EnteredQueueResponse;
 import com.back.api.queue.dto.response.ExpiredQueueResponse;
+import com.back.api.queue.dto.response.QueueEntryListResponse;
 import com.back.api.queue.dto.response.QueueEntryStatusResponse;
 import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.WaitingQueueResponse;
+import com.back.domain.event.entity.Event;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
@@ -32,6 +38,7 @@ public class QueueEntryReadService {
 
 	private final QueueEntryRepository queueEntryRepository;
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
+	private final EventService eventService;
 
 	public QueueEntryStatusResponse getMyQueueStatus(Long eventId, Long userId) {
 		QueueEntry entry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
@@ -160,13 +167,29 @@ public class QueueEntryReadService {
 			QueueEntryStatus.EXPIRED
 		);
 
+		long completedCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
+			eventId,
+			QueueEntryStatus.COMPLETED
+		);
+
 		return QueueStatisticsResponse.from(
 			eventId,
 			totalWaitingCount,
 			waitingCount,
 			enteredCount,
-			expiredCount
+			expiredCount,
+			completedCount
 		);
+	}
+
+	// 관리자용 - 대기열 전체 조회
+	public Page<QueueEntryListResponse> getQueueEntriesByEventId(Long eventId, int page, int size) {
+
+		Event event = eventService.getEventEntity(eventId);
+
+		Pageable pageable = PageRequest.of(page, size);
+		Page<QueueEntry> entries = queueEntryRepository.findByEventIdWithUserAndEvent(eventId, pageable);
+		return entries.map(QueueEntryListResponse::from);
 	}
 
 	//Redis 먼저 조회

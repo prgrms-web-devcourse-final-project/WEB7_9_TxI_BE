@@ -7,12 +7,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.seat.dto.request.AutoCreateSeatsRequest;
 import com.back.api.seat.dto.request.SeatCreateRequest;
 import com.back.api.seat.dto.request.SeatUpdateRequest;
+import com.back.api.seat.dto.response.SeatResponse;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.seat.entity.Seat;
@@ -226,4 +230,17 @@ public class AdminSeatService {
 				SeatErrorCode.DUPLICATE_SEAT_CODE);
 		}
 	}
+
+	@Transactional(readOnly = true)
+	public Page<SeatResponse> getSeatsByEventWithPaging(Long eventId, int page, int size) {
+		if (!eventRepository.existsById(eventId)) {
+			throw new ErrorException(SeatErrorCode.NOT_FOUND_EVENT);
+		}
+
+		Pageable pageable = PageRequest.of(page, size);
+		Page<Seat> seatPage = seatRepository.findSortedSeatPageByEventIdForAdmin(eventId, pageable);
+
+		return seatPage.map(SeatResponse::from);
+	}
+
 }

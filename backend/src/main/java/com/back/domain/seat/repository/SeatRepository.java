@@ -3,6 +3,8 @@ package com.back.domain.seat.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -54,4 +56,18 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 	// 관리자 대시보드용 - 이벤트별 특정 상태 좌석의 총 판매 금액 조회
 	@Query("SELECT COALESCE(SUM(s.price), 0) FROM Seat s WHERE s.event.id = :eventId AND s.seatStatus = :seatStatus")
 	Long sumPriceByEventIdAndSeatStatus(@Param("eventId") Long eventId, @Param("seatStatus") SeatStatus seatStatus);
+
+	@Query("""
+		SELECT s
+		FROM Seat s
+		WHERE s.event.id = :eventId
+		ORDER BY s.grade ASC,
+				 REGEXP_REPLACE(s.seatCode, '[0-9]', '', 'g') ASC,
+				 CAST(REGEXP_REPLACE(s.seatCode, '[^0-9]', '', 'g') AS INTEGER) ASC
+		""")
+	Page<Seat> findSortedSeatPageByEventIdForAdmin(
+		@Param("eventId") Long eventId,
+		Pageable pageable
+	);
+
 }

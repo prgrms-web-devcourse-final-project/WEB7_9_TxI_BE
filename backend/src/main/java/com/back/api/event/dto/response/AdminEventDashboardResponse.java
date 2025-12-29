@@ -23,7 +23,10 @@ public record AdminEventDashboardResponse(
 	Long totalSoldSeats,
 
 	@Schema(description = "총 판매 금액", example = "127500000")
-	Long totalSalesAmount
+	Long totalSalesAmount,
+
+	@Schema(description = "삭제 여부", example = "false")
+	Boolean deleted
 ) {
 	public static AdminEventDashboardResponse of(
 		Long eventId,
@@ -31,7 +34,8 @@ public record AdminEventDashboardResponse(
 		EventStatus status,
 		Long preRegisterCount,
 		Long totalSoldSeats,
-		Long totalSalesAmount
+		Long totalSalesAmount,
+		Boolean deleted
 	) {
 		return new AdminEventDashboardResponse(
 			eventId,
@@ -39,7 +43,8 @@ public record AdminEventDashboardResponse(
 			status,
 			preRegisterCount,
 			totalSoldSeats,
-			totalSalesAmount
+			totalSalesAmount,
+			deleted
 		);
 	}
 }
