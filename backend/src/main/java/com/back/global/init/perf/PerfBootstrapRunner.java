@@ -31,7 +31,7 @@ public class PerfBootstrapRunner implements ApplicationRunner {
 	@Override
 	public void run(ApplicationArguments args) {
 		// 파라미터 파싱 (기본값 포함)
-		int userCount = getIntArg(args, "users", 100);
+		int userCount = getIntArg(args, "users", 500);
 		int eventCount = getIntArg(args, "events", 50);
 		double preregRatio = getDoubleArg(args, "prereg-ratio", 1);
 		double queueRatio = getDoubleArg(args, "queue-ratio", 1);

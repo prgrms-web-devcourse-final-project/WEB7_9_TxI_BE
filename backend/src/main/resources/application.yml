@@ -2,7 +2,7 @@ spring:
   config:
     import: optional:file:.env.properties
   profiles:
-    active: perf
+    active: dev
     include: secret
   jackson:
     time-zone: Asia/Seoul
