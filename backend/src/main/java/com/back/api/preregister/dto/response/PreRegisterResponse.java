@@ -57,4 +57,21 @@ public record PreRegisterResponse(
 			event.getTicketOpenAt()
 		);
 	}
+
+	// S3 Presigned URL을 포함한 생성자
+	public static PreRegisterResponse from(PreRegister preRegister, String imageUrl) {
+		Event event = preRegister.getEvent();
+		return new PreRegisterResponse(
+			preRegister.getId(),
+			preRegister.getUserId(),
+			preRegister.getEventId(),
+			preRegister.getPreRegisterStatus(),
+			preRegister.getCreateAt(),
+			imageUrl,
+			event.getTitle(),
+			event.getEventDate(),
+			event.getPlace(),
+			event.getTicketOpenAt()
+		);
+	}
 }

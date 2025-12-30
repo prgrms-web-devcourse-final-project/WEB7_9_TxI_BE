@@ -139,4 +139,26 @@ public class EventFactory extends BaseFactory {
 			.status(EventStatus.OPEN)
 			.build();
 	}
+
+	public static Event fakePastEvent(String title) {
+		int minPrice = faker.number().numberBetween(10000, 50000);
+		int maxPrice = faker.number().numberBetween(minPrice, 200000);
+
+		return Event.builder()
+			.title(title)
+			.category(EventCategory.CONCERT)
+			.description(faker.lorem().sentence())
+			.place(faker.address().city())
+			.imageUrl(faker.internet().image())
+			.minPrice(minPrice)
+			.maxPrice(maxPrice)
+			.preOpenAt(LocalDateTime.now().minusDays(40))
+			.preCloseAt(LocalDateTime.now().minusDays(38))
+			.ticketOpenAt(LocalDateTime.now().minusDays(37))
+			.ticketCloseAt(LocalDateTime.now().minusDays(10))
+			.eventDate(LocalDateTime.now().minusDays(1)) // 이미 지난 날짜
+			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
+			.status(EventStatus.OPEN)
+			.build();
+	}
 }

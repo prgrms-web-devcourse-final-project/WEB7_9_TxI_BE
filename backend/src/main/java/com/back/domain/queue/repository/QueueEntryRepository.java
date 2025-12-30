@@ -52,6 +52,9 @@ public interface QueueEntryRepository extends JpaRepository<QueueEntry, Long> {
 		@Param("eventId") Long eventId
 	);
 
+	@Query("SELECT q FROM QueueEntry q WHERE q.user.id = :userId")
+	List<QueueEntry> findAllByUserId(@Param("userId") Long userId);
+
 	@Query("SELECT q FROM QueueEntry q "
 		+ "JOIN FETCH q.user u "
 		+ "JOIN FETCH q.event e "

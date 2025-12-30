@@ -76,6 +76,20 @@ class EventControllerTest {
 		}
 
 		@Test
+		@DisplayName("비회원도 이벤트 단건 조회 가능")
+		void getEvent_Success_WithoutAuth() throws Exception {
+			// given
+			Event event = eventRepository.save(EventFactory.fakeEvent("비회원 조회 이벤트"));
+
+			// when & then
+			mockMvc.perform(get("/api/v1/events/{eventId}", event.getId()))
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.id").value(event.getId()))
+				.andExpect(jsonPath("$.data.title").value("비회원 조회 이벤트"));
+		}
+
+		@Test
 		@DisplayName("존재하지 않는 이벤트 조회 시 404 에러")
 		void getEvent_Fail_NotFound() throws Exception {
 			// when & then
@@ -105,6 +119,23 @@ class EventControllerTest {
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.content", hasSize(2)));
+		}
+
+		@Test
+		@DisplayName("비회원도 이벤트 목록 조회 가능")
+		void getEvents_Success_WithoutAuth() throws Exception {
+			// given
+			eventRepository.save(EventFactory.fakeEvent("비회원 이벤트1"));
+			eventRepository.save(EventFactory.fakeEvent("비회원 이벤트2"));
+			eventRepository.save(EventFactory.fakeEvent("비회원 이벤트3"));
+
+			// when & then
+			mockMvc.perform(get("/api/v1/events")
+					.param("page", "0")
+					.param("size", "10"))
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content", hasSize(greaterThanOrEqualTo(3))));
 		}
 
 		@Test

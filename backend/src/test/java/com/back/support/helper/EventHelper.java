@@ -37,6 +37,10 @@ public class EventHelper {
 		return eventRepository.save(EventFactory.fakeReadyEvent());
 	}
 
+	public Event createPastEvent(String title) {
+		return eventRepository.save(EventFactory.fakePastEvent(title));
+	}
+
 	public void clearEvent() {
 		eventRepository.deleteAll();
 	}

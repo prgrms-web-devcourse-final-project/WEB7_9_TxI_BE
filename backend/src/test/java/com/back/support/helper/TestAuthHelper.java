@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.auth.dto.cache.ActiveSessionDto;
+import com.back.api.auth.service.ActiveSessionCache;
 import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.user.entity.User;
@@ -27,17 +29,20 @@ public class TestAuthHelper {
 
 	private final JwtProvider jwtProvider;
 	private final ActiveSessionRepository activeSessionRepository;
+	private final ActiveSessionCache activeSessionCache;
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 
 	public TestAuthHelper(
 		JwtProvider jwtProvider,
 		ActiveSessionRepository activeSessionRepository,
+		ActiveSessionCache activeSessionCache,
 		UserRepository userRepository,
 		PasswordEncoder passwordEncoder
 	) {
 		this.jwtProvider = jwtProvider;
 		this.activeSessionRepository = activeSessionRepository;
+		this.activeSessionCache = activeSessionCache;
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 	}
@@ -68,6 +73,11 @@ public class TestAuthHelper {
 	public String issueAccessToken(UserRole role) {
 		User user = createUser(role);
 		ActiveSession session = activeSessionRepository.save(ActiveSession.create(user));
+
+		// Redis 캐시에도 저장 (테스트 환경에서 실제 인증 필터와 동일한 동작 보장)
+		ActiveSessionDto dto = ActiveSessionDto.from(session);
+		activeSessionCache.set(user.getId(), dto);
+
 		return jwtProvider.generateAccessToken(user, session.getSessionId(), session.getTokenVersion());
 	}
 
@@ -80,6 +90,10 @@ public class TestAuthHelper {
 
 		session.rotate();
 		activeSessionRepository.saveAndFlush(session);
+
+		// Redis 캐시에도 저장 (테스트 환경에서 실제 인증 필터와 동일한 동작 보장)
+		ActiveSessionDto dto = ActiveSessionDto.from(session);
+		activeSessionCache.set(ref.getId(), dto);
 
 		return jwtProvider.generateAccessToken(ref, session.getSessionId(), session.getTokenVersion());
 	}

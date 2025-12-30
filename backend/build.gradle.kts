@@ -5,6 +5,7 @@ plugins {
     checkstyle
     jacoco
 }
+val springCloudVersion by extra("2025.0.1")
 
 group = "com"
 version = "0.0.1-SNAPSHOT"
@@ -89,6 +90,9 @@ dependencies {
     // flyway
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
+
+    // resilience4j
+    implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
 }
 
 tasks.withType<Test> {
@@ -326,4 +330,9 @@ tasks.named<org.gradle.api.plugins.quality.Checkstyle>("checkstyleMain") {
     dependsOn(tasks.named("compileTestJava"))
     // QueryDSL generated 폴더 제외 (src/main/generated 기준 상대 경로)
     exclude("com/back/**/entity/Q*.java")
+}
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion")
+    }
 }

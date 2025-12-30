@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-	name = "activeSessions",
+	name = "active_sessions",
 	uniqueConstraints = {
 		@UniqueConstraint(name = "uk_active_session_user", columnNames = {"user_id"})
 	},

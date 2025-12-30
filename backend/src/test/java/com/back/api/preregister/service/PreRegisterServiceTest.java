@@ -1,6 +1,7 @@
 package com.back.api.preregister.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,10 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.preregister.dto.request.PreRegisterCreateRequest;
 import com.back.api.preregister.dto.response.PreRegisterResponse;
+import com.back.api.s3.service.S3MoveService;
+import com.back.api.s3.service.S3PresignedService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
@@ -59,6 +63,13 @@ class PreRegisterServiceTest {
 	@Autowired
 	private StringRedisTemplate redisTemplate;
 
+	@MockitoBean
+	private S3MoveService s3MoveService;
+
+	@MockitoBean
+	private S3PresignedService s3PresignedService;
+
+
 	private static final String DEFAULT_PHONE_NUMBER = "01012345678";
 	private static final String SMS_VERIFIED_KEY_PREFIX = "SMS_VERIFIED:";
 
@@ -81,6 +92,12 @@ class PreRegisterServiceTest {
 
 		testEvent = EventFactory.fakePreOpenEvent();
 		eventRepository.save(testEvent);
+
+		when(s3MoveService.moveImage(anyLong(), anyString()))
+			.thenReturn("events/1/main.jpg");
+
+		when(s3PresignedService.issueDownloadUrl(anyString()))
+			.thenReturn("https://s3.amazonaws.com/bucket/events/1/main.jpg?signature=xxx");
 
 		// 모든 테스트에서 SMS 인증 완료 상태로 시작
 		setSmsVerified(DEFAULT_PHONE_NUMBER);

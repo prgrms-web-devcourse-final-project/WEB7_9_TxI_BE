@@ -16,7 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.back.api.auth.dto.JwtDto;
 import com.back.api.auth.service.AuthTokenService;
 import com.back.api.auth.service.SessionGuard;
-import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.code.ErrorCode;
@@ -43,6 +42,10 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private static final Set<String> AUTH_WHITELIST = Set.of(
 		"/api/v1/auth/login",
 		"/api/v1/auth/signup"
+	);
+
+	private static final Set<String> PATH_PREFIX_WHITELIST = Set.of(
+		"/api/v1/events"
 	);
 
 	private final JwtProvider jwtProvider;
@@ -87,6 +90,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		if ("OPTIONS".equalsIgnoreCase(request.getMethod())
 			|| !requestUrl.startsWith("/api/")
 			|| AUTH_WHITELIST.contains(requestUrl)
+			|| isWhitelistedPath(requestUrl)
 		) {
 			filterChain.doFilter(request, response);
 			return;
@@ -107,12 +111,14 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		String sid = claims.sessionId();
 		long tokenVersion = claims.tokenVersion();
 
-		ActiveSession active = sessionGuard.requireActiveSession(userId);
-
-		// 싱글 디바이스 검증
-		if (!active.getSessionId().equals(sid) || active.getTokenVersion() != tokenVersion) {
-			cookieManager.deleteAuthCookies(request, response);
-			throw new ErrorException(AuthErrorCode.ACCESS_OTHER_DEVICE);
+		// ActiveSession Redis 캐싱 적용
+		try {
+			sessionGuard.requireAndValidateSession(userId, sid, tokenVersion);
+		} catch (ErrorException e) {
+			if (e.getErrorCode() == AuthErrorCode.ACCESS_OTHER_DEVICE) {
+				cookieManager.deleteAuthCookies(request, response);
+			}
+			throw e;
 		}
 
 		SecurityUser securityUser = new SecurityUser(
@@ -139,6 +145,19 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		} finally {
 			MdcContext.removeUserId(); // 다음 스레드 재사용을 위해 반드시 제거
 		}
+	}
+
+	private boolean isWhitelistedPath(String requestUrl) {
+		for (String prefix : PATH_PREFIX_WHITELIST) {
+			if (requestUrl.startsWith(prefix)) {
+				// /api/v1/events로 시작하지만 /pre-registers를 포함하는 경우 제외
+				if (requestUrl.contains("/pre-registers")) {
+					return false;
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void handleErrorException(

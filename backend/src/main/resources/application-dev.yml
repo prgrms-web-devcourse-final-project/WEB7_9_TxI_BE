@@ -7,6 +7,10 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: create-drop
+  flyway:
+    enabled: true
+    clean-disabled: false
+
 security:
   password:
     bcrypt-strength: 4

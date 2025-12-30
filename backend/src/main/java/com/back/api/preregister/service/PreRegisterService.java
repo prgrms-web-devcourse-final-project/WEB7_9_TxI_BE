@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.preregister.dto.request.PreRegisterCreateRequest;
 import com.back.api.preregister.dto.response.PreRegisterResponse;
+import com.back.api.s3.service.S3PresignedService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.notification.systemMessage.PreRegisterDoneMessage;
@@ -38,6 +39,7 @@ public class PreRegisterService {
 	private final UserRepository userRepository;
 	private final ApplicationEventPublisher eventPublisher;
 	private final StringRedisTemplate redisTemplate;
+	private final S3PresignedService s3PresignedService;
 
 	private static final String SMS_VERIFIED_PREFIX = "SMS_VERIFIED:";
 
@@ -122,7 +124,15 @@ public class PreRegisterService {
 	public List<PreRegisterResponse> getMyPreRegister(Long userId) {
 		List<PreRegister> preRegisters = preRegisterRepository.findByUser_Id(userId);
 		return preRegisters.stream()
-			.map(PreRegisterResponse::from)
+			.map(preRegister -> {
+				Event event = preRegister.getEvent();
+				String imageUrl = null;
+				if(event.getImageUrl() != null && !event.getImageUrl().isBlank()) {
+					imageUrl = s3PresignedService.issueDownloadUrl(event.getImageUrl());
+				}
+
+				return PreRegisterResponse.from(preRegister, imageUrl);
+			})
 			.toList();
 	}
 

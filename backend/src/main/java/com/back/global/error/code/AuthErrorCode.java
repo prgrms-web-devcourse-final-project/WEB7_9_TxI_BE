@@ -13,6 +13,7 @@ public enum AuthErrorCode implements ErrorCode {
 
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요."),
 	ACCESS_OTHER_DEVICE(HttpStatus.UNAUTHORIZED, "다른 환경에서 로그인했습니다."),
+	TEMPORARY_AUTH_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "인증 시스템 일시 장애입니다. 잠시 후 다시 시도해주세요."),
 
 	FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
 	ADMIN_ONLY(HttpStatus.FORBIDDEN, "관리자 계정만 접근 가능합니다."),
