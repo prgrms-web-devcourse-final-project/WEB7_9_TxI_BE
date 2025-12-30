@@ -14,10 +14,10 @@ import com.back.api.auth.dto.request.SignupRequest;
 import com.back.api.auth.dto.response.AuthResponse;
 import com.back.api.auth.dto.response.TokenResponse;
 import com.back.api.auth.dto.response.UserResponse;
+import com.back.api.auth.store.AuthStore;
 import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.auth.entity.RefreshToken;
 import com.back.domain.auth.repository.ActiveSessionRepository;
-import com.back.domain.auth.repository.RefreshTokenRedisRepository;
 import com.back.domain.auth.repository.RefreshTokenRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
@@ -29,9 +29,11 @@ import com.back.global.http.HttpRequestContext;
 import com.back.global.utils.TokenHash;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
 	private final UserRepository userRepository;
@@ -41,7 +43,7 @@ public class AuthService {
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final ActiveSessionCache activeSessionCache;
 	private final ActiveSessionRepository activeSessionRepository;
-	private final RefreshTokenRedisRepository refreshTokenRedisRepository;
+	private final AuthStore authStore;
 
 	@Transactional
 	public AuthResponse signup(SignupRequest request) {
@@ -103,8 +105,7 @@ public class AuthService {
 			.orElseThrow(() -> new ErrorException(AuthErrorCode.ACCESS_OTHER_DEVICE));
 
 		refreshToken.revoke();
-
-		refreshTokenRedisRepository.delete(userId);
+		authStore.deleteRefreshCache(userId);
 
 		// ActiveSession 캐시 무효화
 		activeSessionCache.evict(userId);
@@ -129,7 +130,7 @@ public class AuthService {
 		ActiveSession saved = activeSessionRepository.saveAndFlush(session);
 
 		refreshTokenRepository.revokeAllActiveByUserId(user.getId());
-		refreshTokenRedisRepository.delete(user.getId());
+		authStore.deleteRefreshCache(user.getId());
 
 		// 로그인 직후 Redis에 캐싱 불필요 DB접근 최소화
 		ActiveSessionDto dto = ActiveSessionDto.from(saved);

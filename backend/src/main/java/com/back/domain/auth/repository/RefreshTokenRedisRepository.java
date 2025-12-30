@@ -16,7 +16,8 @@ import lombok.RequiredArgsConstructor;
 public class RefreshTokenRedisRepository {
 
 	private static final String KEY_PREFIX = "auth:refresh:";
-	private final @Qualifier("refreshTokenRedisTemplate") RedisTemplate<String, RefreshTokenCache> redisTemplate;
+	private final @Qualifier("refreshTokenRedisTemplate")
+	RedisTemplate<String, RefreshTokenCache> redisTemplate;
 
 	private String key(long userId) {
 		return KEY_PREFIX + userId;

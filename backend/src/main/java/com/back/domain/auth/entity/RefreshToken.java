@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-	name = "refreshTokens",
+	name = "refresh_tokens",
 	indexes = {
 		@Index(name = "idx_refresh_token_token", columnList = "token"),
 		@Index(name = "idx_refresh_token_user_revoked", columnList = "user_id, revoked"),
