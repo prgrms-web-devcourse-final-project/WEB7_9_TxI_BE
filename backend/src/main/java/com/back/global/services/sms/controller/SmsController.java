@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.back.global.response.ApiResponse;
 import com.back.global.services.sms.dto.SmsSendRequest;
+import com.back.global.services.sms.dto.SmsSendResponse;
 import com.back.global.services.sms.dto.SmsVerifyRequest;
 import com.back.global.services.sms.dto.SmsVerifyResponse;
 import com.back.global.services.sms.service.SmsService;
@@ -23,9 +24,9 @@ public class SmsController implements SmsApi {
 
 	@Override
 	@PostMapping("/send")
-	public ApiResponse<Void> sendVerificationCode(@Valid @RequestBody SmsSendRequest request) {
-		smsService.sendVerificationCode(request.phoneNumber());
-		return ApiResponse.ok("인증번호가 발송되었습니다.", null);
+	public ApiResponse<SmsSendResponse> sendVerificationCode(@Valid @RequestBody SmsSendRequest request) {
+		Long expiresInSeconds = smsService.sendVerificationCode(request.phoneNumber());
+		return ApiResponse.ok("인증번호가 발송되었습니다.", SmsSendResponse.of(expiresInSeconds));
 	}
 
 	@Override

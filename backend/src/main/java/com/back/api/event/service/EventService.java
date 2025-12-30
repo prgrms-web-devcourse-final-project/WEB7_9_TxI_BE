@@ -141,7 +141,13 @@ public class EventService {
 
 	public Page<EventListResponse> getEvents(EventStatus status, EventCategory category, Pageable pageable) {
 		Page<Event> events = eventRepository.findByConditions(status, category, pageable);
-		return events.map(EventListResponse::from);
+		return events.map(event -> {
+			String imageUrl = null;
+			if (event.getImageUrl() != null && !event.getImageUrl().isBlank()) {
+				imageUrl = s3PresignedService.issueDownloadUrl(event.getImageUrl());
+			}
+			return EventListResponse.from(event, imageUrl);
+		});
 	}
 
 	public Event getEventEntity(Long eventId) {

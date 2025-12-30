@@ -1,5 +1,6 @@
 package com.back.api.queue.controller;
 
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,11 +8,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.queue.dto.request.ShuffleQueueRequest;
 import com.back.api.queue.dto.response.CompletedQueueResponse;
 import com.back.api.queue.dto.response.ProcessEntriesResponse;
+import com.back.api.queue.dto.response.QueueEntryListResponse;
 import com.back.api.queue.dto.response.QueueStatisticsResponse;
 import com.back.api.queue.dto.response.ShuffleQueueResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
@@ -93,6 +96,21 @@ public class AdminQueueEntryController implements AdminQueueEntryApi {
 		);
 
 		return ApiResponse.ok("해당 유저 포함 상위 대기자 입장 처리가 완료되었습니다.", response);
+	}
+
+	@Override
+	@GetMapping
+	public ApiResponse<Page<QueueEntryListResponse>> getQueueEntriesByEventId(
+		@PathVariable Long eventId,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "20") int size
+	) {
+		Page<QueueEntryListResponse> response = queueEntryReadService.getQueueEntriesByEventId(
+			eventId,
+			page,
+			size
+		);
+		return ApiResponse.ok("이벤트 대기열 목록을 조회했습니다.", response);
 	}
 
 }

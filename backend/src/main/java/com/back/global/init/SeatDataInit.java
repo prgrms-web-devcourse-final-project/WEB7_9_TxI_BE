@@ -61,7 +61,7 @@ public class SeatDataInit implements ApplicationRunner {
 		for (int i = 1; i <= 10; i++) {
 			seats.add(Seat.builder()
 				.event(event)
-				.seatCode("VIP-" + i)
+				.seatCode("VIP" + i)
 				.grade(SeatGrade.VIP)
 				.price(10)
 				.build());
@@ -71,7 +71,7 @@ public class SeatDataInit implements ApplicationRunner {
 		for (int i = 1; i <= 20; i++) {
 			seats.add(Seat.builder()
 				.event(event)
-				.seatCode("R-" + i)
+				.seatCode("R" + i)
 				.grade(SeatGrade.R)
 				.price(132000)
 				.build());
@@ -81,7 +81,7 @@ public class SeatDataInit implements ApplicationRunner {
 		for (int i = 1; i <= 30; i++) {
 			seats.add(Seat.builder()
 				.event(event)
-				.seatCode("S-" + i)
+				.seatCode("S" + i)
 				.grade(SeatGrade.S)
 				.price(110000)
 				.build());
@@ -91,7 +91,7 @@ public class SeatDataInit implements ApplicationRunner {
 		for (int i = 1; i <= 40; i++) {
 			seats.add(Seat.builder()
 				.event(event)
-				.seatCode("A-" + i)
+				.seatCode("A" + i)
 				.grade(SeatGrade.A)
 				.price(99000)
 				.build());

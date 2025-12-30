@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "S3 Image API", description = "S3 이미지 업로드 API")
-public interface S3ImageApi {
+public interface AdminS3ImageApi {
 
 	@Operation(
 		summary = "이미지 업로드용 Presigned URL 발급",

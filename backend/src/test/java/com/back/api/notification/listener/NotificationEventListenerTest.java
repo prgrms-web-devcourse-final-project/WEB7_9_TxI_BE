@@ -144,9 +144,8 @@ class NotificationEventListenerTest {
 				assertThat(saved.isRead()).isFalse();
 
 				// 웹소켓 전송 확인
-				verify(messagingTemplate).convertAndSendToUser(
-					eq(testUser.getId().toString()),
-					eq("/notifications"),
+				verify(messagingTemplate).convertAndSend(
+					eq("/user/" + testUser.getId() + "/notifications"),
 					any(NotificationResponseDto.class)
 				);
 			});
@@ -177,10 +176,9 @@ class NotificationEventListenerTest {
 				assertThat(notifications).hasSize(1);
 
 				// 웹소켓 미전송 확인
-				verify(messagingTemplate, never()).convertAndSendToUser(
+				verify(messagingTemplate, never()).convertAndSend(
 					anyString(),
-					anyString(),
-					any()
+					any(Object.class)
 				);
 			});
 		}
@@ -247,9 +245,8 @@ class NotificationEventListenerTest {
 				assertThat(saved.getTitle()).isEqualTo("주문 및 결제 실패");
 				assertThat(saved.getMessage()).contains("테스트 이벤트", "154000원", "실패");
 
-				verify(messagingTemplate).convertAndSendToUser(
-					eq(testUser.getId().toString()),
-					eq("/notifications"),
+				verify(messagingTemplate).convertAndSend(
+					eq("/user/" + testUser.getId() + "/notifications"),
 					any(NotificationResponseDto.class)
 				);
 			});
@@ -315,9 +312,8 @@ class NotificationEventListenerTest {
 				assertThat(saved.getTitle()).isEqualTo("사전등록 완료");
 				assertThat(saved.getMessage()).contains("테스트 이벤트", "사전등록이 완료");
 
-				verify(messagingTemplate).convertAndSendToUser(
-					eq(testUser.getId().toString()),
-					eq("/notifications"),
+				verify(messagingTemplate).convertAndSend(
+					eq("/user/" + testUser.getId() + "/notifications"),
 					any(NotificationResponseDto.class)
 				);
 			});
@@ -382,9 +378,8 @@ class NotificationEventListenerTest {
 				assertThat(saved.getTitle()).isEqualTo("티켓팅 시작");
 				assertThat(saved.getMessage()).contains("테스트 이벤트", "입장 준비가 완료");
 
-				verify(messagingTemplate).convertAndSendToUser(
-					eq(testUser.getId().toString()),
-					eq("/notifications"),
+				verify(messagingTemplate).convertAndSend(
+					eq("/user/" + testUser.getId() + "/notifications"),
 					any(NotificationResponseDto.class)
 				);
 			});
@@ -448,10 +443,9 @@ class NotificationEventListenerTest {
 				assertThat(notifications).isEmpty();
 
 				// 웹소켓도 전송되지 않음
-				verify(messagingTemplate, never()).convertAndSendToUser(
+				verify(messagingTemplate, never()).convertAndSend(
 					anyString(),
-					anyString(),
-					any()
+					any(Object.class)
 				);
 			});
 		}
@@ -462,10 +456,9 @@ class NotificationEventListenerTest {
 			// given
 			given(sessionManager.isUserOnline(testUser.getId())).willReturn(true);
 			willThrow(new RuntimeException("웹소켓 전송 실패"))
-				.given(messagingTemplate).convertAndSendToUser(
+				.given(messagingTemplate).convertAndSend(
 					anyString(),
-					anyString(),
-					any()
+					any(Object.class)
 				);
 
 			// when
@@ -486,9 +479,8 @@ class NotificationEventListenerTest {
 				assertThat(notifications).hasSize(1);
 
 				// 웹소켓 전송 시도는 있었음
-				verify(messagingTemplate).convertAndSendToUser(
-					eq(testUser.getId().toString()),
-					eq("/notifications"),
+				verify(messagingTemplate).convertAndSend(
+					eq("/user/" + testUser.getId() + "/notifications"),
 					any(NotificationResponseDto.class)
 				);
 			});
@@ -529,9 +521,8 @@ class NotificationEventListenerTest {
 					);
 
 				// 웹소켓 4번 전송 확인
-				verify(messagingTemplate, times(4)).convertAndSendToUser(
-					eq(testUser.getId().toString()),
-					eq("/notifications"),
+				verify(messagingTemplate, times(4)).convertAndSend(
+					eq("/user/" + testUser.getId() + "/notifications"),
 					any(NotificationResponseDto.class)
 				);
 			});

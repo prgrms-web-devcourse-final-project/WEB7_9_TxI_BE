@@ -1,5 +1,6 @@
 package com.back.api.s3.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -12,9 +13,10 @@ import com.back.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/images")
+@RequestMapping("/api/v1/admin/images")
 @RequiredArgsConstructor
-public class S3ImageController implements S3ImageApi {
+@PreAuthorize("hasRole('ADMIN')")
+public class AdminS3ImageController implements AdminS3ImageApi {
 
 	private final S3PresignedService s3PresignedService;
 

@@ -47,20 +47,11 @@ public class NotificationEventListener {
 				.build();
 
 			notificationRepository.save(notification);
-			log.info("알림 생성 완료 - userId: {}, type: {}, from: {}",
-				message.getUserId(),
-				message.getNotificationType(),
-				message.getDomainName());
 
 			// 웹소켓으로 실시간 알림 전송
 			sendNotificationViaWebSocket(message.getUserId(), notification);
 
 		} catch (Exception e) {
-			log.error("알림 생성 실패 - userId: {}, type: {}",
-				message.getUserId(),
-				message.getNotificationType(),
-				e);
-			// 알림 생성 실패가 원본 트랜잭션에 영향 주지 않음
 		}
 	}
 
@@ -71,29 +62,26 @@ public class NotificationEventListener {
 	 * @param notification 전송할 알림 엔티티
 	 */
 	private void sendNotificationViaWebSocket(Long userId, Notification notification) {
-		// 사용자 온라인 여부 확인
-		if (!sessionManager.isUserOnline(userId)) {
-			log.debug("사용자 오프라인 - 웹소켓 전송 생략 - userId: {}", userId);
+
+		boolean isOnline = sessionManager.isUserOnline(userId);
+
+		if (!isOnline) {
+			//log.debug("사용자 오프라인 - 웹소켓 전송 생략 - userId: {}", userId);
 			return;
 		}
 
 		try {
-			// DTO 변환
 			NotificationResponseDto dto = NotificationResponseDto.from(notification);
 
-			// 웹소켓 전송
-			messagingTemplate.convertAndSendToUser(
-				userId.toString(),
-				"/notifications",
-				dto
-			);
+			// convertAndSendToUser 대신 직접 경로로 전송
+			String directDestination = "/user/" + userId + "/notifications";
 
-			log.info("웹소켓 전송 성공 - userId: {}, notificationId: {}", userId, notification.getId());
+			messagingTemplate.convertAndSend(directDestination, dto);
+
+			//log.info("=== 웹소켓 전송 성공 - userId: {}, notificationId: {}", userId, notification.getId());
 
 		} catch (Exception e) {
-			log.warn("웹소켓 전송 실패 - userId: {}, notificationId: {}, error: {}",
-				userId, notification.getId(), e.getMessage());
-			// 전송 실패해도 DB에는 저장되어 있으므로 예외를 던지지 않음
+			//log.error("=== 웹소켓 전송 실패 - userId: {}, error: {}", userId, e.getMessage(), e);
 		}
 	}
 }

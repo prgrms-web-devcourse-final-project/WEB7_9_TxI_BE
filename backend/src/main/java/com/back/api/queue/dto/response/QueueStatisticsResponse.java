@@ -20,7 +20,10 @@ public record QueueStatisticsResponse(
 	@Schema(description = "만료된 인원 (EXPIRED, 시간 초과 + 마감)", example = "50")
 	Long expiredCount,
 
-	@Schema(description = "진행률 (%). (입장 완료 + 만료) / 전체 * 100", example = "20")
+	@Schema(description = "결제 완료 인원 (COMPLETED)", example = "100")
+	Long completedCount,
+
+	@Schema(description = "진행률 (%). (입장 완료 + 만료 + 결제 완료) / 전체 * 100", example = "30")
 	Integer progress
 ) {
 	public static QueueStatisticsResponse from(
@@ -28,11 +31,12 @@ public record QueueStatisticsResponse(
 		Long totalCount,
 		Long waitingCount,
 		Long enteredCount,
-		Long expiredCount
+		Long expiredCount,
+		Long completedCount
 	) {
 		// 진행률
 		int progress = totalCount > 0
-			? (int) ((enteredCount + expiredCount) * 100 / totalCount)
+			? (int) ((enteredCount + expiredCount + completedCount) * 100 / totalCount)
 			: 0;
 
 		return new QueueStatisticsResponse(
@@ -41,6 +45,7 @@ public record QueueStatisticsResponse(
 			waitingCount,
 			enteredCount,
 			expiredCount,
+			completedCount,
 			progress
 		);
 	}

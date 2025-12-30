@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
 import com.back.global.services.sms.dto.SmsSendRequest;
+import com.back.global.services.sms.dto.SmsSendResponse;
 import com.back.global.services.sms.dto.SmsVerifyRequest;
 import com.back.global.services.sms.dto.SmsVerifyResponse;
 
@@ -12,18 +13,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
-@Tag(name = "SMS API", description = "SMS 인증번호 발송 및 검증 API (현 시점에서는 사용하지 않는 API 입니다.)")
+@Tag(name = "SMS API", description = "SMS 인증번호 발송 및 검증 API")
 public interface SmsApi {
 	@Operation(
 		summary = "SMS 인증번호 발송",
-		description = "휴대폰 번호로 6자리 인증번호를 발송합니다. 인증번호는 3분간 유효합니다."
+		description = "휴대폰 번호로 6자리 인증번호를 발송합니다. 인증번호는 3분간 유효하며, 응답으로 유효 시간(초)을 반환합니다."
 	)
 	@ApiErrorCode({
 		"INVALID_PHONE_NUMBER",
 		"SMS_SEND_FAILED",
 		"SMS_SEND_LIMIT_EXCEEDED"
 	})
-	ApiResponse<Void> sendVerificationCode(@Valid @RequestBody SmsSendRequest request);
+	ApiResponse<SmsSendResponse> sendVerificationCode(@Valid @RequestBody SmsSendRequest request);
 
 	@Operation(
 		summary = "SMS 인증번호 검증",

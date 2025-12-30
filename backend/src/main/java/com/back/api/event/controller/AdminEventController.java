@@ -61,4 +61,13 @@ public class AdminEventController implements AdminEventApi {
 		List<AdminEventDashboardResponse> responses = adminEventService.getAllEventsDashboard();
 		return ApiResponse.ok("이벤트 현황 조회 성공", responses);
 	}
+
+	@Override
+	@GetMapping("/{eventId}")
+	public ApiResponse<EventResponse> getEvent(
+		@PathVariable Long eventId) {
+		EventResponse response = adminEventService.getEventForAdmin(eventId);
+		return ApiResponse.ok("이벤트를 조회했습니다.", response);
+	}
+
 }
