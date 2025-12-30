@@ -65,4 +65,24 @@ public class RedisConfig {
 		template.afterPropertiesSet();
 		return template;
 	}
+
+	//ActiveSession용 RedisTemplate (String 직렬화)
+	//필드 2개(sessionId, tokenVersion)만 저장하므로 경량 String 직렬화 사용
+	@Bean(name = "activeSessionRedisTemplate")
+	public RedisTemplate<String, String> activeSessionRedisTemplate(
+		RedisConnectionFactory connectionFactory
+	) {
+		RedisTemplate<String, String> template = new RedisTemplate<>();
+		template.setConnectionFactory(connectionFactory);
+
+		StringRedisSerializer serializer = new StringRedisSerializer();
+
+		template.setKeySerializer(serializer);
+		template.setValueSerializer(serializer);
+		template.setHashKeySerializer(serializer);
+		template.setHashValueSerializer(serializer);
+
+		template.afterPropertiesSet();
+		return template;
+	}
 }

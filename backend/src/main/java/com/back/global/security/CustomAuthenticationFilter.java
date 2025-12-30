@@ -16,7 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.back.api.auth.dto.JwtDto;
 import com.back.api.auth.service.AuthTokenService;
 import com.back.api.auth.service.SessionGuard;
-import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.code.ErrorCode;
@@ -107,12 +106,14 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		String sid = claims.sessionId();
 		long tokenVersion = claims.tokenVersion();
 
-		ActiveSession active = sessionGuard.requireActiveSession(userId);
-
-		// 싱글 디바이스 검증
-		if (!active.getSessionId().equals(sid) || active.getTokenVersion() != tokenVersion) {
-			cookieManager.deleteAuthCookies(request, response);
-			throw new ErrorException(AuthErrorCode.ACCESS_OTHER_DEVICE);
+		// ActiveSession Redis 캐싱 적용
+		try {
+			sessionGuard.requireAndValidateSession(userId, sid, tokenVersion);
+		} catch (ErrorException e) {
+			if (e.getErrorCode() == AuthErrorCode.ACCESS_OTHER_DEVICE) {
+				cookieManager.deleteAuthCookies(request, response);
+			}
+			throw e;
 		}
 
 		SecurityUser securityUser = new SecurityUser(
