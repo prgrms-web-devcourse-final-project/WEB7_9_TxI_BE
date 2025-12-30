@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.auth.service.ActiveSessionCache;
 import com.back.api.user.dto.request.UpdateProfileRequest;
 import com.back.api.user.dto.response.UserProfileResponse;
 import com.back.domain.auth.repository.RefreshTokenRepository;
@@ -23,6 +24,7 @@ public class UserService {
 
 	private final UserRepository userRepository;
 	private final RefreshTokenRepository refreshTokenRepository;
+	private final ActiveSessionCache activeSessionCache;
 	private final HttpRequestContext requestContext;
 
 	public UserProfileResponse getUser(Long userId) {
@@ -59,6 +61,9 @@ public class UserService {
 
 		// 모든 기기의 refreshToken 무효화 (전 기기 로그아웃 효과)
 		refreshTokenRepository.revokeAllByUserId(userId);
+
+		// activeSession redis 캐시 무효화
+		activeSessionCache.evict(userId);
 
 		// 현재 요청의 쿠키 삭제 (현재 기기 즉시 로그아웃 UX)
 		requestContext.deleteAuthCookies();
