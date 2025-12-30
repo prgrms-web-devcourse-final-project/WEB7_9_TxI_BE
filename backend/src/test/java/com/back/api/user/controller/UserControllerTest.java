@@ -25,13 +25,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.auth.repository.RefreshTokenRepository;
+import com.back.domain.event.entity.Event;
+import com.back.domain.queue.entity.QueueEntry;
+import com.back.domain.queue.entity.QueueEntryStatus;
+import com.back.domain.queue.repository.QueueEntryRedisRepository;
+import com.back.domain.queue.repository.QueueEntryRepository;
+import com.back.domain.seat.entity.Seat;
+import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.AuthErrorCode;
+import com.back.global.error.code.UserErrorCode;
 import com.back.global.http.HttpRequestContext;
 import com.back.support.data.TestUser;
+import com.back.support.helper.EventHelper;
+import com.back.support.helper.QueueEntryHelper;
+import com.back.support.helper.SeatHelper;
 import com.back.support.helper.TestAuthHelper;
+import com.back.support.helper.TicketHelper;
 import com.back.support.helper.UserHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -56,13 +68,31 @@ public class UserControllerTest {
 	private ActiveSessionRepository activeSessionRepository;
 
 	@Autowired
+	private QueueEntryRepository queueEntryRepository;
+
+	@Autowired
 	private UserHelper userHelper;
 
 	@Autowired
 	private TestAuthHelper testAuthHelper;
 
 	@Autowired
+	private TicketHelper ticketHelper;
+
+	@Autowired
+	private SeatHelper seatHelper;
+
+	@Autowired
+	private QueueEntryHelper queueEntryHelper;
+
+	@Autowired
+	private EventHelper eventHelper;
+
+	@Autowired
 	private EntityManager entityManager;
+
+	@Autowired
+	private QueueEntryRedisRepository queueEntryRedisRepository;
 
 	@Autowired
 	private com.back.api.auth.service.ActiveSessionCache activeSessionCache;
@@ -81,6 +111,10 @@ public class UserControllerTest {
 
 	String token;
 
+	Event testEvent;
+
+	Seat seat;
+
 	@BeforeEach
 	void setUp() {
 		testUser = userHelper.createUser(UserRole.NORMAL);
@@ -93,6 +127,10 @@ public class UserControllerTest {
 		user = userRepository.findById(user.getId()).orElseThrow();
 
 		testAuthHelper.clearAuthentication();
+
+		testEvent = eventHelper.createEvent("TestEvent");
+		queueEntryRedisRepository.clearAll(testEvent.getId());
+		seat = seatHelper.createSeat(testEvent, "A1", SeatGrade.VIP);
 	}
 
 	@Nested
@@ -353,40 +391,200 @@ public class UserControllerTest {
 				.andExpect(jsonPath("$.status").value(AuthErrorCode.UNAUTHORIZED.name()))
 				.andExpect(jsonPath("$.message").value(AuthErrorCode.UNAUTHORIZED.getMessage()));
 		}
-	}
 
-	@Test
-	@DisplayName("회원탈퇴 실패 - revokeAll/쿠키삭제 등 부작용이 없어야 한다")
-	void delete_user_failed_by_not_found_has_no_side_effects() throws Exception {
-		// given
-		long userId = user.getId();
+		@Test
+		@DisplayName("회원탈퇴 실패 - revokeAll/쿠키삭제 등 부작용이 없어야 한다")
+		void delete_user_failed_by_not_found_has_no_side_effects() throws Exception {
+			// given
+			long userId = user.getId();
 
-		// authenticate 과정에서 spy 호출이 발생할 수 있으니, 검증 전에 기록 제거
-		clearInvocations(spyRefreshTokenRepository, requestContext);
+			// authenticate 과정에서 spy 호출이 발생할 수 있으니, 검증 전에 기록 제거
+			clearInvocations(spyRefreshTokenRepository, requestContext);
 
+			// NOT_FOUND 유도: 인증은 유지하되, DB에서 유저만 삭제
+			activeSessionRepository.deleteByUserId(userId);
+			userRepository.deleteById(userId);
+			userRepository.flush();
 		// NOT_FOUND 유도: Redis 캐시 + DB에서 ActiveSession + User 삭제
 		activeSessionCache.evict(userId);
 		activeSessionRepository.deleteByUserId(userId);
 		userRepository.deleteById(userId);
 		userRepository.flush();
 
-		// when
-		ResultActions actions = mvc.perform(
-			delete("/api/v1/users/me")
-				.header("Authorization", "Bearer " + token)
-				.contentType(MediaType.APPLICATION_JSON)
-		).andDo(print());
+			// when
+			ResultActions actions = mvc.perform(
+				delete("/api/v1/users/me")
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
 
-		// then: 응답 검증
-		actions
-			.andExpect(status().isUnauthorized())
-			.andExpect(jsonPath("$.status").value(AuthErrorCode.UNAUTHORIZED.name()))
-			.andExpect(jsonPath("$.message").value(AuthErrorCode.UNAUTHORIZED.getMessage()));
+			// then: 응답 검증
+			actions
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.status").value(AuthErrorCode.UNAUTHORIZED.name()))
+				.andExpect(jsonPath("$.message").value(AuthErrorCode.UNAUTHORIZED.getMessage()));
 
-		// then: 부작용(토큰 revoke / 쿠키 삭제) 없어야 함
-		verify(refreshTokenRepository, never()).revokeAllByUserId(anyLong());
-		verify(requestContext, never()).deleteCookie("accessToken");
-		verify(requestContext, never()).deleteCookie("refreshToken");
+			// then: 부작용(토큰 revoke / 쿠키 삭제) 없어야 함
+			verify(refreshTokenRepository, never()).revokeAllByUserId(anyLong());
+			verify(requestContext, never()).deleteCookie("accessToken");
+			verify(requestContext, never()).deleteCookie("refreshToken");
+		}
+
+		@Test
+		@DisplayName("회원탈퇴 성공 - 대기열 WAITING 상태, 탈퇴 후 QueueEntry Expired 처리")
+		void success_delete_user_in_waiting_queue_and_update_to_expired() throws Exception {
+			// given
+			long userId = user.getId();
+			queueEntryHelper.createQueueEntryWithRedis(testEvent, user, 1);
+
+			// when
+			ResultActions actions = mvc.perform(
+				delete(deleteUserApi)
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
+
+			// then (API 응답)
+			actions
+				.andExpect(status().isNoContent())
+				.andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.name()))
+				.andExpect(jsonPath("$.message").value("회원탈퇴 완료"))
+				.andExpect(cookie().maxAge("accessToken", 0))
+				.andExpect(cookie().maxAge("refreshToken", 0));
+
+			// then (User soft delete 검증)
+			User deletedUser = userRepository.findIncludingDeletedById(userId)
+				.orElseThrow(() -> new RuntimeException("Not found user (including deleted)"));
+			assertThat(deletedUser.getDeleteDate()).isNotNull();
+
+			QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(testEvent.getId(), userId)
+				.orElseThrow(() -> new RuntimeException("Not found queue entry"));
+			assertThat(queueEntry.getQueueEntryStatus()).isEqualTo(QueueEntryStatus.EXPIRED);
+		}
+
+		@Test
+		@DisplayName("회원탈퇴 성공 - 대기열 ENTERED 상태, 탈퇴 후 QueueEntry Expired 처리")
+		void success_delete_user_in_entered_queue_and_update_to_expired() throws Exception {
+			// given
+			long userId = user.getId();
+			queueEntryHelper.createEnteredQueueEntryWithRedis(testEvent, user);
+
+			// when
+			ResultActions actions = mvc.perform(
+				delete(deleteUserApi)
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
+
+			// then (API 응답)
+			actions
+				.andExpect(status().isNoContent())
+				.andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.name()))
+				.andExpect(jsonPath("$.message").value("회원탈퇴 완료"))
+				.andExpect(cookie().maxAge("accessToken", 0))
+				.andExpect(cookie().maxAge("refreshToken", 0));
+
+			// then (User soft delete 검증)
+			User deletedUser = userRepository.findIncludingDeletedById(userId)
+				.orElseThrow(() -> new RuntimeException("Not found user (including deleted)"));
+			assertThat(deletedUser.getDeleteDate()).isNotNull();
+
+			QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(testEvent.getId(), userId)
+				.orElseThrow(() -> new RuntimeException("Not found queue entry"));
+			assertThat(queueEntry.getQueueEntryStatus()).isEqualTo(QueueEntryStatus.EXPIRED);
+		}
+
+		@Test
+		@DisplayName("회원탈퇴 실패 - 대기열 ENTERED 상태, 티켓 구매 완료, 이벤트 행사 전 탈퇴 요청")
+		void failed_delete_user_in_completed_queue_with_paid_ticket() throws Exception {
+			// given
+			long userId = user.getId();
+			queueEntryHelper.createCompletedQueueEntry(testEvent, user);
+			ticketHelper.createPaidTicket(user, seat, testEvent);
+
+			// when
+			ResultActions actions = mvc.perform(
+				delete(deleteUserApi)
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
+
+			// then (API 응답)
+			actions
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.name()))
+				.andExpect(jsonPath("$.message").value(UserErrorCode.CAN_NOT_DELETE_USER.getMessage()));
+
+			// then (User soft delete 검증)
+			User deletedUser = userRepository.findIncludingDeletedById(userId)
+				.orElseThrow(() -> new RuntimeException("Not found user (including deleted)"));
+			assertThat(deletedUser.getDeleteDate()).isNull();
+
+			QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(testEvent.getId(), userId)
+				.orElseThrow(() -> new RuntimeException("Not found queue entry"));
+			assertThat(queueEntry.getQueueEntryStatus()).isEqualTo(QueueEntryStatus.COMPLETED);
+		}
+
+		@Test
+		@DisplayName("회원탈퇴 실패 - 대기열 ENTERED 상태, 티켓 상태 ISSUED, 이벤트 행사 전 탈퇴 요청")
+		void failed_delete_user_in_completed_queue_with_issued_ticket() throws Exception {
+			// given
+			long userId = user.getId();
+			queueEntryHelper.createCompletedQueueEntry(testEvent, user);
+			ticketHelper.createIssuedTicket(user, seat, testEvent);
+
+			// when
+			ResultActions actions = mvc.perform(
+				delete(deleteUserApi)
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
+
+			// then (API 응답)
+			actions
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.name()))
+				.andExpect(jsonPath("$.message").value(UserErrorCode.CAN_NOT_DELETE_USER.getMessage()));
+
+			// then (User soft delete 검증)
+			User deletedUser = userRepository.findIncludingDeletedById(userId)
+				.orElseThrow(() -> new RuntimeException("Not found user (including deleted)"));
+			assertThat(deletedUser.getDeleteDate()).isNull();
+
+			QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(testEvent.getId(), userId)
+				.orElseThrow(() -> new RuntimeException("Not found queue entry"));
+			assertThat(queueEntry.getQueueEntryStatus()).isEqualTo(QueueEntryStatus.COMPLETED);
+		}
+
+		@Test
+		@DisplayName("회원탈퇴 성공 - 티켓을 구매완료, 행사가 완료됨")
+		void success_delete_user_with_past_event() throws Exception {
+			// given
+			long userId = user.getId();
+			testEvent = eventHelper.createPastEvent("PastEvent");
+			queueEntryHelper.createCompletedQueueEntry(testEvent, user);
+			ticketHelper.createPaidTicket(user, seat, testEvent);
+
+			// when
+			ResultActions actions = mvc.perform(
+				delete(deleteUserApi)
+					.header("Authorization", "Bearer " + token)
+					.contentType(MediaType.APPLICATION_JSON)
+			).andDo(print());
+
+			// then (API 응답)
+			actions
+				.andExpect(status().isNoContent())
+				.andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.name()))
+				.andExpect(jsonPath("$.message").value("회원탈퇴 완료"))
+				.andExpect(cookie().maxAge("accessToken", 0))
+				.andExpect(cookie().maxAge("refreshToken", 0));
+
+			// then (User soft delete 검증)
+			User deletedUser = userRepository.findIncludingDeletedById(userId)
+				.orElseThrow(() -> new RuntimeException("Not found user (including deleted)"));
+			assertThat(deletedUser.getDeleteDate()).isNotNull();
+		}
 	}
 
 	private void deleteUserById(long userId) {

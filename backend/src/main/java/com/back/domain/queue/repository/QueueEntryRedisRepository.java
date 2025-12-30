@@ -92,13 +92,25 @@ public class QueueEntryRedisRepository {
 		log.info("Removed user from entered queue - eventId: {}, userId: {}", eventId, userId);
 	}
 
+	public void removeFromWaitingAndEnteredQueue(Long eventId, Long userId) {
+		// WAITING 제거
+		String waitingKey = String.format(WAITING_KEY, eventId);
+		redisTemplate.opsForZSet().remove(waitingKey, userId.toString());
+
+		// ENTERED 제거
+		String enteredKey = String.format(ENTERED_KEY, eventId);
+		redisTemplate.opsForSet().remove(enteredKey, userId.toString());
+
+		log.info("Removed user from waiting & entered queue - eventId: {}, userId: {}", eventId, userId);
+	}
+
 	public Long getTotalEnteredCount(Long eventId) {
 		String key = String.format(ENTERED_KEY, eventId);
 		Long size = redisTemplate.opsForSet().size(key);
 		return size != null ? size : 0L;
 	}
 
-	public boolean  isInEnteredQueue(Long eventId, Long userId) {
+	public boolean isInEnteredQueue(Long eventId, Long userId) {
 		String key = String.format(ENTERED_KEY, eventId);
 		Boolean isMember = redisTemplate.opsForSet().isMember(key, userId.toString());
 		return isMember != null && isMember;
@@ -115,7 +127,6 @@ public class QueueEntryRedisRepository {
 		Object count = redisTemplate.opsForValue().get(key);
 		return count != null ? (Long)count : 0L;
 	}
-
 
 	/* ==================== 임시 데이터 추가용 ==================== */
 	public void addToEnteredQueueDirectly(Long eventId, Long userId) {
