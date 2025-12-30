@@ -64,6 +64,9 @@ public class UserControllerTest {
 	@Autowired
 	private EntityManager entityManager;
 
+	@Autowired
+	private com.back.api.auth.service.ActiveSessionCache activeSessionCache;
+
 	@MockitoSpyBean
 	private RefreshTokenRepository spyRefreshTokenRepository;
 
@@ -361,7 +364,8 @@ public class UserControllerTest {
 		// authenticate 과정에서 spy 호출이 발생할 수 있으니, 검증 전에 기록 제거
 		clearInvocations(spyRefreshTokenRepository, requestContext);
 
-		// NOT_FOUND 유도: 인증은 유지하되, DB에서 유저만 삭제
+		// NOT_FOUND 유도: Redis 캐시 + DB에서 ActiveSession + User 삭제
+		activeSessionCache.evict(userId);
 		activeSessionRepository.deleteByUserId(userId);
 		userRepository.deleteById(userId);
 		userRepository.flush();
@@ -386,6 +390,9 @@ public class UserControllerTest {
 	}
 
 	private void deleteUserById(long userId) {
+		// Redis 캐시 삭제 (DB와 동기화)
+		activeSessionCache.evict(userId);
+
 		activeSessionRepository.deleteByUserId(userId);
 		activeSessionRepository.flush();
 
