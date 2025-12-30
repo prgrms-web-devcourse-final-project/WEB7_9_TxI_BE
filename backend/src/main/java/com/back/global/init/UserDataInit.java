@@ -63,7 +63,7 @@ public class UserDataInit implements ApplicationRunner {
 				.email("test" + i + "@test.com")
 				.password(passwordEncoder.encode("abc12345"))
 				.nickname("test" + i)
-				.fullName("test2")
+				.fullName("test" + i)
 				.role(UserRole.NORMAL)
 				.birthDate(LocalDate.of(2000, 1, 1))
 				.activeStatus(UserActiveStatus.ACTIVE)

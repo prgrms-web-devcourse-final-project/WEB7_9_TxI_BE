@@ -295,12 +295,16 @@ class AdminEventControllerTest {
 					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data", hasSize(2)))
-				.andExpect(jsonPath("$.data[0].title", notNullValue()))
-				.andExpect(jsonPath("$.data[0].status", notNullValue()))
-				.andExpect(jsonPath("$.data[0].preRegisterCount", notNullValue()))
-				.andExpect(jsonPath("$.data[0].totalSoldSeats", notNullValue()))
-				.andExpect(jsonPath("$.data[0].totalSalesAmount", notNullValue()));
+				.andExpect(jsonPath("$.data.content", hasSize(2)))
+				.andExpect(jsonPath("$.data.content[0].title", notNullValue()))
+				.andExpect(jsonPath("$.data.content[0].status", notNullValue()))
+				.andExpect(jsonPath("$.data.content[0].preRegisterCount", notNullValue()))
+				.andExpect(jsonPath("$.data.content[0].totalSoldSeats", notNullValue()))
+				.andExpect(jsonPath("$.data.content[0].totalSalesAmount", notNullValue()))
+				.andExpect(jsonPath("$.data.totalElements").value(2))
+				.andExpect(jsonPath("$.data.totalPages").value(1))
+				.andExpect(jsonPath("$.data.size").value(20))
+				.andExpect(jsonPath("$.data.number").value(0));;
 		}
 
 		@Test
@@ -311,7 +315,9 @@ class AdminEventControllerTest {
 					.header("Authorization", "Bearer " + token))
 				.andDo(print())
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data", hasSize(0)));
+				.andExpect(jsonPath("$.data.content", hasSize(0)))
+				.andExpect(jsonPath("$.data.totalElements").value(0))
+				.andExpect(jsonPath("$.data.totalPages").value(0));
 		}
 	}
 

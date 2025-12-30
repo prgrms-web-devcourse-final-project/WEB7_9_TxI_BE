@@ -1,8 +1,8 @@
 package com.back.api.event.service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,11 +44,11 @@ public class AdminEventService {
 		eventService.deleteEvent(eventId);
 	}
 
-	public List<AdminEventDashboardResponse> getAllEventsDashboard() {
-		List<Event> events = eventRepository.findAll();
+	public Page<AdminEventDashboardResponse> getAllEventsDashboard(int page, int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		Page<Event> eventPage = eventRepository.findAll(pageable);
 
-		return events.stream()
-			.map(event -> {
+		return eventPage.map(event -> {
 				Long eventId = event.getId();
 
 				// 1. 이벤트별 현재 사전등록 인원 수 조회
@@ -72,8 +72,7 @@ public class AdminEventService {
 					totalSalesAmount != null ? totalSalesAmount : 0L,
 					event.isDeleted()
 				);
-			})
-			.collect(Collectors.toList());
+			});
 	}
 
 	@Transactional(readOnly = true)
