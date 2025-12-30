@@ -45,6 +45,10 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		"/api/v1/auth/signup"
 	);
 
+	private static final Set<String> PATH_PREFIX_WHITELIST = Set.of(
+		"/api/v1/events"
+	);
+
 	private final JwtProvider jwtProvider;
 	private final AuthTokenService tokenService;
 	private final CookieManager cookieManager;
@@ -87,6 +91,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		if ("OPTIONS".equalsIgnoreCase(request.getMethod())
 			|| !requestUrl.startsWith("/api/")
 			|| AUTH_WHITELIST.contains(requestUrl)
+			|| isWhitelistedPath(requestUrl)
 		) {
 			filterChain.doFilter(request, response);
 			return;
@@ -139,6 +144,19 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		} finally {
 			MdcContext.removeUserId(); // 다음 스레드 재사용을 위해 반드시 제거
 		}
+	}
+
+	private boolean isWhitelistedPath(String requestUrl) {
+		for (String prefix : PATH_PREFIX_WHITELIST) {
+			if (requestUrl.startsWith(prefix)) {
+				// /api/v1/events로 시작하지만 /pre-registers를 포함하는 경우 제외
+				if (requestUrl.contains("/pre-registers")) {
+					return false;
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void handleErrorException(
