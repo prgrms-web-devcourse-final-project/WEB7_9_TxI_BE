@@ -151,7 +151,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		for (String prefix : PATH_PREFIX_WHITELIST) {
 			if (requestUrl.startsWith(prefix)) {
 				// /api/v1/events로 시작하지만 /pre-registers를 포함하는 경우 제외
-				if (requestUrl.contains("/pre-registers")) {
+				if (requestUrl.contains("/pre-registers")
+					|| requestUrl.contains("/seats")) {
 					return false;
 				}
 				return true;

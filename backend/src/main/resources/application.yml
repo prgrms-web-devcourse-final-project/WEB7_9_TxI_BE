@@ -112,7 +112,7 @@ queue:
     #입장 처리 스케줄러
     entry:
       cron: "*/10 * * * * *" # 10초마다 실행
-      batch-size: 5 # 한 번에 입장시킬 인원 100
+      batch-size: 50 # 한 번에 입장시킬 인원 100
       max-entered-limit: 100  # 최대 수용 인원
 
     #셔플 처리 스케줄러
