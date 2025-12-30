@@ -1,5 +1,6 @@
 package com.back.api.ticket.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -171,6 +172,10 @@ public class TicketService {
 	@Transactional(readOnly = true)
 	public List<TicketResponse> getMyTickets(Long userId) {
 		return ticketRepository.findMyTicketDto(userId);
+	}
+
+	public List<Ticket> getMyIssuedOrPaidTicketsBeforeEvent(Long userId) {
+		return ticketRepository.findIssuedOrPaidBeforeEvent(userId, LocalDateTime.now());
 	}
 
 	/**

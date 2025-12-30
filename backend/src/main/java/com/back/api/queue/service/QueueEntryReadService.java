@@ -1,5 +1,7 @@
 package com.back.api.queue.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,14 +44,27 @@ public class QueueEntryReadService {
 
 	public QueueEntryStatusResponse getMyQueueStatus(Long eventId, Long userId) {
 		QueueEntry entry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
-			.orElseThrow(()-> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
+			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
 
-		return switch(entry.getQueueEntryStatus()) {
+		return switch (entry.getQueueEntryStatus()) {
 			case WAITING -> buildWaitingQueueResponse(eventId, entry);
-			case ENTERED  -> buildEnteredQueueResponse(entry);
-			case EXPIRED  -> buildExpiredQueueResponse(entry);
+			case ENTERED -> buildEnteredQueueResponse(entry);
+			case EXPIRED -> buildExpiredQueueResponse(entry);
 			case COMPLETED -> buildCompletedQueueResponse(entry);
 		};
+	}
+
+	public List<QueueEntry> getMyAllQueues(Long userId) {
+		return queueEntryRepository.findAllByUserId(userId);
+	}
+
+	public List<QueueEntry> getWaitingOrEnteredQueues(Long userId) {
+		return getMyAllQueues(userId)
+			.stream()
+			.filter(queue ->
+				queue.getQueueEntryStatus().equals(QueueEntryStatus.WAITING)
+					|| queue.getQueueEntryStatus().equals(QueueEntryStatus.ENTERED))
+			.toList();
 	}
 
 	//Redis 조회 + 계산
@@ -90,7 +105,7 @@ public class QueueEntryReadService {
 		} else {
 			estimatedWaitTime = waitingAhead * 3;
 			progress = totalWaitingCount > 0
-				? (int) (((totalWaitingCount - waitingAhead) * 100) / totalWaitingCount)
+				? (int)(((totalWaitingCount - waitingAhead) * 100) / totalWaitingCount)
 				: 0;
 		}
 
@@ -150,7 +165,6 @@ public class QueueEntryReadService {
 		if (totalWaitingCount == 0) {
 			throw new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY);
 		}
-
 
 		long waitingCount = queueEntryRepository.countByEvent_IdAndQueueEntryStatus(
 			eventId,
@@ -217,8 +231,8 @@ public class QueueEntryReadService {
 			entry.getUserId(),
 			entry.getEventId(),
 			entry.getQueueRank(),
-			(int) waitingAheadCount,
-			(int) totalWaitingCount
+			(int)waitingAheadCount,
+			(int)totalWaitingCount
 		);
 	}
 

@@ -343,6 +343,39 @@ public class QueueEntryProcessService {
 	}
 
 	@Transactional
+	public void expireWaitingAndEnteredEntry(Long eventId, Long userId) {
+		QueueEntry queueEntry = queueEntryRepository.findByEvent_IdAndUser_Id(eventId, userId)
+			.orElseThrow(() -> new ErrorException(QueueEntryErrorCode.NOT_FOUND_QUEUE_ENTRY));
+
+		if (queueEntry.getQueueEntryStatus() == QueueEntryStatus.EXPIRED
+			|| queueEntry.getQueueEntryStatus() == QueueEntryStatus.COMPLETED) {
+			return;
+		}
+
+		queueEntry.expire();
+		QueueEntry deque = queueEntryRepository.save(queueEntry);
+
+		try {
+			queueEntryRedisRepository.removeFromWaitingAndEnteredQueue(eventId, userId);
+			log.debug("eventId {} - Redis 만료 처리 성공", eventId);
+		} catch (Exception e) {
+			log.error("eventId {} - Redis 만료 처리 실패", eventId);
+		}
+
+		publishExpiredEvent(queueEntry);  // 만료 처리 웹소켓 이벤트 발행
+
+		eventPublisher.publishEvent(
+			new QueueExpiredMessage(
+				userId,
+				deque.getId(),
+				eventRepository.findById(eventId)
+					.map(Event::getTitle)
+					.orElse("제목 없음")
+			)
+		);
+	}
+
+	@Transactional
 	public void expireBatchEntries(List<QueueEntry> entries) {
 
 		int successCount = 0;
