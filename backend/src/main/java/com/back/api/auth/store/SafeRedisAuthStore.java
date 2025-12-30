@@ -79,7 +79,7 @@ public class SafeRedisAuthStore implements AuthStore {
 		if (lastFail > 0 && (now - lastFail) < COOL_DOWN_MS) {
 			return false;
 		}
-		// Spring Cloud CB에 State 가 없어서, ping 기반으로 판단
+		// circuit breaker 가 run 에 성공하면 true 반환
 		return circuitBreaker().run(
 			() -> true,
 			throwable -> {
