@@ -44,7 +44,7 @@ public class QrService {
 	private static final String CLAIM_TICKET_ID = "ticketId";
 	private static final String CLAIM_EVENT_ID = "eventId";
 	private static final String CLAIM_USER_ID = "userId";
-	private static final String CLAIM_ISSUED_AT = "issuedAt";
+	private static final String CLAIM_IAT = "iat";
 
 	// QR 토큰 발급
 	public QrTokenResponse generateQrTokenResponse(Long ticketId, Long userId) {
@@ -113,7 +113,7 @@ public class QrService {
 		claims.put(CLAIM_TICKET_ID, ticket.getId());
 		claims.put(CLAIM_EVENT_ID, ticket.getEvent().getId());
 		claims.put(CLAIM_USER_ID, userId);
-		claims.put(CLAIM_ISSUED_AT, now);
+		claims.put(CLAIM_IAT, now);
 
 		return JwtUtil.sign(qrSecret,QR_TOKEN_VALIDATE_SECEONDS,claims);
 	}
@@ -130,7 +130,7 @@ public class QrService {
 			Long ticketId = getLongValue(payload, CLAIM_TICKET_ID);
 			Long eventId = getLongValue(payload, CLAIM_EVENT_ID);
 			Long userId = getLongValue(payload, CLAIM_USER_ID);
-			Long issuedAt = getLongValue(payload, CLAIM_ISSUED_AT);
+			Long issuedAt = getLongValue(payload, CLAIM_IAT);
 
 			// 토큰 기간 확인 -> 60초 이상이면 만료
 			long now = Instant.now().getEpochSecond();
