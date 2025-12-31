@@ -87,15 +87,18 @@ public class AuthControllerTest {
 		@DisplayName("Success Sign up")
 		void signup_success() throws Exception {
 
-			String requestJson = mapper.writeValueAsString(Map.of(
-				"email", user.getEmail(),
-				"password", testUser.rawPassword(),
-				"fullName", user.getFullName(),
-				"nickname", user.getNickname(),
-				"year", "2002",
-				"month", "2",
-				"day", "11"
-			));
+			Map<String, Object> body = new java.util.HashMap<>();
+			body.put("email", user.getEmail());
+			body.put("password", testUser.rawPassword());
+			body.put("fullName", user.getFullName());
+			body.put("nickname", user.getNickname());
+			body.put("role", UserRole.NORMAL.name());
+			body.put("year", "2002");
+			body.put("month", "2");
+			body.put("day", "11");
+			body.put("registrationNumber", null);
+
+			String requestJson = mapper.writeValueAsString(body);
 
 			ResultActions actions = mvc
 				.perform(
@@ -123,7 +126,8 @@ public class AuthControllerTest {
 
 			String requestJson = mapper.writeValueAsString(Map.of(
 				"email", user.getEmail(),
-				"password", user.getPassword(),
+				"password", testUser.rawPassword(),
+				"role", UserRole.NORMAL.name(),
 				"year", "2002",
 				"month", "2",
 				"day", "11"
@@ -152,6 +156,7 @@ public class AuthControllerTest {
 				"email", existedUser.user().getEmail(),
 				"password", existedUser.rawPassword(),
 				"fullName", user.getFullName(),
+				"role", UserRole.NORMAL.name(),
 				"nickname", "A" + existedUser.user().getNickname(),
 				"year", "2002",
 				"month", "2",
@@ -185,6 +190,7 @@ public class AuthControllerTest {
 				"password", existedUser.rawPassword(),
 				"fullName", user.getFullName(),
 				"nickname", existedUser.user().getNickname(),
+				"role", UserRole.NORMAL.name(),
 				"year", "2002",
 				"month", "2",
 				"day", "11"
