@@ -30,7 +30,7 @@ public class Store extends BaseEntity {
 	@SequenceGenerator(
 		name = "store_seq",
 		sequenceName = "store_seq",
-		allocationSize = 100
+		allocationSize = 1
 	)
 	private Long id;
 
