@@ -88,6 +88,7 @@ public class SecurityConfig {
 				.requestMatchers("/ws/**").permitAll()  // WebSocket 핸드셰이크 허용
 				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 				.requestMatchers("/actuator/**").permitAll()    // 모니터링/Actuator 관련
+				.requestMatchers("/api/v1/tickets/entry/verify").permitAll() // QR 코드 검증
 				.requestMatchers("/api/v1/**").authenticated()
 				.requestMatchers("/api/v2/**").authenticated()
 				.anyRequest().authenticated()

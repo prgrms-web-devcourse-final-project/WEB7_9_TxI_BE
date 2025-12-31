@@ -1,6 +1,7 @@
 package com.back.api.ticket.controller;
 
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.back.api.ticket.dto.response.QrTokenResponse;
 import com.back.api.ticket.dto.response.QrValidationResponse;
@@ -40,6 +41,6 @@ public interface QrApi {
 	})
 	ApiResponse<QrValidationResponse> validateQrCode(
 		@Parameter(description = "QR 토큰", example = "abc123xyz456")
-		@PathVariable String token
+		@RequestParam String token
 	);
 }

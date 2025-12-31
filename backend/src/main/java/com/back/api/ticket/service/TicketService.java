@@ -195,11 +195,6 @@ public class TicketService {
 	}
 
 	@Transactional(readOnly = true)
-	public Optional<Ticket> getTicketById(Long ticketId) {
-		return ticketRepository.findByIdWithDetails(ticketId);
-	}
-
-	@Transactional(readOnly = true)
 	public Ticket findById(Long ticketId) {
 		return ticketRepository.findById(ticketId)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));

@@ -39,7 +39,6 @@ public class QrController implements QrApi {
 	public ApiResponse<QrValidationResponse> validateQrCode(
 		@RequestParam String token
 	){
-		Long userId = httpRequestContext.getUserId();
 		QrValidationResponse response = qrService.validateAndProcessEntry(token);
 
 		return ApiResponse.ok("QR 코드 검증 성공", response);
