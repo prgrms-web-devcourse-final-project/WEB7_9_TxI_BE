@@ -89,11 +89,6 @@ public class User extends BaseEntity {
 		this.store = store;
 	}
 
-	public User(Long id, String nickname) {
-		this.id = id;
-		this.nickname = nickname;
-	}
-
 	public void update(String fullName, String nickname, LocalDate birthDate) {
 		this.fullName = fullName;
 		this.nickname = nickname;
