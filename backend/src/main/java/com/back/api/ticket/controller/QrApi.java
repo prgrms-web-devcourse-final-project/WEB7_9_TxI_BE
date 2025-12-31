@@ -40,6 +40,6 @@ public interface QrApi {
 	})
 	ApiResponse<QrValidationResponse> validateQrCode(
 		@Parameter(description = "QR 토큰", example = "abc123xyz456")
-		@PathVariable String qrToken
+		@PathVariable String token
 	);
 }
