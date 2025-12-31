@@ -15,14 +15,28 @@ CREATE TABLE IF NOT EXISTS payment (
 
 
 /* =========================================================
- * 2. Index: payment_key (조회 성능)
+ * 2. Alter: payment - add created_at (BaseEntity 상속 추가)
+ * ========================================================= */
+ALTER TABLE payment
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NULL;
+
+
+/* =========================================================
+ * 3. Alter: payment - add modified_at (BaseEntity 상속 추가)
+ * ========================================================= */
+ALTER TABLE payment
+    ADD COLUMN IF NOT EXISTS modified_at TIMESTAMP NULL;
+
+
+/* =========================================================
+ * 4. Index: payment_key (조회 성능)
  * ========================================================= */
 CREATE INDEX IF NOT EXISTS idx_payment_payment_key
     ON payment(payment_key);
 
 
 /* =========================================================
- * 3. Index: order_id (조회 성능)
+ * 5. Index: order_id (조회 성능)
  * ========================================================= */
 CREATE INDEX IF NOT EXISTS idx_payment_order_id
     ON payment(order_id);

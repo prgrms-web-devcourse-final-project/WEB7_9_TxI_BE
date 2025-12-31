@@ -15,7 +15,14 @@ CREATE TABLE IF NOT EXISTS v2_orders (
 
 
 /* =========================================================
- * 2. Foreign Key: v2_orders.ticket_id → ticket.ticket_id
+ * 2. Alter: v2_orders - add payment_id (신규 컬럼 추가)
+ * ========================================================= */
+ALTER TABLE v2_orders
+    ADD COLUMN IF NOT EXISTS payment_id BIGINT NULL;
+
+
+/* =========================================================
+ * 3. Foreign Key: v2_orders.ticket_id → ticket.ticket_id
  * ========================================================= */
 DO $$
 BEGIN
