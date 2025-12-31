@@ -22,6 +22,7 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.entity.SeatStatus;
+import com.back.domain.store.entity.Store;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 import com.back.domain.user.entity.User;
@@ -30,6 +31,7 @@ import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.support.factory.EventFactory;
 import com.back.support.factory.SeatFactory;
+import com.back.support.factory.StoreFactory;
 import com.back.support.factory.UserFactory;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,9 +67,10 @@ class SeatSelectServiceUnitTest {
 		eventId = 1L;
 		seatId = 1L;
 		userId = 100L;
+		Store store = StoreFactory.fakeStore(1L);
 
-		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-		testEvent = EventFactory.fakeEvent("테스트 콘서트");
+		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+		testEvent = EventFactory.fakeEvent(store, "테스트 콘서트");
 		testSeat = SeatFactory.fakeSeat(testEvent, "A1", SeatGrade.VIP, 150000);
 
 		testTicket = Ticket.builder()

@@ -20,6 +20,7 @@ import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 import com.back.domain.ticket.repository.TicketRepository;
@@ -27,6 +28,7 @@ import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.support.helper.EventHelper;
 import com.back.support.helper.SeatHelper;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TicketHelper;
 import com.back.support.helper.UserHelper;
 
@@ -60,6 +62,9 @@ class DraftTicketExpirationSchedulerTest {
 	private TicketHelper ticketHelper;
 
 	@Autowired
+	private StoreHelper storeHelper;
+
+	@Autowired
 	private EntityManager em;
 
 	private User user;
@@ -68,9 +73,10 @@ class DraftTicketExpirationSchedulerTest {
 
 	@BeforeEach
 	void setUp() {
+		Store store = storeHelper.createStore();
 		// Helper 메서드들이 각자 @Transactional로 커밋
-		user = userHelper.createUser(UserRole.NORMAL).user();
-		event = eventHelper.createEvent();
+		user = userHelper.createUser(UserRole.NORMAL, null).user();
+		event = eventHelper.createEvent(store);
 		seat = seatHelper.createSeat(event, "A1", SeatGrade.VIP);
 	}
 

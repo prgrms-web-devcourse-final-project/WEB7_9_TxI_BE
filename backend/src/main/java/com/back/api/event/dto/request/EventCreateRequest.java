@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
+import com.back.domain.store.entity.Store;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
@@ -66,7 +67,7 @@ public record EventCreateRequest(
 	@Min(value = 1, message = "최대 티켓 수량은 1 이상이어야 합니다.")
 	Integer maxTicketAmount
 ) {
-	public Event toEntity() {
+	public Event toEntity(Store store) {
 		return Event.builder()
 			.title(title)
 			.category(category)
@@ -82,6 +83,7 @@ public record EventCreateRequest(
 			.eventDate(eventDate)
 			.maxTicketAmount(maxTicketAmount)
 			.status(EventStatus.READY)
+			.store(store)
 			.build();
 	}
 }

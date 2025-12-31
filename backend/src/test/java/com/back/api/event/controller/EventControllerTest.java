@@ -23,8 +23,10 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.UserRole;
 import com.back.support.factory.EventFactory;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 
 @SpringBootTest
@@ -46,14 +48,20 @@ class EventControllerTest {
 	@Autowired
 	private TestAuthHelper authHelper;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	String token;
+
+	Store store;
 
 	@BeforeEach
 	void setUp() {
+		store = storeHelper.createStore();
 		when(s3PresignedService.issueDownloadUrl(anyString()))
 			.thenReturn("https://mocked-presigned-url");
 
-		token = authHelper.issueAccessToken(UserRole.NORMAL);
+		token = authHelper.issueAccessToken(UserRole.NORMAL, null);
 	}
 
 	@Nested
@@ -64,7 +72,7 @@ class EventControllerTest {
 		@DisplayName("이벤트 단건 조회 성공")
 		void getEvent_Success() throws Exception {
 			// given
-			Event event = eventRepository.save(EventFactory.fakeEvent("단건 조회 이벤트"));
+			Event event = eventRepository.save(EventFactory.fakeEvent(store, "단건 조회 이벤트"));
 
 			// when & then
 			mockMvc.perform(get("/api/v1/events/{eventId}", event.getId())
@@ -79,7 +87,7 @@ class EventControllerTest {
 		@DisplayName("비회원도 이벤트 단건 조회 가능")
 		void getEvent_Success_WithoutAuth() throws Exception {
 			// given
-			Event event = eventRepository.save(EventFactory.fakeEvent("비회원 조회 이벤트"));
+			Event event = eventRepository.save(EventFactory.fakeEvent(store, "비회원 조회 이벤트"));
 
 			// when & then
 			mockMvc.perform(get("/api/v1/events/{eventId}", event.getId()))
@@ -108,8 +116,8 @@ class EventControllerTest {
 		@DisplayName("전체 이벤트 목록 조회 성공")
 		void getEvents_Success() throws Exception {
 			// given
-			eventRepository.save(EventFactory.fakeEvent("이벤트1"));
-			eventRepository.save(EventFactory.fakeEvent("이벤트2"));
+			eventRepository.save(EventFactory.fakeEvent(store, "이벤트1"));
+			eventRepository.save(EventFactory.fakeEvent(store, "이벤트2"));
 
 			// when & then
 			mockMvc.perform(get("/api/v1/events")
@@ -125,9 +133,9 @@ class EventControllerTest {
 		@DisplayName("비회원도 이벤트 목록 조회 가능")
 		void getEvents_Success_WithoutAuth() throws Exception {
 			// given
-			eventRepository.save(EventFactory.fakeEvent("비회원 이벤트1"));
-			eventRepository.save(EventFactory.fakeEvent("비회원 이벤트2"));
-			eventRepository.save(EventFactory.fakeEvent("비회원 이벤트3"));
+			eventRepository.save(EventFactory.fakeEvent(store, "비회원 이벤트1"));
+			eventRepository.save(EventFactory.fakeEvent(store, "비회원 이벤트2"));
+			eventRepository.save(EventFactory.fakeEvent(store, "비회원 이벤트3"));
 
 			// when & then
 			mockMvc.perform(get("/api/v1/events")
@@ -142,8 +150,8 @@ class EventControllerTest {
 		@DisplayName("카테고리별 조회 성공")
 		void getEvents_ByCategory_Success() throws Exception {
 			// given
-			eventRepository.save(EventFactory.fakeEvent(EventCategory.CONCERT, EventStatus.READY));
-			eventRepository.save(EventFactory.fakeEvent(EventCategory.POPUP, EventStatus.READY));
+			eventRepository.save(EventFactory.fakeEvent(store, EventCategory.CONCERT, EventStatus.READY));
+			eventRepository.save(EventFactory.fakeEvent(store, EventCategory.POPUP, EventStatus.READY));
 
 			// when & then
 			mockMvc.perform(get("/api/v1/events")
@@ -161,8 +169,8 @@ class EventControllerTest {
 		@DisplayName("상태별 조회 성공")
 		void getEvents_ByStatus_Success() throws Exception {
 			// given
-			eventRepository.save(EventFactory.fakeEvent(EventCategory.CONCERT, EventStatus.PRE_OPEN));
-			eventRepository.save(EventFactory.fakeEvent(EventCategory.CONCERT, EventStatus.CLOSED));
+			eventRepository.save(EventFactory.fakeEvent(store, EventCategory.CONCERT, EventStatus.PRE_OPEN));
+			eventRepository.save(EventFactory.fakeEvent(store, EventCategory.CONCERT, EventStatus.CLOSED));
 
 			// when & then
 			mockMvc.perform(get("/api/v1/events")

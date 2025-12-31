@@ -40,7 +40,7 @@ class TokenTypeMismatchTest {
 	@Test
 	@DisplayName("rotateTokenByRefreshToken에 accessToken을 넣으면 INVALID_TOKEN")
 	void rotate_with_access_token_should_be_invalid() {
-		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
+		TestUser testUser = userHelper.createUser(UserRole.NORMAL, null);
 		User user = testUser.user();
 
 		ActiveSession session = activeSessionRepository.findByUserId(user.getId())

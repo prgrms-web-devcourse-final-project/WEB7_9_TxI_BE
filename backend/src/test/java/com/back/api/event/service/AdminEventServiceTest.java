@@ -27,7 +27,9 @@ import com.back.domain.preregister.entity.PreRegisterStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
+import com.back.domain.store.entity.Store;
 import com.back.support.factory.EventFactory;
+import com.back.support.factory.StoreFactory;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AdminEventService 단위 테스트")
@@ -48,6 +50,8 @@ class AdminEventServiceTest {
 	@Mock
 	private SeatRepository seatRepository;
 
+	private final Store store = StoreFactory.fakeStore(1L);
+
 	@Nested
 	@DisplayName("이벤트 생성")
 	class CreateEvent {
@@ -59,14 +63,14 @@ class AdminEventServiceTest {
 			EventCreateRequest request = mock(EventCreateRequest.class);
 			EventResponse expectedResponse = mock(EventResponse.class);
 
-			given(eventService.createEvent(request)).willReturn(expectedResponse);
+			given(eventService.createEvent(request, store.getId())).willReturn(expectedResponse);
 
 			// when
-			EventResponse result = adminEventService.createEvent(request);
+			EventResponse result = adminEventService.createEvent(request, store.getId());
 
 			// then
 			assertThat(result).isEqualTo(expectedResponse);
-			verify(eventService).createEvent(request);
+			verify(eventService).createEvent(request, store.getId());
 		}
 	}
 
@@ -82,14 +86,14 @@ class AdminEventServiceTest {
 			EventUpdateRequest request = mock(EventUpdateRequest.class);
 			EventResponse expectedResponse = mock(EventResponse.class);
 
-			given(eventService.updateEvent(eventId, request)).willReturn(expectedResponse);
+			given(eventService.updateEvent(eventId, store.getId(), request)).willReturn(expectedResponse);
 
 			// when
-			EventResponse result = adminEventService.updateEvent(eventId, request);
+			EventResponse result = adminEventService.updateEvent(eventId, store.getId(), request);
 
 			// then
 			assertThat(result).isEqualTo(expectedResponse);
-			verify(eventService).updateEvent(eventId, request);
+			verify(eventService).updateEvent(eventId, store.getId(), request);
 		}
 	}
 
@@ -104,10 +108,10 @@ class AdminEventServiceTest {
 			Long eventId = 1L;
 
 			// when
-			adminEventService.deleteEvent(eventId);
+			adminEventService.deleteEvent(eventId, store.getId());
 
 			// then
-			verify(eventService).deleteEvent(eventId);
+			verify(eventService).deleteEvent(eventId, store.getId());
 		}
 	}
 
@@ -119,22 +123,22 @@ class AdminEventServiceTest {
 		@DisplayName("모든 이벤트의 대시보드 정보를 조회한다")
 		void getAllEventsDashboard_Success() {
 			// given
-			Event event1 = EventFactory.fakeEvent("이벤트1");
-			Event event2 = EventFactory.fakeEvent("이벤트2");
+			Event event1 = EventFactory.fakeEvent(store, "이벤트1");
+			Event event2 = EventFactory.fakeEvent(store, "이벤트2");
 			List<Event> events = List.of(event1, event2);
 
 			Pageable pageable = PageRequest.of(0, 20);
 			Page<Event> eventPage = new PageImpl<>(events, pageable, events.size());
 
-
-			given(eventRepository.findAll(any(Pageable.class))).willReturn(eventPage);  // <- 변경!
+			given(eventRepository.findAllByStore_Id(any(Pageable.class), eq(store.getId())))
+				.willReturn(eventPage);
 			given(preRegisterRepository.countByEvent_IdAndPreRegisterStatus(
 				any(), eq(PreRegisterStatus.REGISTERED))).willReturn(10L);
 			given(seatRepository.countByEventIdAndSeatStatus(any(), eq(SeatStatus.SOLD))).willReturn(5L);
 			given(seatRepository.sumPriceByEventIdAndSeatStatus(any(), eq(SeatStatus.SOLD))).willReturn(50000L);
 
 			// when
-			Page<AdminEventDashboardResponse> results = adminEventService.getAllEventsDashboard(0, 20);
+			Page<AdminEventDashboardResponse> results = adminEventService.getAllEventsDashboard(0, 20, store.getId());
 
 			// then
 			assertThat(results.getContent()).hasSize(2);
@@ -155,10 +159,11 @@ class AdminEventServiceTest {
 			Pageable pageable = PageRequest.of(0, 20);
 			Page<Event> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-			given(eventRepository.findAll(any(Pageable.class))).willReturn(emptyPage);
+			given(eventRepository.findAllByStore_Id(any(Pageable.class), eq(store.getId())))
+				.willReturn(emptyPage);
 
 			// when
-			Page<AdminEventDashboardResponse> results = adminEventService.getAllEventsDashboard(0, 20);
+			Page<AdminEventDashboardResponse> results = adminEventService.getAllEventsDashboard(0, 20, store.getId());
 
 			// then
 			assertThat(results.getContent()).isEmpty();
@@ -170,18 +175,19 @@ class AdminEventServiceTest {
 		@DisplayName("총 판매 금액이 null이면 0을 반환한다")
 		void getAllEventsDashboard_NullSalesAmount() {
 			// given
-			Event event = EventFactory.fakeEvent("이벤트");
+			Event event = EventFactory.fakeEvent(store, "이벤트");
 			Pageable pageable = PageRequest.of(0, 20);
 			Page<Event> eventPage = new PageImpl<>(List.of(event), pageable, 1);
 
-			given(eventRepository.findAll(any(Pageable.class))).willReturn(eventPage);
+			given(eventRepository.findAllByStore_Id(any(Pageable.class), eq(store.getId())))
+				.willReturn(eventPage);
 			given(preRegisterRepository.countByEvent_IdAndPreRegisterStatus(
 				any(), eq(PreRegisterStatus.REGISTERED))).willReturn(0L);
 			given(seatRepository.countByEventIdAndSeatStatus(any(), eq(SeatStatus.SOLD))).willReturn(0L);
 			given(seatRepository.sumPriceByEventIdAndSeatStatus(any(), eq(SeatStatus.SOLD))).willReturn(null);
 
 			// when
-			Page<AdminEventDashboardResponse> results = adminEventService.getAllEventsDashboard(0, 20);
+			Page<AdminEventDashboardResponse> results = adminEventService.getAllEventsDashboard(0, 20, store.getId());
 
 			// then
 			assertThat(results.getContent()).hasSize(1);

@@ -5,6 +5,7 @@ import java.time.Month;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
 import com.back.domain.user.entity.UserRole;
@@ -12,7 +13,10 @@ import com.back.support.data.TestUser;
 
 public class UserFactory extends BaseFactory {
 
-	public static TestUser fakeUser(UserRole role, PasswordEncoder encoder) {
+	public static TestUser fakeUser(UserRole role, PasswordEncoder encoder, Store store) {
+		if (role != UserRole.ADMIN) {
+			store = null;
+		}
 
 		String rawPassword = faker.internet().password();
 
@@ -39,6 +43,7 @@ public class UserFactory extends BaseFactory {
 			.nickname(faker.lorem().characters(3, 6))
 			.password(encoder.encode(rawPassword))
 			.birthDate(birthDate)
+			.store(store)
 			.build();
 
 		return new TestUser(user, rawPassword);

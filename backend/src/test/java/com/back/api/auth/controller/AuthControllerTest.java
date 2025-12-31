@@ -34,6 +34,7 @@ import com.back.global.error.code.AuthErrorCode;
 import com.back.global.security.SecurityUser;
 import com.back.support.data.TestUser;
 import com.back.support.factory.UserFactory;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.UserHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -58,6 +59,9 @@ public class AuthControllerTest {
 	private UserHelper userHelper;
 
 	@Autowired
+	private StoreHelper storeHelper;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	@Value("${custom.jwt.secret}")
@@ -69,7 +73,7 @@ public class AuthControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 		user = testUser.user();
 	}
 
@@ -142,7 +146,7 @@ public class AuthControllerTest {
 		@DisplayName("Failed sign up by existing email")
 		void signup_failed_by_existing_email() throws Exception {
 
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 
 			String requestJson = mapper.writeValueAsString(Map.of(
 				"email", existedUser.user().getEmail(),
@@ -174,7 +178,7 @@ public class AuthControllerTest {
 		@DisplayName("Failed sign up by existing nickname")
 		void signup_failed_by_existing_nickname() throws Exception {
 
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 
 			String requestJson = mapper.writeValueAsString(Map.of(
 				"email", "test" + existedUser.user().getEmail(),
@@ -212,7 +216,7 @@ public class AuthControllerTest {
 		@Test
 		@DisplayName("Success login")
 		void login_success() throws Exception {
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 			String rawPassword = existedUser.rawPassword();
 
@@ -237,7 +241,7 @@ public class AuthControllerTest {
 		@Test
 		@DisplayName("Failed by missing password parameter")
 		void failed_by_missing_password_parameter() throws Exception {
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 
 			String requestJson = mapper.writeValueAsString(Map.of(
@@ -260,7 +264,7 @@ public class AuthControllerTest {
 		@Test
 		@DisplayName("Failed by missing email parameter")
 		void failed_by_missing_email_parameter() throws Exception {
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			String rawPassword = existedUser.rawPassword();
 
 			String requestJson = mapper.writeValueAsString(Map.of(
@@ -283,7 +287,7 @@ public class AuthControllerTest {
 		@Test
 		@DisplayName("Failed by wrong email parameter")
 		void failed_by_wrong_email_parameter() throws Exception {
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 			String rawPassword = existedUser.rawPassword();
 
@@ -310,7 +314,7 @@ public class AuthControllerTest {
 		@Test
 		@DisplayName("Failed by wrong password parameter")
 		void failed_by_wrong_password_parameter() throws Exception {
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 			String rawPassword = existedUser.rawPassword();
 
@@ -338,7 +342,7 @@ public class AuthControllerTest {
 		@DisplayName("싱글디바이스 정책: 두 번째 로그인 후 첫 번째 accessToken으로 보호 API 호출하면 ACCESS_OTHER_DEVICE")
 		void old_access_blocked_after_second_login() throws Exception {
 			// given
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 			String rawPassword = existedUser.rawPassword();
 
@@ -385,6 +389,7 @@ public class AuthControllerTest {
 				user.getPassword(),
 				user.getNickname(),
 				user.getRole(),
+				null,
 				java.util.List.of(new SimpleGrantedAuthority("ROLE_USER"))
 			);
 		}
@@ -392,7 +397,7 @@ public class AuthControllerTest {
 		@Test
 		@DisplayName("로그아웃 성공")
 		void logout_success() throws Exception {
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 			String rawPassword = existedUser.rawPassword();
 
@@ -431,7 +436,7 @@ public class AuthControllerTest {
 		@DisplayName("로그아웃 실패 - refreshToken 쿠키 없음 (UNAUTHORIZED)")
 		void logout_failed_refresh_token_required() throws Exception {
 			// given: 유저 생성
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 
 			// when: refreshToken 쿠키 없이, 인증된 유저로 로그아웃 요청
@@ -457,7 +462,7 @@ public class AuthControllerTest {
 		@DisplayName("로그아웃 실패 - refreshToken DB에 없음 (ACCESS_OTHER_DEVICE)")
 		void logout_failed_refresh_token_not_found() throws Exception {
 			// given: 유저 생성 + 로그인해서 '정상 accessToken 쿠키' 확보
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 			String rawPassword = existedUser.rawPassword();
 
@@ -519,6 +524,7 @@ public class AuthControllerTest {
 				user.getPassword(),
 				user.getNickname(),
 				user.getRole(),
+				null,
 				java.util.List.of(new SimpleGrantedAuthority("ROLE_USER"))
 			);
 		}
@@ -526,7 +532,7 @@ public class AuthControllerTest {
 		@Test
 		@DisplayName("비밀번호 인증 성공")
 		void verify_password_success() throws Exception {
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 			String rawPassword = existedUser.rawPassword();
 
@@ -565,7 +571,7 @@ public class AuthControllerTest {
 		@Test
 		@DisplayName("비밀번호 인증 실패 - 요청 데이터 누락")
 		void failed_by_missing_parameter() throws Exception {
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 			String rawPassword = existedUser.rawPassword();
 
@@ -599,7 +605,7 @@ public class AuthControllerTest {
 		@Test
 		@DisplayName("비밀번호 인증 실패 - 비밀번호 불일치")
 		void failed_by_wrong_parameter() throws Exception {
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
 			User savedUser = existedUser.user();
 			String rawPassword = existedUser.rawPassword();
 

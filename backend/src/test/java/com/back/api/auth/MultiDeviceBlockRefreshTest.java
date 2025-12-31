@@ -59,7 +59,7 @@ public class MultiDeviceBlockRefreshTest {
 	@DisplayName("A의 access 만료 후 refresh 재발급 시도 중, B가 로그인(rotate)하면 ACCESS_OTHER_DEVICE 발생")
 	void refresh_blocked_by_other_device_as_access_other_device() throws Exception {
 		// given
-		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
+		TestUser testUser = userHelper.createUser(UserRole.NORMAL, null);
 		User user = testUser.user();
 
 		// ActiveSession 준비

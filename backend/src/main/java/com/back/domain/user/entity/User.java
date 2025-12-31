@@ -78,7 +78,7 @@ public class User extends BaseEntity {
 
 	@Builder
 	public User(String email, String fullName, String nickname, String password,
-		LocalDate birthDate, UserRole role, UserActiveStatus activeStatus) {
+		LocalDate birthDate, UserRole role, UserActiveStatus activeStatus, Store store) {
 		this.email = email;
 		this.fullName = fullName;
 		this.nickname = nickname;
@@ -86,6 +86,7 @@ public class User extends BaseEntity {
 		this.birthDate = birthDate;
 		this.role = role;
 		this.activeStatus = activeStatus;
+		this.store = store;
 	}
 
 	public User(Long id, String nickname) {

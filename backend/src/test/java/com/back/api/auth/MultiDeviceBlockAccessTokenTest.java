@@ -61,7 +61,7 @@ public class MultiDeviceBlockAccessTokenTest {
 	@Test
 	@DisplayName("기기 B가 로그인(rotate)하면, 기기 A의 기존 accessToken 요청은 ACCESS_OTHER_DEVICE로 차단된다")
 	void block_old_access_token_after_other_device_login() throws Exception {
-		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
+		TestUser testUser = userHelper.createUser(UserRole.NORMAL, null);
 		User user = testUser.user();
 
 		ActiveSession session = activeSessionRepository

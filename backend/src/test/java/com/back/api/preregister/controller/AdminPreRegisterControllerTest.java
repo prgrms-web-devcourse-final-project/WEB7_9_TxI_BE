@@ -1,4 +1,5 @@
 package com.back.api.preregister.controller;
+
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
@@ -20,6 +21,7 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.preregister.entity.PreRegister;
 import com.back.domain.preregister.repository.PreRegisterRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
@@ -27,6 +29,7 @@ import com.back.support.data.TestUser;
 import com.back.support.factory.EventFactory;
 import com.back.support.factory.PreRegisterFactory;
 import com.back.support.factory.UserFactory;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 
 @SpringBootTest
@@ -54,16 +57,21 @@ class AdminPreRegisterControllerTest {
 	@Autowired
 	private TestAuthHelper authHelper;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	private Event testEvent;
 	private User adminUser;
 	private String accessToken;
+	private Store store;
 
 	@BeforeEach
 	void setUp() {
-		testEvent = EventFactory.fakePreOpenEvent();
+		store = storeHelper.createStore();
+		testEvent = EventFactory.fakePreOpenEvent(store);
 		eventRepository.save(testEvent);
 
-		TestUser adminTestUser = UserFactory.fakeUser(UserRole.ADMIN, passwordEncoder);
+		TestUser adminTestUser = UserFactory.fakeUser(UserRole.ADMIN, passwordEncoder, store);
 		adminUser = adminTestUser.user();
 		userRepository.save(adminUser);
 
@@ -79,7 +87,7 @@ class AdminPreRegisterControllerTest {
 		void getPreRegistersByEventId_Success() throws Exception {
 			// given - 5명의 사용자가 사전 등록
 			for (int i = 0; i < 5; i++) {
-				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 				User user = testUser.user();
 				userRepository.save(user);
 
@@ -123,7 +131,7 @@ class AdminPreRegisterControllerTest {
 		void getPreRegistersByEventId_CustomPageSize() throws Exception {
 			// given - 25개 사전 등록 생성
 			for (int i = 0; i < 25; i++) {
-				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 				User user = testUser.user();
 				userRepository.save(user);
 
@@ -169,7 +177,7 @@ class AdminPreRegisterControllerTest {
 		void getPreRegistersByEventId_DefaultPaging() throws Exception {
 			// given
 			for (int i = 0; i < 3; i++) {
-				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 				User user = testUser.user();
 				userRepository.save(user);
 
@@ -191,8 +199,8 @@ class AdminPreRegisterControllerTest {
 		@DisplayName("취소된 사전 등록도 포함하여 조회")
 		void getPreRegistersByEventId_IncludeCanceled() throws Exception {
 			// given
-			TestUser user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
-			TestUser user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+			TestUser user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
+			TestUser user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 			userRepository.save(user1.user());
 			userRepository.save(user2.user());
 
@@ -220,7 +228,7 @@ class AdminPreRegisterControllerTest {
 		@DisplayName("사전 등록 수 조회 성공")
 		void getPreRegisterCountByEventId_Success() throws Exception {
 			for (int i = 0; i < 10; i++) {
-				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 				User user = testUser.user();
 				userRepository.save(user);
 
@@ -253,9 +261,9 @@ class AdminPreRegisterControllerTest {
 		@DisplayName("취소된 사전 등록은 카운트에서 제외")
 		void getPreRegisterCountByEventId_ExcludeCanceled() throws Exception {
 			// given
-			TestUser user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
-			TestUser user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
-			TestUser user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+			TestUser user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
+			TestUser user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
+			TestUser user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 			userRepository.save(user1.user());
 			userRepository.save(user2.user());
 			userRepository.save(user3.user());
@@ -282,7 +290,7 @@ class AdminPreRegisterControllerTest {
 		void getPreRegisterCountByEventId_LargeCount() throws Exception {
 
 			for (int i = 0; i < 100; i++) {
-				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 				User user = testUser.user();
 				userRepository.save(user);
 
@@ -306,7 +314,7 @@ class AdminPreRegisterControllerTest {
 		@Test
 		@DisplayName("일반 사용자는 접근 불가 (403)")
 		void getPreRegisters_Forbidden_NormalUser() throws Exception {
-			TestUser normalUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+			TestUser normalUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 			userRepository.save(normalUser.user());
 			String normalUserToken = authHelper.issueAccessToken(normalUser.user());
 
@@ -333,7 +341,7 @@ class AdminPreRegisterControllerTest {
 		@Test
 		@DisplayName("일반 사용자는 카운트 조회도 불가 (403)")
 		void getPreRegisterCount_Forbidden_NormalUser() throws Exception {
-			TestUser normalUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+			TestUser normalUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 			userRepository.save(normalUser.user());
 			String normalUserToken = authHelper.issueAccessToken(normalUser.user());
 

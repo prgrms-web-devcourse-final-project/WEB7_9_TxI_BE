@@ -18,12 +18,14 @@ import com.back.api.payment.order.service.OrderService;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.payment.order.repository.OrderRepository;
 import com.back.domain.seat.entity.SeatGrade;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.OrderErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.support.factory.EventFactory;
 import com.back.support.factory.OrderFactory;
 import com.back.support.factory.SeatFactory;
+import com.back.support.factory.StoreFactory;
 import com.back.support.factory.TicketFactory;
 import com.back.support.factory.UserFactory;
 
@@ -43,6 +45,8 @@ class OrderServiceTest {
 	@Mock
 	private PasswordEncoder passwordEncoder;
 
+	private final Store store = StoreFactory.fakeStore(1L);
+
 	@Test
 	@DisplayName("주문 생성 성공 - Draft Ticket 존재, amount 정상")
 	void createOrder_success() {
@@ -52,9 +56,9 @@ class OrderServiceTest {
 		Long seatId = 200L;
 		Long amount = 50_000L;
 
-		var event = EventFactory.fakeEvent();
+		var event = EventFactory.fakeEvent(store);
 		var seat = SeatFactory.fakeSeat(event, "A1", SeatGrade.VIP, 50_000);
-		var user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+		var user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 		var draftTicket = TicketFactory.fakeDraftTicket(user, seat, event);
 
 		given(ticketService.getDraftTicket(eventId, seatId, userId))
@@ -84,9 +88,9 @@ class OrderServiceTest {
 		Long seatId = 200L;
 		Long wrongAmount = 30_000L;
 
-		var event = EventFactory.fakeEvent();
+		var event = EventFactory.fakeEvent(store);
 		var seat = SeatFactory.fakeSeat(event, "A1", SeatGrade.VIP, 50_000);
-		var user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+		var user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 		var draftTicket = TicketFactory.fakeDraftTicket(user, seat, event);
 
 		given(ticketService.getDraftTicket(eventId, seatId, userId))

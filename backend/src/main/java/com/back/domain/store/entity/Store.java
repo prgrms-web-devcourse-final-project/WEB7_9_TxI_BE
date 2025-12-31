@@ -17,6 +17,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -53,8 +54,23 @@ public class Store extends BaseEntity {
 	@OneToMany(mappedBy = "store", fetch = FetchType.LAZY)
 	private List<User> managers = new ArrayList<>();
 
+	@Builder
+	private Store(
+		String name,
+		String registrationNumber,
+		String address
+	) {
+		this.name = name;
+		this.registrationNumber = registrationNumber;
+		this.address = address;
+	}
+
 	public void addManager(User user) {
 		managers.add(user);
 		user.changeStore(this);
+	}
+
+	public void softDelete() {
+		this.deleteDate = LocalDateTime.now();
 	}
 }

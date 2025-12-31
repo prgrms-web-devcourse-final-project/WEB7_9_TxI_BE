@@ -80,7 +80,7 @@ public class CustomAuthenticationFilterReissueTest {
 		throws Exception {
 
 		// given
-		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
+		TestUser testUser = userHelper.createUser(UserRole.NORMAL, null);
 		User user = testUser.user();
 
 		// ActiveSession을 DB에 만들고 (sid/version 확정)

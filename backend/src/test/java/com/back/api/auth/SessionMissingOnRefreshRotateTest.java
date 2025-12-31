@@ -56,7 +56,7 @@ class SessionMissingOnRefreshRotateTest {
 	@Test
 	@DisplayName("ActiveSession이 없으면(refresh rotate) UNAUTHORIZED")
 	void rotate_refresh_fails_when_active_session_missing() throws Exception {
-		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
+		TestUser testUser = userHelper.createUser(UserRole.NORMAL, null);
 		User user = testUser.user();
 
 		activeSessionRepository.findByUserId(user.getId()).ifPresent(activeSessionRepository::delete);
