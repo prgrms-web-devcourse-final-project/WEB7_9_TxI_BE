@@ -132,7 +132,8 @@ security:
       enabled: true
       refresh-cron: "0 0 3 * * MON"  # 매주 월요일 새벽 3시
       ip-list-urls:
-        - "https://raw.githubusercontent.com/client9/ipcat/master/datacenters.csv"
+        - "https://ip-ranges.amazonaws.com/ip-ranges.json"
+        - "https://www.gstatic.com/ipranges/cloud.json"
     # Device Fingerprint 설정
     fingerprint:
       enabled: true
