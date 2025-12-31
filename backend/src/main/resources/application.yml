@@ -91,13 +91,14 @@ custom:
 
   jwt:
     secret: ${JWT_SECRET}
+    qr-secret: ${JWT_QR_SECRET}
     access-token-duration: ${JWT_ACCESS_TOKEN_DURATION:3600}
     refresh-token-duration: ${JWT_REFRESH_TOKEN_DURATION:1209600}
 
   dev:
     domain: localhost
     back-url: "http://${custom.dev.domain}:8080"
-    front-url: "http://${custom.dev.domain}:3000"
+    front-url: "http://${custom.dev.domain}:5174"
   prod:
     domain: ${API_BASE_URL}
     back-url: "https://api.${custom.prod.domain}"

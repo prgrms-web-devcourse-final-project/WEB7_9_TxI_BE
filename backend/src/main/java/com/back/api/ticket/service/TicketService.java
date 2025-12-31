@@ -194,6 +194,11 @@ public class TicketService {
 		return ticket;
 	}
 
+	@Transactional(readOnly = true)
+	public Optional<Ticket> getTicketById(Long ticketId) {
+		return ticketRepository.findByIdWithDetails(ticketId);
+	}
+
 	/**
 	 * Draft만료 전용 스케줄러 사용하는 메소드
 	 */
