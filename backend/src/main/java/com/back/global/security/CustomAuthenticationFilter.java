@@ -154,8 +154,9 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 				if (requestUrl.matches(".*/events/\\d+/pre-registers/count$")) {
 					return true;
 				}
-				// /api/v1/events로 시작하지만 /pre-registers를 포함하는 다른 경우 제외
-				if (requestUrl.contains("/pre-registers")) {
+				// /api/v1/events로 시작하지만 /pre-registers나 /seats를 포함하는 다른 경우 제외
+				if (requestUrl.contains("/pre-registers")
+					|| requestUrl.contains("/seats")) {
 					return false;
 				}
 				return true;

@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"perf", "dev"})
+@Profile({"perf"})
 public class QueueShuffleScheduler {
 	private static final String JOB_NAME = "QueueShuffle";
 
