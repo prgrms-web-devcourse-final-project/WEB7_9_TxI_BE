@@ -35,10 +35,19 @@ public class PreRegisterController implements PreRegisterApi {
 	public ApiResponse<PreRegisterResponse> register(
 		@PathVariable Long eventId,
 		@RequestHeader(value = "X-Recaptcha-Token", required = false) String recaptchaToken,
-		@Valid @RequestBody PreRegisterCreateRequest request) {
+		@RequestHeader(value = "X-Device-Id", required = false) String deviceId,
+		@Valid @RequestBody PreRegisterCreateRequest request,
+		jakarta.servlet.http.HttpServletRequest httpRequest) {
 		reCaptchaService.verifyToken(recaptchaToken, null);
 		Long userId = httpRequestContext.getUserId();
-		PreRegisterResponse response = preRegisterService.register(eventId, userId, request);
+
+		// Fingerprint 기록을 위해 visitorId 전달
+		String visitorId = (String)httpRequest.getAttribute("VISITOR_ID");
+		if (visitorId == null) {
+			visitorId = deviceId;
+		}
+
+		PreRegisterResponse response = preRegisterService.register(eventId, userId, request, visitorId);
 		return ApiResponse.created("사전등록이 완료되었습니다.", response);
 	}
 

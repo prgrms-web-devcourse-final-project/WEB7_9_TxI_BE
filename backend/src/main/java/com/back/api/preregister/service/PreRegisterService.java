@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -24,13 +25,12 @@ import com.back.global.error.code.CommonErrorCode;
 import com.back.global.error.code.EventErrorCode;
 import com.back.global.error.code.PreRegisterErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.global.security.service.FingerprintService;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PreRegisterService {
 
@@ -40,68 +40,113 @@ public class PreRegisterService {
 	private final ApplicationEventPublisher eventPublisher;
 	private final StringRedisTemplate redisTemplate;
 	private final S3PresignedService s3PresignedService;
+	private FingerprintService fingerprintService;
+
+	public PreRegisterService(
+		PreRegisterRepository preRegisterRepository,
+		EventRepository eventRepository,
+		UserRepository userRepository,
+		ApplicationEventPublisher eventPublisher,
+		StringRedisTemplate redisTemplate,
+		S3PresignedService s3PresignedService) {
+		this.preRegisterRepository = preRegisterRepository;
+		this.eventRepository = eventRepository;
+		this.userRepository = userRepository;
+		this.eventPublisher = eventPublisher;
+		this.redisTemplate = redisTemplate;
+		this.s3PresignedService = s3PresignedService;
+	}
+
+	@Autowired(required = false)
+	public void setFingerprintService(FingerprintService fingerprintService) {
+		this.fingerprintService = fingerprintService;
+	}
 
 	private static final String SMS_VERIFIED_PREFIX = "SMS_VERIFIED:";
 
 	@Transactional
-	public PreRegisterResponse register(Long eventId, Long userId, PreRegisterCreateRequest request) {
+	public PreRegisterResponse register(Long eventId, Long userId, PreRegisterCreateRequest request, String visitorId) {
 		Event event = findEventById(eventId);
 		User user = findUserById(userId);
 
-		// 사전등록 기간 검증
-		validatePreRegistrationPeriod(event);
+		try {
+			// 사전등록 기간 검증
+			validatePreRegistrationPeriod(event);
 
-		// SMS 인증 완료 여부 검증 (플래그 삭제하지 않고 검증만)
-		validateSmsVerificationWithoutDelete(request.phoneNumber());
+			// SMS 인증 완료 여부 검증 (플래그 삭제하지 않고 검증만)
+			validateSmsVerificationWithoutDelete(request.phoneNumber());
 
-		// 본인 인증 정보 검증 (회원가입 정보와 대조)
-		validateUserInfo(user, request);
+			// 본인 인증 정보 검증 (회원가입 정보와 대조)
+			validateUserInfo(user, request);
 
-		// 약관 동의 검증
-		validateAgreements(request);
+			// 약관 동의 검증
+			validateAgreements(request);
 
-		// 기존 사전등록 확인 (CANCELED 상태면 재활용)
-		Optional<PreRegister> existingPreRegister = preRegisterRepository.findByEvent_IdAndUser_Id(eventId, userId);
+			// 기존 사전등록 확인 (CANCELED 상태면 재활용)
+			Optional<PreRegister> existingPreRegister = preRegisterRepository.findByEvent_IdAndUser_Id(eventId, userId);
 
-		if (existingPreRegister.isPresent()) {
-			PreRegister preRegister = existingPreRegister.get();
+			if (existingPreRegister.isPresent()) {
+				PreRegister preRegister = existingPreRegister.get();
 
-			// REGISTERED 상태면 중복 등록 예외
-			if (preRegister.isRegistered()) {
-				throw new ErrorException(PreRegisterErrorCode.ALREADY_PRE_REGISTERED);
+				// REGISTERED 상태면 중복 등록 예외
+				if (preRegister.isRegistered()) {
+					throw new ErrorException(PreRegisterErrorCode.ALREADY_PRE_REGISTERED);
+				}
+
+				// CANCELED 상태면 재등록 (상태만 변경)
+				preRegister.reRegister();
+
+				// 모든 검증 통과 후 SMS 인증 플래그 삭제
+				deleteSmsVerificationFlag(request.phoneNumber());
+
+				// Fingerprint 성공 기록
+				if (fingerprintService != null && visitorId != null) {
+					fingerprintService.recordAttempt(visitorId, true);
+				}
+
+				return PreRegisterResponse.from(preRegister);
 			}
 
-			// CANCELED 상태면 재등록 (상태만 변경)
-			preRegister.reRegister();
+			// 새로운 사전등록 생성
+			PreRegister preRegister = PreRegister.builder()
+				.event(event)
+				.user(user)
+				.preRegisterAgreeTerms(request.agreeTerms())
+				.preRegisterAgreePrivacy(request.agreePrivacy())
+				.build();
+
+			PreRegister savedPreRegister = preRegisterRepository.save(preRegister);
 
 			// 모든 검증 통과 후 SMS 인증 플래그 삭제
 			deleteSmsVerificationFlag(request.phoneNumber());
 
-			return PreRegisterResponse.from(preRegister);
+			eventPublisher.publishEvent(
+				new PreRegisterDoneMessage(
+					userId,
+					savedPreRegister.getId(),
+					event.getTitle()
+				)
+			);
+
+			// Fingerprint 성공 기록
+			if (fingerprintService != null && visitorId != null) {
+				fingerprintService.recordAttempt(visitorId, true);
+			}
+
+			return PreRegisterResponse.from(savedPreRegister);
+		} catch (ErrorException e) {
+			// Fingerprint 실패 기록 (검증 실패)
+			if (fingerprintService != null && visitorId != null) {
+				fingerprintService.recordAttempt(visitorId, false);
+			}
+			throw e;
+		} catch (Exception e) {
+			// Fingerprint 실패 기록 (시스템 에러)
+			if (fingerprintService != null && visitorId != null) {
+				fingerprintService.recordAttempt(visitorId, false);
+			}
+			throw e;
 		}
-
-		// 새로운 사전등록 생성
-		PreRegister preRegister = PreRegister.builder()
-			.event(event)
-			.user(user)
-			.preRegisterAgreeTerms(request.agreeTerms())
-			.preRegisterAgreePrivacy(request.agreePrivacy())
-			.build();
-
-		PreRegister savedPreRegister = preRegisterRepository.save(preRegister);
-
-		// 모든 검증 통과 후 SMS 인증 플래그 삭제
-		deleteSmsVerificationFlag(request.phoneNumber());
-
-		eventPublisher.publishEvent(
-			new PreRegisterDoneMessage(
-				userId,
-				savedPreRegister.getId(),
-				event.getTitle()
-			)
-		);
-
-		return PreRegisterResponse.from(savedPreRegister);
 	}
 
 	@Transactional
@@ -217,4 +262,3 @@ public class PreRegisterService {
 		redisTemplate.delete(verifiedKey);
 	}
 }
-

@@ -120,7 +120,7 @@ class PreRegisterServiceTest {
 			PreRegisterResponse response = preRegisterService.register(
 				testEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			);
 
 			// then
@@ -154,7 +154,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				testEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.INVALID_USER_INFO.getMessage());
@@ -173,7 +173,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				testEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.TERMS_NOT_AGREED.getMessage());
@@ -192,7 +192,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				testEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.PRIVACY_NOT_AGREED.getMessage());
@@ -214,7 +214,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				testEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.ALREADY_PRE_REGISTERED.getMessage());
@@ -251,7 +251,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				futureEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.INVALID_PRE_REGISTRATION_PERIOD.getMessage());
@@ -288,7 +288,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				closedEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.INVALID_PRE_REGISTRATION_PERIOD.getMessage());
@@ -307,7 +307,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				99999L,  // 존재하지 않는 이벤트 ID
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(EventErrorCode.NOT_FOUND_EVENT.getMessage());
@@ -326,7 +326,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				testEvent.getId(),
 				99999L,  // 존재하지 않는 사용자 ID
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(CommonErrorCode.NOT_FOUND_USER.getMessage());
@@ -355,7 +355,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				testEvent.getId(),
 				userWithoutBirthDate.getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.INVALID_USER_INFO.getMessage());
@@ -378,7 +378,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				testEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.SMS_VERIFICATION_NOT_COMPLETED.getMessage());
@@ -397,7 +397,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				testEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.INVALID_USER_INFO.getMessage());
@@ -426,7 +426,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				testEvent.getId(),
 				userWithoutFullName.getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.INVALID_USER_INFO.getMessage());
@@ -703,21 +703,21 @@ class PreRegisterServiceTest {
 				PreRegisterRequestFactory.fakePreRegisterRequest(
 					user1.user().getFullName(),
 					user1.user().getBirthDate()
-				));
+				), null);
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user2.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
 					user2.user().getFullName(),
 					user2.user().getBirthDate()
-				));
+				), null);
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user3.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
 					user3.user().getFullName(),
 					user3.user().getBirthDate()
-				));
+				), null);
 
 			// then: 3명 모두 등록되어야 함
 			Long count = preRegisterService.getRegistrationCount(testEvent.getId());
@@ -736,7 +736,7 @@ class PreRegisterServiceTest {
 			PreRegisterResponse registerResponse = preRegisterService.register(
 				testEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			);
 			// 2. 조회
 			PreRegisterResponse getResponse = preRegisterService.getMyPreRegister(
@@ -787,35 +787,35 @@ class PreRegisterServiceTest {
 				PreRegisterRequestFactory.fakePreRegisterRequest(
 					user1.user().getFullName(),
 					user1.user().getBirthDate()
-				));
+				), null);
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user2.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
 					user2.user().getFullName(),
 					user2.user().getBirthDate()
-				));
+				), null);
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user3.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
 					user3.user().getFullName(),
 					user3.user().getBirthDate()
-				));
+				), null);
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user4.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
 					user4.user().getFullName(),
 					user4.user().getBirthDate()
-				));
+				), null);
 
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 			preRegisterService.register(testEvent.getId(), user5.user().getId(),
 				PreRegisterRequestFactory.fakePreRegisterRequest(
 					user5.user().getFullName(),
 					user5.user().getBirthDate()
-				));
+				), null);
 
 			// then: 5명 등록 확인
 			Long countBeforeCancel = preRegisterService.getRegistrationCount(testEvent.getId());
@@ -851,7 +851,7 @@ class PreRegisterServiceTest {
 			PreRegisterResponse registerResponse = preRegisterService.register(
 				testEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			);
 			// when: 취소
 			preRegisterService.cancel(testEvent.getId(), testUser.user().getId());
@@ -864,7 +864,7 @@ class PreRegisterServiceTest {
 			PreRegisterResponse reRegisterResponse = preRegisterService.register(
 				testEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			);
 
 			// then: 재등록 성공 및 기존 레코드를 재활용
@@ -899,7 +899,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				deletedEvent.getId(),
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(EventErrorCode.NOT_FOUND_EVENT.getMessage());
@@ -919,7 +919,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				nonExistentEventId,
 				testUser.user().getId(),
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(EventErrorCode.NOT_FOUND_EVENT.getMessage());
@@ -939,7 +939,7 @@ class PreRegisterServiceTest {
 			assertThatThrownBy(() -> preRegisterService.register(
 				testEvent.getId(),
 				nonExistentUserId,
-				request
+				request, null
 			))
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(CommonErrorCode.NOT_FOUND_USER.getMessage());

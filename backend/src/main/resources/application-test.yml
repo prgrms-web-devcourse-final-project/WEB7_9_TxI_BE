@@ -35,6 +35,13 @@ custom:
 security:
   password:
     bcrypt-strength: 4
+  bot-protection:
+    rate-limit:
+      enabled: false
+    idc-block:
+      enabled: false
+    fingerprint:
+      enabled: false
 
 sms:
   test:

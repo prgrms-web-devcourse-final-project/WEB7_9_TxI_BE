@@ -42,6 +42,8 @@ spring:
 server:
   tomcat:
     basedir: .
+    # DoS 공격 방지: POST 요청 크기 제한 (Spring Boot 3.x)
+    max-http-form-post-size: 2MB  # SMS/사전등록 API는 JSON만 받음
     accesslog:
       enabled: true
       directory: logs
@@ -54,6 +56,7 @@ logging:
   level:
     root: INFO
     com.back: DEBUG
+    com.back.global.security: DEBUG  # 보안 필터 로그 상세 출력
     org.hibernate.orm.jdbc.bind: OFF
     org.hibernate.orm.jdbc.extract: OFF
     org.springframework.transaction.interceptor: INFO
@@ -88,6 +91,7 @@ custom:
       - "Cache-Control"
       - "Pragma"
       - "X-Recaptcha-Token"
+      - "X-Device-Id"
 
   jwt:
     secret: ${JWT_SECRET}
@@ -149,6 +153,31 @@ management:
 security:
   password:
     bcrypt-strength: 8 # prod 8 이상, perf/test/dev 4
+  bot-protection:
+    # 화이트리스트 IP (개발/테스트 환경)
+    whitelist-ips:
+      - 127.0.0.1
+      - ::1
+    # 신뢰할 수 있는 프록시 개수 (IP 스푸핑 방지)
+    # 0: 직접 연결, 1: ALB만, 2: CloudFront+ALB
+    trusted-proxy-count: 1
+    # Rate Limit 설정
+    rate-limit:
+      enabled: true
+      global-per-second: 50  # 전체 API: 1초당 50회
+      sms-per-minute: 5      # SMS/사전등록: 1분당 5회
+    # IDC IP 차단 설정
+    idc-block:
+      enabled: true
+      refresh-cron: "0 0 3 * * MON"  # 매주 월요일 새벽 3시
+      ip-list-urls:
+        - "https://raw.githubusercontent.com/client9/ipcat/master/datacenters.csv"
+    # Device Fingerprint 설정
+    fingerprint:
+      enabled: true
+      min-attempts: 5          # 최소 시도 횟수
+      failure-rate-threshold: 0.8  # 실패율 임계값 (80%)
+      ttl-seconds: 86400       # TTL: 24시간
 
 # coolSMS
 coolsms:
