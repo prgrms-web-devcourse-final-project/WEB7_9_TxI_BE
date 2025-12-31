@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class QrTokenService {
+public class QrService {
 
 	private final RedisTemplate<String, String> redisTemplate;
 	private final SiteProperties siteProperties;
@@ -191,7 +191,7 @@ public class QrTokenService {
 	}
 
 	private String buildRedisKey(Long ticketId) {
-		return "qr:ticket:" + ticketId;
+		return "entry:ticket:" + ticketId;
 	}
 
 
