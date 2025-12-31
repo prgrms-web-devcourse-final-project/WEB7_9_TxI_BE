@@ -10,6 +10,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.ticket.dto.response.QrTokenResponse;
 import com.back.api.ticket.dto.response.QrValidationResponse;
@@ -47,6 +48,7 @@ public class QrService {
 	private static final String CLAIM_IAT = "iat";
 
 	// QR 토큰 발급
+	@Transactional(readOnly = true)
 	public QrTokenResponse generateQrTokenResponse(Long ticketId, Long userId) {
 		Ticket ticket = ticketService.getTicketDetail(ticketId, userId);
 
@@ -71,6 +73,7 @@ public class QrService {
 	}
 
 	// QR 입장 검증 및 처리
+	@Transactional
 	public QrValidationResponse validateAndProcessEntry(String qrToken) {
 
 		QrTokenClaims claims = validateAndParseQrToken(qrToken);
