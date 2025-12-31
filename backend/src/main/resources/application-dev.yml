@@ -8,8 +8,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
   flyway:
-    enabled: true
-    clean-disabled: false
+    enabled: false
 
 security:
   password:
