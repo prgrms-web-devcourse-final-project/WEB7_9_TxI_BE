@@ -31,7 +31,6 @@ public record V2_PaymentConfirmResponse(
 		var event = ticket.getEvent();
 		var seat = ticket.getSeat();
 		var payment = order.getPayment();
-		log.debug("[V2 결제 디버깅] - payments 엔티티 상태 파악 {}", payment.getStatus());
 
 		return new V2_PaymentConfirmResponse(
 			order.getOrderId(),
