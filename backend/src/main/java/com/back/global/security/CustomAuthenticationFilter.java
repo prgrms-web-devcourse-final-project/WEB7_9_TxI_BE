@@ -150,7 +150,11 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private boolean isWhitelistedPath(String requestUrl) {
 		for (String prefix : PATH_PREFIX_WHITELIST) {
 			if (requestUrl.startsWith(prefix)) {
-				// /api/v1/events로 시작하지만 /pre-registers를 포함하는 경우 제외
+				// /api/v1/events/{id}/pre-registers/count는 공개 API (인증 불필요)
+				if (requestUrl.matches(".*/events/\\d+/pre-registers/count$")) {
+					return true;
+				}
+				// /api/v1/events로 시작하지만 /pre-registers를 포함하는 다른 경우 제외
 				if (requestUrl.contains("/pre-registers")) {
 					return false;
 				}
