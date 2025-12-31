@@ -19,7 +19,8 @@ public enum TicketErrorCode implements ErrorCode {
 	TICKET_QR_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "티켓 QR 토큰이 만료되었습니다."),
 	INVALID_TICKET_QR_TOKEN(HttpStatus.BAD_REQUEST, "유효하지 않은 티켓 QR 토큰입니다."),
 	TICKET_ALREADY_USED(HttpStatus.BAD_REQUEST, "이미 사용된 티켓입니다."),
-	EVENT_NOT_STARTED(HttpStatus.BAD_REQUEST, "이벤트 시작 전에는 QR이 발급되지 않습니다.");
+	EVENT_NOT_STARTED(HttpStatus.BAD_REQUEST, "이벤트 시작 전에는 QR이 발급되지 않습니다."),
+	TICKET_ALREADY_ENTERED(HttpStatus.BAD_REQUEST, "이미 입장처 티켓입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;
