@@ -15,13 +15,14 @@ import com.back.api.auth.dto.response.AuthResponse;
 import com.back.api.auth.dto.response.TokenResponse;
 import com.back.api.auth.dto.response.UserResponse;
 import com.back.api.auth.store.AuthStore;
+import com.back.api.store.service.StoreService;
 import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.auth.entity.RefreshToken;
 import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.auth.repository.RefreshTokenRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
-import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.exception.ErrorException;
@@ -44,6 +45,7 @@ public class AuthService {
 	private final ActiveSessionCache activeSessionCache;
 	private final ActiveSessionRepository activeSessionRepository;
 	private final AuthStore authStore;
+	private final StoreService storeService;
 
 	@Transactional
 	public AuthResponse signup(SignupRequest request) {
@@ -58,14 +60,25 @@ public class AuthService {
 		String encoded = passwordEncoder.encode(request.password());
 		LocalDate birthDate = request.toBirthDate();
 
+		Store store = null;
+
+		if (
+			request.registrationNumber() != null
+				&& !request.registrationNumber().isBlank()
+				&& !request.registrationNumber().isEmpty()
+		) {
+			store = storeService.getStoreByRegistrationNumber(request.registrationNumber());
+		}
+
 		User user = User.builder()
 			.email(request.email())
 			.password(encoded)
 			.fullName(request.fullName())
 			.nickname(request.nickname())
-			.role(UserRole.NORMAL)
+			.role(request.role())
 			.activeStatus(UserActiveStatus.ACTIVE)
 			.birthDate(birthDate)
+			.store(store)
 			.build();
 
 		User savedUser = userRepository.save(user);

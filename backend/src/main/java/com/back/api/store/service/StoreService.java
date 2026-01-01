@@ -22,4 +22,10 @@ public class StoreService {
 			() -> new ErrorException(StoreErrorCode.NOT_FOUND)
 		);
 	}
+
+	public Store getStoreByRegistrationNumber(String number) {
+		return storeRepository.findByRegistrationNumber(number).orElseThrow(
+			() -> new ErrorException(StoreErrorCode.NOT_FOUND)
+		);
+	}
 }
