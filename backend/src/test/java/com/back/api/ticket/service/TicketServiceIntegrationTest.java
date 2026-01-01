@@ -20,6 +20,7 @@ import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 import com.back.domain.ticket.repository.TicketRepository;
@@ -28,6 +29,7 @@ import com.back.domain.user.entity.UserRole;
 import com.back.global.error.exception.ErrorException;
 import com.back.support.factory.EventFactory;
 import com.back.support.helper.SeatHelper;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TicketHelper;
 import com.back.support.helper.UserHelper;
 
@@ -51,6 +53,8 @@ class TicketServiceIntegrationTest {
 	@Autowired
 	private TicketHelper ticketHelper;
 	@Autowired
+	private StoreHelper storeHelper;
+	@Autowired
 	private SeatRepository seatRepository;
 
 	private User user;
@@ -59,8 +63,9 @@ class TicketServiceIntegrationTest {
 
 	@BeforeEach
 	void setUp() {
-		user = userHelper.createUser(UserRole.NORMAL).user();
-		event = eventRepository.save(EventFactory.fakeEvent("통합 테스트 이벤트"));
+		Store store = storeHelper.createStore();
+		user = userHelper.createUser(UserRole.NORMAL, null).user();
+		event = eventRepository.save(EventFactory.fakeEvent(store, "통합 테스트 이벤트"));
 		seat = seatHelper.createSeat(event, "A1", SeatGrade.VIP);
 	}
 
@@ -203,7 +208,7 @@ class TicketServiceIntegrationTest {
 	@DisplayName("다른 사용자의 티켓으로 결제 확정 시도 - 실패")
 	void confirmPayment_unauthorizedUser_fail() {
 
-		User otherUser = userHelper.createUser(UserRole.NORMAL).user();
+		User otherUser = userHelper.createUser(UserRole.NORMAL, null).user();
 
 		Ticket draft = ticketService.getOrCreateDraft(event.getId(), user.getId());
 		draft.assignSeat(seat);
@@ -223,7 +228,7 @@ class TicketServiceIntegrationTest {
 	@DisplayName("다른 사용자의 티켓 상세 조회 시도 - 실패")
 	void getTicketDetail_unauthorizedUser_fail() {
 
-		User otherUser = userHelper.createUser(UserRole.NORMAL).user();
+		User otherUser = userHelper.createUser(UserRole.NORMAL, null).user();
 		Ticket saved = ticketHelper.createIssuedTicket(user, seat, event);
 
 		assertThatThrownBy(() ->

@@ -18,11 +18,13 @@ import com.back.domain.event.repository.EventRepository;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
+import com.back.domain.store.entity.Store;
 import com.back.domain.ticket.repository.TicketRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.support.factory.EventFactory;
 import com.back.support.helper.SeatHelper;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 import com.back.support.helper.TicketHelper;
 import com.back.support.helper.UserHelper;
@@ -46,6 +48,9 @@ class TicketControllerTest {
 	private UserHelper userHelper;
 	@Autowired
 	private SeatHelper seatHelper;
+	@Autowired
+	private StoreHelper storeHelper;
+
 	private Event testEvent;
 	private User testUser;
 	private Seat testSeat;
@@ -54,15 +59,16 @@ class TicketControllerTest {
 
 	@BeforeEach
 	void setUp() {
+		Store store = storeHelper.createStore();
 		// 이벤트 생성
-		testEvent = EventFactory.fakeEvent("테스트 이벤트");
+		testEvent = EventFactory.fakeEvent(store, "테스트 이벤트");
 		eventRepository.save(testEvent);
 
 		// 좌석 1개 생성
 		testSeat = seatHelper.createSeat(testEvent, "A1", SeatGrade.VIP);
 
 		// 유저 생성 + 인증
-		testUser = userHelper.createUser(UserRole.NORMAL).user();
+		testUser = userHelper.createUser(UserRole.NORMAL, null).user();
 		testAuthHelper.authenticate(testUser);
 
 		// Redis 초기화
@@ -104,7 +110,7 @@ class TicketControllerTest {
 	void getMyTickets_filtering() throws Exception {
 
 		// given
-		User otherUser = userHelper.createUser(UserRole.NORMAL).user();
+		User otherUser = userHelper.createUser(UserRole.NORMAL, null).user();
 		ticketHelper.createIssuedTicket(otherUser, testSeat, testEvent);
 
 		// when & then: 로그인한 testUser는 티켓이 없어야 함

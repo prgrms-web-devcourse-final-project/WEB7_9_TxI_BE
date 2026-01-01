@@ -2,6 +2,7 @@ package com.back.support.helper;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,6 +18,7 @@ import com.back.api.auth.dto.cache.ActiveSessionDto;
 import com.back.api.auth.service.ActiveSessionCache;
 import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.auth.repository.ActiveSessionRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
 import com.back.domain.user.entity.UserRole;
@@ -52,11 +54,14 @@ public class TestAuthHelper {
 		List<GrantedAuthority> authorities =
 			List.of(new SimpleGrantedAuthority("ROLE_USER"));
 
+		Optional<Long> storeId = Optional.ofNullable(user.getStore()).map(Store::getId);
+
 		SecurityUser securityUser = new SecurityUser(
 			user.getId(),
 			user.getEmail(),
 			user.getPassword(),
 			user.getRole(),
+			storeId,
 			authorities
 		);
 
@@ -70,9 +75,12 @@ public class TestAuthHelper {
 	}
 
 	/** role 지정해서 유저 생성 + accessToken 발급 */
-	public String issueAccessToken(UserRole role) {
+	public String issueAccessToken(UserRole role, Store store) {
 		User user = createUser(role);
 		ActiveSession session = activeSessionRepository.save(ActiveSession.create(user));
+
+		user.changeStore(store);
+		userRepository.saveAndFlush(user);
 
 		// Redis 캐시에도 저장 (테스트 환경에서 실제 인증 필터와 동일한 동작 보장)
 		ActiveSessionDto dto = ActiveSessionDto.from(session);

@@ -29,8 +29,10 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.store.entity.Store;
 import com.back.global.error.code.EventErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.support.helper.StoreHelper;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -43,6 +45,9 @@ class EventServiceTest {
 
 	@Autowired
 	private EventRepository eventRepository;
+
+	@Autowired
+	private StoreHelper storeHelper;
 
 	@MockitoBean
 	private S3MoveService s3MoveService;
@@ -57,8 +62,11 @@ class EventServiceTest {
 	private LocalDateTime ticketCloseAt;
 	private LocalDateTime eventDate;
 
+	private Store store;
+
 	@BeforeEach
 	void setUp() {
+		store = storeHelper.createStore();
 		LocalDateTime rawNow = LocalDateTime.now();
 		now = rawNow.withNano((rawNow.getNano() / 1000) * 1000);
 		preOpenAt = now.plusDays(1);
@@ -99,7 +107,7 @@ class EventServiceTest {
 			);
 
 			// when
-			EventResponse response = eventService.createEvent(request);
+			EventResponse response = eventService.createEvent(request, store.getId());
 
 			// then
 			assertThat(response.id()).isNotNull();
@@ -133,7 +141,7 @@ class EventServiceTest {
 			);
 
 			// when & then
-			assertThatThrownBy(() -> eventService.createEvent(request))
+			assertThatThrownBy(() -> eventService.createEvent(request, store.getId()))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.INVALID_EVENT_DATE);
 		}
@@ -159,7 +167,7 @@ class EventServiceTest {
 			);
 
 			// when & then
-			assertThatThrownBy(() -> eventService.createEvent(request))
+			assertThatThrownBy(() -> eventService.createEvent(request, store.getId()))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.INVALID_EVENT_DATE);
 		}
@@ -185,7 +193,7 @@ class EventServiceTest {
 			);
 
 			// when & then
-			assertThatThrownBy(() -> eventService.createEvent(request))
+			assertThatThrownBy(() -> eventService.createEvent(request, store.getId()))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.INVALID_EVENT_DATE);
 		}
@@ -215,6 +223,7 @@ class EventServiceTest {
 				.eventDate(eventDate)
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			// 동일한 title, place, ticketOpenAt으로 이벤트 생성 시도
@@ -235,7 +244,7 @@ class EventServiceTest {
 			);
 
 			// when & then
-			assertThatThrownBy(() -> eventService.createEvent(request))
+			assertThatThrownBy(() -> eventService.createEvent(request, store.getId()))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.DUPLICATE_EVENT);
 		}
@@ -261,7 +270,7 @@ class EventServiceTest {
 			);
 
 			// when
-			EventResponse response = eventService.createEvent(request);
+			EventResponse response = eventService.createEvent(request, store.getId());
 
 			// then
 			assertThat(response.id()).isNotNull();
@@ -290,7 +299,7 @@ class EventServiceTest {
 			);
 
 			// when
-			EventResponse response = eventService.createEvent(request);
+			EventResponse response = eventService.createEvent(request, store.getId());
 
 			// then
 			assertThat(response.id()).isNotNull();
@@ -322,6 +331,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			EventUpdateRequest request = new EventUpdateRequest(
@@ -342,7 +352,7 @@ class EventServiceTest {
 			);
 
 			// when
-			EventResponse response = eventService.updateEvent(existingEvent.getId(), request);
+			EventResponse response = eventService.updateEvent(existingEvent.getId(), store.getId(), request);
 
 			// then
 			assertThat(response.title()).isEqualTo("수정된 이벤트");
@@ -373,6 +383,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			EventUpdateRequest request = new EventUpdateRequest(
@@ -393,7 +404,7 @@ class EventServiceTest {
 			);
 
 			// when
-			EventResponse response = eventService.updateEvent(existingEvent.getId(), request);
+			EventResponse response = eventService.updateEvent(existingEvent.getId(), store.getId(), request);
 
 			// then
 			assertThat(response.title()).isEqualTo("수정된 이벤트");
@@ -419,6 +430,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			EventUpdateRequest request = new EventUpdateRequest(
@@ -439,7 +451,7 @@ class EventServiceTest {
 			);
 
 			// when
-			EventResponse response = eventService.updateEvent(existingEvent.getId(), request);
+			EventResponse response = eventService.updateEvent(existingEvent.getId(), store.getId(), request);
 
 			// then
 			assertThat(response.title()).isEqualTo("수정된 이벤트");
@@ -471,7 +483,7 @@ class EventServiceTest {
 			);
 
 			// when & then
-			assertThatThrownBy(() -> eventService.updateEvent(eventId, request))
+			assertThatThrownBy(() -> eventService.updateEvent(eventId, store.getId(), request))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.NOT_FOUND_EVENT);
 		}
@@ -496,6 +508,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			// 두 번째 이벤트 생성
@@ -514,6 +527,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			// 두 번째 이벤트를 첫 번째 이벤트와 중복되는 정보로 수정 시도
@@ -535,7 +549,7 @@ class EventServiceTest {
 			);
 
 			// when & then
-			assertThatThrownBy(() -> eventService.updateEvent(secondEvent.getId(), request))
+			assertThatThrownBy(() -> eventService.updateEvent(secondEvent.getId(), store.getId(), request))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.DUPLICATE_EVENT);
 		}
@@ -559,6 +573,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			// 동일한 title, place, ticketOpenAt으로 수정 (자기 자신이므로 성공해야 함)
@@ -580,7 +595,7 @@ class EventServiceTest {
 			);
 
 			// when
-			EventResponse response = eventService.updateEvent(existingEvent.getId(), request);
+			EventResponse response = eventService.updateEvent(existingEvent.getId(), store.getId(), request);
 
 			// then
 			assertThat(response.title()).isEqualTo("기존 이벤트");
@@ -612,12 +627,13 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			Long eventId = existingEvent.getId();
 
 			// when
-			eventService.deleteEvent(eventId);
+			eventService.deleteEvent(eventId, store.getId());
 
 			// then
 			// 소프트 딜리트되어 findById로 조회되지 않음 (deleted = false 조건 때문)
@@ -631,7 +647,7 @@ class EventServiceTest {
 			Long eventId = 999L;
 
 			// when & then
-			assertThatThrownBy(() -> eventService.deleteEvent(eventId))
+			assertThatThrownBy(() -> eventService.deleteEvent(eventId, store.getId()))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", EventErrorCode.NOT_FOUND_EVENT);
 		}
@@ -660,6 +676,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			// when
@@ -701,6 +718,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			// when
@@ -731,6 +749,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			// when
@@ -766,6 +785,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			eventRepository.save(Event.builder()
@@ -783,6 +803,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.PRE_OPEN)
+				.store(store)
 				.build());
 
 			Pageable pageable = PageRequest.of(0, 10);
@@ -813,6 +834,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.PRE_OPEN)
+				.store(store)
 				.build());
 
 			Pageable pageable = PageRequest.of(0, 10);
@@ -844,6 +866,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			Pageable pageable = PageRequest.of(0, 10);
@@ -875,6 +898,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.PRE_OPEN)
+				.store(store)
 				.build());
 
 			Pageable pageable = PageRequest.of(0, 10);
@@ -915,6 +939,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			// when
@@ -962,6 +987,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			eventRepository.save(Event.builder()
@@ -979,6 +1005,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			eventRepository.save(Event.builder()
@@ -996,6 +1023,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.PRE_OPEN)
+				.store(store)
 				.build());
 
 			// when
@@ -1045,6 +1073,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			eventRepository.save(Event.builder()
@@ -1062,6 +1091,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			// 검색 범위 밖의 이벤트
@@ -1080,6 +1110,7 @@ class EventServiceTest {
 				.eventDate(now.plusDays(35))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build());
 
 			// when

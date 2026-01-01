@@ -93,4 +93,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 		@Param("title") String title,
 		@Param("place") String place,
 		@Param("ticketOpenAt") LocalDateTime ticketOpenAt);
+
+	Page<Event> findAllByStore_Id(Pageable pageable, long storeId);
 }

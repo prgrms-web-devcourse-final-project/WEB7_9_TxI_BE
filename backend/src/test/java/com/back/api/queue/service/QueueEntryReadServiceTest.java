@@ -30,11 +30,13 @@ import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.QueueEntryErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.support.factory.EventFactory;
+import com.back.support.factory.StoreFactory;
 import com.back.support.factory.UserFactory;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,7 +53,6 @@ class QueueEntryReadServiceTest {
 	@Mock
 	private QueueEntryRedisRepository queueEntryRedisRepository;
 
-
 	private Event testEvent;
 	private User testUser;
 	private QueueEntry testQueueEntry;
@@ -59,22 +60,22 @@ class QueueEntryReadServiceTest {
 	private Long userId;
 	private PasswordEncoder passwordEncoder;
 
+	private final Store store = StoreFactory.fakeStore(1L);
+
 	@BeforeEach
 	void setUp() {
 		eventId = 1L;
 		userId = 100L;
 		passwordEncoder = new BCryptPasswordEncoder();
 
-		testEvent = EventFactory.fakeEvent("Test Event");
-		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+		testEvent = EventFactory.fakeEvent(store, "Test Event");
+		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 
 		ReflectionTestUtils.setField(testEvent, "id", eventId);
 		ReflectionTestUtils.setField(testUser, "id", userId);
 
-
 		testQueueEntry = new QueueEntry(testUser, testEvent, 5);
 	}
-
 
 	@Nested
 	@DisplayName("getMyQueueStatus 테스트")
@@ -98,7 +99,7 @@ class QueueEntryReadServiceTest {
 
 			// then
 			assertThat(response).isInstanceOf(WaitingQueueResponse.class);
-			WaitingQueueResponse waitingResponse = (WaitingQueueResponse) response;
+			WaitingQueueResponse waitingResponse = (WaitingQueueResponse)response;
 			assertThat(waitingResponse.userId()).isEqualTo(userId);
 			assertThat(waitingResponse.eventId()).isEqualTo(eventId);
 			assertThat(waitingResponse.status()).isEqualTo(QueueEntryStatus.WAITING);
@@ -123,7 +124,7 @@ class QueueEntryReadServiceTest {
 
 			// then
 			assertThat(response).isInstanceOf(EnteredQueueResponse.class);
-			EnteredQueueResponse enteredResponse = (EnteredQueueResponse) response;
+			EnteredQueueResponse enteredResponse = (EnteredQueueResponse)response;
 			assertThat(enteredResponse.userId()).isEqualTo(userId);
 			assertThat(enteredResponse.eventId()).isEqualTo(eventId);
 			assertThat(enteredResponse.status()).isEqualTo(QueueEntryStatus.ENTERED);
@@ -148,7 +149,7 @@ class QueueEntryReadServiceTest {
 
 			// then
 			assertThat(response).isInstanceOf(ExpiredQueueResponse.class);
-			ExpiredQueueResponse expiredResponse = (ExpiredQueueResponse) response;
+			ExpiredQueueResponse expiredResponse = (ExpiredQueueResponse)response;
 			assertThat(expiredResponse.userId()).isEqualTo(userId);
 			assertThat(expiredResponse.status()).isEqualTo(QueueEntryStatus.EXPIRED);
 
@@ -170,7 +171,7 @@ class QueueEntryReadServiceTest {
 
 			// then
 			assertThat(response).isInstanceOf(CompletedQueueResponse.class);
-			CompletedQueueResponse completedResponse = (CompletedQueueResponse) response;
+			CompletedQueueResponse completedResponse = (CompletedQueueResponse)response;
 			assertThat(completedResponse.userId()).isEqualTo(userId);
 			assertThat(completedResponse.status()).isEqualTo(QueueEntryStatus.COMPLETED);
 
@@ -210,7 +211,7 @@ class QueueEntryReadServiceTest {
 
 			// then
 			assertThat(response).isInstanceOf(WaitingQueueResponse.class);
-			WaitingQueueResponse waitingResponse = (WaitingQueueResponse) response;
+			WaitingQueueResponse waitingResponse = (WaitingQueueResponse)response;
 			assertThat(waitingResponse.queueRank()).isEqualTo(5);
 			assertThat(waitingResponse.waitingAhead()).isEqualTo(4);
 

@@ -20,9 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.domain.event.entity.Event;
 import com.back.domain.seat.entity.SeatGrade;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.UserRole;
 import com.back.support.helper.EventHelper;
 import com.back.support.helper.SeatHelper;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 
 @SpringBootTest
@@ -45,17 +47,23 @@ class AdminSeatControllerTest {
 	@Autowired
 	TestAuthHelper authHelper;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	private String token;
 
 	private Event testEvent;
 
+	private Store store;
+
 	@BeforeEach
 	void setUp() {
+		store = storeHelper.createStore();
 		seatHelper.clearSeat();
 		eventHelper.clearEvent();
 
-		testEvent = eventHelper.createEvent("테스트 콘서트");
-		token = authHelper.issueAccessToken(UserRole.ADMIN);
+		testEvent = eventHelper.createEvent(store, "테스트 콘서트");
+		token = authHelper.issueAccessToken(UserRole.ADMIN, store);
 	}
 
 	@Nested
@@ -588,7 +596,7 @@ class AdminSeatControllerTest {
 		@Test
 		@DisplayName("다른 이벤트의 같은 좌석 코드는 허용")
 		void validateDuplicateSeats_DifferentEvent() throws Exception {
-			var anotherEvent = eventHelper.createEvent("다른 이벤트");
+			var anotherEvent = eventHelper.createEvent(store, "다른 이벤트");
 			seatHelper.createSeat(anotherEvent, "A1", SeatGrade.VIP, 150000);
 
 			String requestBody = """

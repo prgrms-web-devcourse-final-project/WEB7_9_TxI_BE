@@ -27,7 +27,7 @@ public class OrderController implements OrderApi {
 		Long userId = httpRequestContext.getUser().getId();
 
 		OrderResponseDto orderResponseDto = orderService.createOrder(orderRequestDto, userId);
-		return ApiResponse.ok("주문이 생성되었습니다",orderResponseDto);
+		return ApiResponse.ok("주문이 생성되었습니다", orderResponseDto);
 	}
 
 	@PostMapping("/v2/orders/prepare")
@@ -37,6 +37,6 @@ public class OrderController implements OrderApi {
 
 		V2_OrderResponseDto orderResponseDto = orderService.v2_createOrder(orderRequestDto, userId);
 
-		return ApiResponse.ok("주문이 생성되었습니다",orderResponseDto);
+		return ApiResponse.ok("주문이 생성되었습니다", orderResponseDto);
 	}
 }

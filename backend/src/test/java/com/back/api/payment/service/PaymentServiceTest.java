@@ -22,6 +22,7 @@ import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.payment.order.entity.OrderStatus;
 import com.back.domain.seat.entity.SeatGrade;
+import com.back.domain.store.entity.Store;
 import com.back.domain.ticket.entity.TicketStatus;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.PaymentErrorCode;
@@ -29,6 +30,7 @@ import com.back.global.error.exception.ErrorException;
 import com.back.support.factory.EventFactory;
 import com.back.support.factory.OrderFactory;
 import com.back.support.factory.SeatFactory;
+import com.back.support.factory.StoreFactory;
 import com.back.support.factory.TicketFactory;
 import com.back.support.factory.UserFactory;
 
@@ -57,6 +59,8 @@ class PaymentServiceTest {
 	@Mock
 	private ApplicationEventPublisher eventPublisher;
 
+	private final Store store = StoreFactory.fakeStore(1L);
+
 	@Test
 	@DisplayName("결제 성공 - Order PAID, Ticket ISSUED, Seat SOLD")
 	void confirmPayment_success() {
@@ -65,8 +69,8 @@ class PaymentServiceTest {
 		String paymentKey = "test_payment_key";
 		Long amount = 50_000L;
 
-		var user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-		var event = EventFactory.fakeEvent();
+		var user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+		var event = EventFactory.fakeEvent(store);
 		var seat = SeatFactory.fakeSeat(event, "A1", SeatGrade.VIP, 50_000);
 		var draftTicket = TicketFactory.fakeDraftTicket(user, seat, event);
 		var order = OrderFactory.fakePendingOrder(draftTicket, amount);
@@ -113,8 +117,8 @@ class PaymentServiceTest {
 		String paymentKey = "test_payment_key";
 		Long amount = 50_000L;
 
-		var user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-		var event = EventFactory.fakeEvent();
+		var user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+		var event = EventFactory.fakeEvent(store);
 		var seat = SeatFactory.fakeSeat(event, "A1", SeatGrade.VIP, 50_000);
 		var draftTicket = TicketFactory.fakeDraftTicket(user, seat, event);
 		var order = OrderFactory.fakePendingOrder(draftTicket, amount);

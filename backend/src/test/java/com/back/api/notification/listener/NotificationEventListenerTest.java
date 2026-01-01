@@ -4,9 +4,9 @@ import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.reset;
+import static org.mockito.BDDMockito.*;
 
 import java.util.List;
 
@@ -35,11 +35,13 @@ import com.back.domain.notification.systemMessage.OrderFailedMessage;
 import com.back.domain.notification.systemMessage.OrderSuccessMessage;
 import com.back.domain.notification.systemMessage.PreRegisterDoneMessage;
 import com.back.domain.notification.systemMessage.QueueEntriesMessage;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.websocket.session.WebSocketSessionManager;
+import com.back.support.helper.StoreHelper;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -61,6 +63,9 @@ class NotificationEventListenerTest {
 	@Autowired
 	private TransactionHelper transactionHelper;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	@MockBean
 	private SimpMessagingTemplate messagingTemplate;
 
@@ -70,8 +75,11 @@ class NotificationEventListenerTest {
 	private User testUser;
 	private Event testEvent;
 
+	private Store store;
+
 	@BeforeEach
 	void setUp() {
+		store = storeHelper.createStore();
 		// 기존 데이터 정리 (테스트 격리를 위해)
 		notificationRepository.deleteAll();
 		eventRepository.deleteAll();
@@ -101,6 +109,7 @@ class NotificationEventListenerTest {
 			.eventDate(java.time.LocalDateTime.now().plusDays(10))
 			.maxTicketAmount(1000)
 			.status(EventStatus.READY)
+			.store(store)
 			.build());
 
 		// Mock 초기화

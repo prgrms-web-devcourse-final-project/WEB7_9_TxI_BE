@@ -25,12 +25,14 @@ import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.support.factory.UserFactory;
 import com.back.support.helper.EventHelper;
 import com.back.support.helper.QueueEntryHelper;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 
 @SpringBootTest
@@ -65,16 +67,20 @@ public class QueueEntryControllerTest {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	private User testUser;
 	private Event testEvent;
+	private Store store;
 
 	@BeforeEach
 	void setUp() {
-
-		testEvent = eventHelper.createEvent("TestEvent");
+		store = storeHelper.createStore();
+		testEvent = eventHelper.createEvent(store, "TestEvent");
 
 		// 테스트 유저 생성 & 저장
-		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 		userRepository.save(testUser);
 
 		// 인증 흐름 통과시키기
@@ -223,13 +229,13 @@ public class QueueEntryControllerTest {
 
 	@Nested
 	@DisplayName("상위 N명 입장 처리 API (/api/v1/queues/{eventId}/process-entries")
-	class ProcessTopEntriesTest  {
+	class ProcessTopEntriesTest {
 		@Test
 		@DisplayName("상위 1명 입장 처리 - 기본값")
 		void processTopEntries_Default_Success() throws Exception {
 			// given
 			for (int i = 1; i <= 5; i++) {
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				userRepository.save(user);
 				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
 			}
@@ -251,7 +257,7 @@ public class QueueEntryControllerTest {
 		void processTopEntries_Count5_Success() throws Exception {
 			// given
 			for (int i = 1; i <= 10; i++) {
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				userRepository.save(user);
 				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
 			}
@@ -271,7 +277,7 @@ public class QueueEntryControllerTest {
 		void processTopEntries_CountExceedsWaiting() throws Exception {
 			// given
 			for (int i = 1; i <= 3; i++) {
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				userRepository.save(user);
 				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
 			}
@@ -303,13 +309,13 @@ public class QueueEntryControllerTest {
 
 	@Nested
 	@DisplayName("내 앞 사용자 모두 입장 처리 API (/api/v1/queues/{eventId}/process-until-me")
-	class ProcessUntilMeTest  {
+	class ProcessUntilMeTest {
 		@Test
 		@DisplayName("70번째 사용자 - 앞의 69명 입장 처리")
 		void processUntilMe_Rank77_Process76Users() throws Exception {
 			// given
 			for (int i = 1; i <= 69; i++) {
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				userRepository.save(user);
 				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
 			}
@@ -317,7 +323,7 @@ public class QueueEntryControllerTest {
 			queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 70);
 
 			for (int i = 71; i <= 100; i++) {
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				userRepository.save(user);
 				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
 			}
@@ -338,9 +344,8 @@ public class QueueEntryControllerTest {
 			// given
 			queueEntryHelper.createQueueEntryWithRedis(testEvent, testUser, 1);
 
-
 			for (int i = 2; i <= 10; i++) {
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				userRepository.save(user);
 				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
 			}
@@ -358,7 +363,7 @@ public class QueueEntryControllerTest {
 		void processUntilMe_Rank5_Process4Users() throws Exception {
 			// given
 			for (int i = 1; i <= 4; i++) {
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				userRepository.save(user);
 				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
 			}
@@ -427,7 +432,7 @@ public class QueueEntryControllerTest {
 
 	@Nested
 	@DisplayName("사용자 대기열 맨 뒤로 이동 API (/api/v1/queues/{eventId}/move-to-back)")
-	class MoveToBackTest   {
+	class MoveToBackTest {
 
 		@Test
 		@DisplayName("입장 완료 상태에서 맨 뒤로 이동 - 성공")
@@ -435,7 +440,7 @@ public class QueueEntryControllerTest {
 
 			// given
 			for (int i = 1; i <= 3; i++) {
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				userRepository.save(user);
 				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
 			}
@@ -469,12 +474,12 @@ public class QueueEntryControllerTest {
 
 			// given
 			for (int i = 1; i <= 3; i++) {
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				userRepository.save(user);
 				queueEntryHelper.createQueueEntryWithRedis(testEvent, user, i);
 			}
 
-			User user4 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user4 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			userRepository.save(user4);
 			QueueEntry entered1 = queueEntryHelper.createQueueEntryWithRedis(testEvent, user4, 100);
 			entered1.enterQueue();
@@ -571,7 +576,6 @@ public class QueueEntryControllerTest {
 				.andExpect(jsonPath("$.message").value("큐 대기열 항목을 찾을 수 없습니다."))
 				.andDo(print());
 		}
-
 
 		@Test
 		@DisplayName("Redis 없어도 DB는 정상 업데이트")

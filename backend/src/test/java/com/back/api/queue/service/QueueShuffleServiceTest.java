@@ -28,12 +28,14 @@ import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.QueueEntryErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.support.factory.EventFactory;
+import com.back.support.factory.StoreFactory;
 import com.back.support.factory.UserFactory;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,6 +63,8 @@ class QueueShuffleServiceTest {
 	private Long eventId;
 	private PasswordEncoder passwordEncoder;
 
+	private final Store store = StoreFactory.fakeStore(1L);
+
 	@BeforeEach
 	void setUp() {
 		eventId = 1L;
@@ -73,14 +77,14 @@ class QueueShuffleServiceTest {
 			eventService
 		);
 
-		testEvent = EventFactory.fakeEvent("Test Event");
+		testEvent = EventFactory.fakeEvent(store, "Test Event");
 		ReflectionTestUtils.setField(testEvent, "id", eventId);
 
 		testUsers = new ArrayList<>();
 		testUserIds = new ArrayList<>();
 		for (int i = 1; i <= 10; i++) {
-			User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			Long userId = (long) (100 + i);
+			User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			Long userId = (long)(100 + i);
 			ReflectionTestUtils.setField(user, "id", userId);
 			testUsers.add(user);
 			testUserIds.add(userId);

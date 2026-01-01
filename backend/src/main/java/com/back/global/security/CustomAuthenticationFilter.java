@@ -2,6 +2,7 @@ package com.back.global.security;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -106,10 +107,16 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		}
 
 		long userId = claims.userId();
+		Optional<Long> storeId = claims.storeId();
 		String nickname = claims.nickname();
 		UserRole role = claims.role();
 		String sid = claims.sessionId();
 		long tokenVersion = claims.tokenVersion();
+
+		if (role == UserRole.ADMIN && storeId.isEmpty()) {
+			log.error("Store manager must have storeId, payload: {}", claims);
+			throw new ErrorException(AuthErrorCode.INVALID_TOKEN);
+		}
 
 		// ActiveSession Redis 캐싱 적용
 		try {
@@ -126,6 +133,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			"",
 			nickname,
 			role,
+			storeId,
 			List.of(new SimpleGrantedAuthority(role.toAuthority()))
 		);
 
@@ -150,12 +158,25 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private boolean isWhitelistedPath(String requestUrl) {
 		for (String prefix : PATH_PREFIX_WHITELIST) {
 			if (requestUrl.startsWith(prefix)) {
-				// /api/v1/events로 시작하지만 /pre-registers를 포함하는 경우 제외
-				if (requestUrl.contains("/pre-registers")
-					|| requestUrl.contains("/seats")) {
-					return false;
+				// Whitelist 방식: 명시적으로 허용할 패턴만 정의 (Default Deny)
+
+				// 1. 이벤트 목록 조회: /api/v1/events (쿼리 파라미터 허용)
+				if (requestUrl.matches("^/api/v1/events(\\?.*)?$")) {
+					return true;
 				}
-				return true;
+
+				// 2. 이벤트 상세 조회: /api/v1/events/{id}
+				if (requestUrl.matches("^/api/v1/events/\\d+$")) {
+					return true;
+				}
+
+				// 3. 사전등록 수 조회: /api/v1/events/{id}/pre-registers/count
+				if (requestUrl.matches("^/api/v1/events/\\d+/pre-registers/count$")) {
+					return true;
+				}
+
+				// 위 패턴에 해당하지 않으면 인증 필요
+				return false;
 			}
 		}
 		return false;

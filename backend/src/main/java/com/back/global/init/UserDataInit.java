@@ -11,6 +11,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import com.back.domain.store.entity.Store;
+import com.back.domain.store.repository.StoreRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
 import com.back.domain.user.entity.UserRole;
@@ -28,6 +30,7 @@ public class UserDataInit implements ApplicationRunner {
 
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final StoreRepository storeRepository;
 
 	@Override
 	public void run(ApplicationArguments args) {
@@ -39,6 +42,7 @@ public class UserDataInit implements ApplicationRunner {
 		log.info("User 초기 데이터를 생성합니다.");
 
 		List<User> users = createTestUsers(150);
+		Store store = storeRepository.findAll().getFirst();
 
 		User admin = User.builder()
 			.email("admin@test.com")
@@ -48,6 +52,7 @@ public class UserDataInit implements ApplicationRunner {
 			.role(UserRole.ADMIN)
 			.birthDate(LocalDate.of(1990, 1, 1))
 			.activeStatus(UserActiveStatus.ACTIVE)
+			.store(store)
 			.build();
 
 		userRepository.save(admin);

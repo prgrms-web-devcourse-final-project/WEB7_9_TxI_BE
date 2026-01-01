@@ -6,6 +6,7 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.store.entity.Store;
 import com.back.support.factory.EventFactory;
 
 @Component
@@ -17,28 +18,28 @@ public class EventHelper {
 		this.eventRepository = eventRepository;
 	}
 
-	public Event createEvent() {
-		return eventRepository.save(EventFactory.fakeEvent());
+	public Event createEvent(Store store) {
+		return eventRepository.save(EventFactory.fakeEvent(store));
 	}
 
-	public Event createEvent(String title) {
-		return eventRepository.save(EventFactory.fakeEvent(title));
+	public Event createEvent(Store store, String title) {
+		return eventRepository.save(EventFactory.fakeEvent(store, title));
 	}
 
-	public Event createEvent(EventCategory category, EventStatus status) {
-		return eventRepository.save(EventFactory.fakeEvent(category, status));
+	public Event createEvent(Store store, EventCategory category, EventStatus status) {
+		return eventRepository.save(EventFactory.fakeEvent(store, category, status));
 	}
 
-	public Event createPreOpenEvent() {
-		return eventRepository.save(EventFactory.fakePreOpenEvent());
+	public Event createPreOpenEvent(Store store) {
+		return eventRepository.save(EventFactory.fakePreOpenEvent(store));
 	}
 
-	public Event createReadyEvent() {
-		return eventRepository.save(EventFactory.fakeReadyEvent());
+	public Event createReadyEvent(Store store) {
+		return eventRepository.save(EventFactory.fakeReadyEvent(store));
 	}
 
-	public Event createPastEvent(String title) {
-		return eventRepository.save(EventFactory.fakePastEvent(title));
+	public Event createPastEvent(Store store, String title) {
+		return eventRepository.save(EventFactory.fakePastEvent(store, title));
 	}
 
 	public void clearEvent() {
