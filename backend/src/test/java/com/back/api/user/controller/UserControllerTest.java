@@ -32,6 +32,7 @@ import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
@@ -42,6 +43,7 @@ import com.back.support.data.TestUser;
 import com.back.support.helper.EventHelper;
 import com.back.support.helper.QueueEntryHelper;
 import com.back.support.helper.SeatHelper;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 import com.back.support.helper.TicketHelper;
 import com.back.support.helper.UserHelper;
@@ -89,6 +91,9 @@ public class UserControllerTest {
 	private EventHelper eventHelper;
 
 	@Autowired
+	private StoreHelper storeHelper;
+
+	@Autowired
 	private EntityManager entityManager;
 
 	@Autowired
@@ -115,9 +120,12 @@ public class UserControllerTest {
 
 	Seat seat;
 
+	Store store;
+
 	@BeforeEach
 	void setUp() {
-		testUser = userHelper.createUser(UserRole.NORMAL);
+		store = storeHelper.createStore();
+		testUser = userHelper.createUser(UserRole.NORMAL, null);
 		user = userRepository.findById(testUser.user().getId()).orElseThrow();
 
 		token = testAuthHelper.issueAccessToken(user);
@@ -128,7 +136,7 @@ public class UserControllerTest {
 
 		testAuthHelper.clearAuthentication();
 
-		testEvent = eventHelper.createEvent("TestEvent");
+		testEvent = eventHelper.createEvent(store, "TestEvent");
 		queueEntryRedisRepository.clearAll(testEvent.getId());
 		seat = seatHelper.createSeat(testEvent, "A1", SeatGrade.VIP);
 	}
@@ -304,7 +312,7 @@ public class UserControllerTest {
 		@DisplayName("사용자 정보 변경 실패 - 닉네임 중복 (ALREADY_EXIST_NICKNAME)")
 		void failed_update_profile_by_duplicate_nickname() throws Exception {
 			// 이미 존재하는 다른 유저 생성
-			TestUser anotherUser = userHelper.createUser(UserRole.NORMAL);
+			TestUser anotherUser = userHelper.createUser(UserRole.NORMAL, null);
 			String duplicatedNickname = anotherUser.user().getNickname();
 
 			String requestJson = mapper.writeValueAsString(Map.of(
@@ -405,11 +413,11 @@ public class UserControllerTest {
 			activeSessionRepository.deleteByUserId(userId);
 			userRepository.deleteById(userId);
 			userRepository.flush();
-		// NOT_FOUND 유도: Redis 캐시 + DB에서 ActiveSession + User 삭제
-		activeSessionCache.evict(userId);
-		activeSessionRepository.deleteByUserId(userId);
-		userRepository.deleteById(userId);
-		userRepository.flush();
+			// NOT_FOUND 유도: Redis 캐시 + DB에서 ActiveSession + User 삭제
+			activeSessionCache.evict(userId);
+			activeSessionRepository.deleteByUserId(userId);
+			userRepository.deleteById(userId);
+			userRepository.flush();
 
 			// when
 			ResultActions actions = mvc.perform(
@@ -561,7 +569,7 @@ public class UserControllerTest {
 		void success_delete_user_with_past_event() throws Exception {
 			// given
 			long userId = user.getId();
-			testEvent = eventHelper.createPastEvent("PastEvent");
+			testEvent = eventHelper.createPastEvent(store, "PastEvent");
 			queueEntryHelper.createCompletedQueueEntry(testEvent, user);
 			ticketHelper.createPaidTicket(user, seat, testEvent);
 

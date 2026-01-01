@@ -31,9 +31,11 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.EventErrorCode;
 import com.back.support.factory.EventFactory;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -62,6 +64,9 @@ class AdminEventControllerTest {
 	@Autowired
 	private TestAuthHelper authHelper;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	private LocalDateTime now;
 	private LocalDateTime preOpenAt;
 	private LocalDateTime preCloseAt;
@@ -71,8 +76,11 @@ class AdminEventControllerTest {
 
 	String token;
 
+	Store store;
+
 	@BeforeEach
 	void setUp() {
+		store = storeHelper.createStore();
 		// 날짜 설정
 		now = LocalDateTime.now().withNano(0);
 		preOpenAt = now.plusDays(1);
@@ -86,8 +94,7 @@ class AdminEventControllerTest {
 		when(s3PresignedService.issueDownloadUrl(anyString()))
 			.thenReturn("https://s3.amazonaws.com/bucket/events/1/main.jpg?signature=xxx");
 
-
-		token = authHelper.issueAccessToken(UserRole.ADMIN);
+		token = authHelper.issueAccessToken(UserRole.ADMIN, store);
 	}
 
 	@Nested
@@ -187,7 +194,7 @@ class AdminEventControllerTest {
 		@DisplayName("유효한 요청으로 이벤트 수정 성공 및 DB 반영 확인")
 		void updateEvent_Success() throws Exception {
 			// given
-			Event originalEvent = EventFactory.fakeEvent("기존 이벤트");
+			Event originalEvent = EventFactory.fakeEvent(store, "기존 이벤트");
 			eventRepository.save(originalEvent);
 
 			EventUpdateRequest request = new EventUpdateRequest(
@@ -253,7 +260,7 @@ class AdminEventControllerTest {
 		@DisplayName("존재하는 이벤트 삭제 성공 (soft delete)")
 		void deleteEvent_Success() throws Exception {
 			// given
-			Event event = EventFactory.fakeEvent("삭제할 이벤트");
+			Event event = EventFactory.fakeEvent(store, "삭제할 이벤트");
 			Event savedEvent = eventRepository.save(event);
 			Long eventId = savedEvent.getId();
 
@@ -286,8 +293,8 @@ class AdminEventControllerTest {
 		@DisplayName("모든 이벤트의 대시보드 정보를 조회한다")
 		void getAllEventsDashboard_Success() throws Exception {
 			// given
-			Event event1 = EventFactory.fakeEvent("이벤트1");
-			Event event2 = EventFactory.fakeEvent("이벤트2");
+			Event event1 = EventFactory.fakeEvent(store, "이벤트1");
+			Event event2 = EventFactory.fakeEvent(store, "이벤트2");
 			eventRepository.saveAll(List.of(event1, event2));
 
 			// when & then
@@ -304,7 +311,8 @@ class AdminEventControllerTest {
 				.andExpect(jsonPath("$.data.totalElements").value(2))
 				.andExpect(jsonPath("$.data.totalPages").value(1))
 				.andExpect(jsonPath("$.data.size").value(20))
-				.andExpect(jsonPath("$.data.number").value(0));;
+				.andExpect(jsonPath("$.data.number").value(0));
+			;
 		}
 
 		@Test
@@ -329,7 +337,7 @@ class AdminEventControllerTest {
 		@DisplayName("존재하는 이벤트 조회 성공")
 		void getEvent_Success() throws Exception {
 			// given
-			Event event = EventFactory.fakeEvent("조회할 이벤트");
+			Event event = EventFactory.fakeEvent(store, "조회할 이벤트");
 			Event savedEvent = eventRepository.save(event);
 
 			// when & then
@@ -359,7 +367,7 @@ class AdminEventControllerTest {
 		@DisplayName("삭제된 이벤트 조회 시 404 에러")
 		void getEvent_Deleted() throws Exception {
 			// given
-			Event event = EventFactory.fakeEvent("삭제될 이벤트");
+			Event event = EventFactory.fakeEvent(store, "삭제될 이벤트");
 			Event savedEvent = eventRepository.save(event);
 			eventRepository.delete(savedEvent);  // soft delete
 

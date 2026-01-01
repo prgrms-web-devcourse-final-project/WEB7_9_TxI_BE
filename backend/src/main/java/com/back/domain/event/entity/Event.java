@@ -2,15 +2,19 @@ package com.back.domain.event.entity;
 
 import java.time.LocalDateTime;
 
+import com.back.domain.store.entity.Store;
 import com.back.global.entity.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -74,12 +78,16 @@ public class Event extends BaseEntity {
 	@Column(nullable = false)
 	private boolean deleted = false;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "store_id", nullable = false)
+	private Store store;
+
 	@Builder
 	public Event(String title, EventCategory category, String description, String place,
 		String imageUrl, Integer minPrice, Integer maxPrice,
 		LocalDateTime preOpenAt, LocalDateTime preCloseAt,
 		LocalDateTime ticketOpenAt, LocalDateTime ticketCloseAt,
-		LocalDateTime eventDate, Integer maxTicketAmount, EventStatus status) {
+		LocalDateTime eventDate, Integer maxTicketAmount, EventStatus status, Store store) {
 		validatePrice(minPrice, maxPrice);
 		this.title = title;
 		this.category = category;
@@ -96,6 +104,7 @@ public class Event extends BaseEntity {
 		this.maxTicketAmount = maxTicketAmount;
 		this.status = status != null ? status : EventStatus.READY;
 		this.deleted = false;
+		this.store = store;
 	}
 
 	public void changeBasicInfo(String title, EventCategory category, String description, String place,
@@ -139,5 +148,9 @@ public class Event extends BaseEntity {
 		if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
 			throw new IllegalArgumentException("최소 가격은 최대 가격보다 클 수 없습니다.");
 		}
+	}
+
+	public boolean checkMatchStore(long storeId) {
+		return this.store.getId() == storeId;
 	}
 }

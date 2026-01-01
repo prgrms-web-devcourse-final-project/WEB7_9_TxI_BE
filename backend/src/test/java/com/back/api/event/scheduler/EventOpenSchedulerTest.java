@@ -20,6 +20,8 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.store.entity.Store;
+import com.back.support.helper.StoreHelper;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -30,13 +32,19 @@ class EventOpenSchedulerTest {
 	@Autowired
 	private EventRepository eventRepository;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	@SpyBean
 	private EventRepository spyEventRepository;
 
 	private EventOpenScheduler scheduler;
 
+	private Store store;
+
 	@BeforeEach
 	void setUp() {
+		store = storeHelper.createStore();
 		eventRepository.deleteAll();
 		// 스케줄러를 직접 생성 (Profile 제한 우회)
 		scheduler = new EventOpenScheduler(eventRepository);
@@ -53,7 +61,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(1),     // preCloseAt
 			now.plusHours(2),     // ticketOpenAt
 			now.plusHours(3),     // ticketCloseAt
-			now.plusDays(1)       // eventDate
+			now.plusDays(1),       // eventDate
+			store
 		);
 		eventRepository.save(event);
 
@@ -76,7 +85,8 @@ class EventOpenSchedulerTest {
 			now.minusMinutes(1),  // preCloseAt: 1분 전 (과거)
 			now.plusHours(1),     // ticketOpenAt
 			now.plusHours(2),     // ticketCloseAt
-			now.plusDays(1)       // eventDate
+			now.plusDays(1),       // eventDate
+			store
 		);
 		eventRepository.save(event);
 
@@ -87,7 +97,6 @@ class EventOpenSchedulerTest {
 		Event result = eventRepository.findById(event.getId()).orElseThrow();
 		assertThat(result.getStatus()).isEqualTo(EventStatus.PRE_CLOSED);
 	}
-
 
 	@Test
 	@DisplayName("QUEUE_READY 상태 이벤트가 ticketOpenAt 시간이 되면 OPEN으로 전환된다")
@@ -100,7 +109,8 @@ class EventOpenSchedulerTest {
 			now.minusHours(2),    // preCloseAt
 			now.minusMinutes(1),  // ticketOpenAt: 1분 전 (과거)
 			now.plusHours(2),     // ticketCloseAt
-			now.plusDays(1)       // eventDate
+			now.plusDays(1),       // eventDate
+			store
 		);
 		eventRepository.save(event);
 
@@ -123,7 +133,8 @@ class EventOpenSchedulerTest {
 			now.minusHours(3),    // preCloseAt
 			now.minusHours(2),    // ticketOpenAt
 			now.minusMinutes(1),  // ticketCloseAt: 1분 전 (과거)
-			now.plusDays(1)       // eventDate
+			now.plusDays(1),       // eventDate
+			store
 		);
 		eventRepository.save(event);
 
@@ -146,7 +157,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(2),     // preCloseAt
 			now.plusHours(3),     // ticketOpenAt
 			now.plusHours(4),     // ticketCloseAt
-			now.plusDays(1)       // eventDate
+			now.plusDays(1),       // eventDate
+			store
 		);
 		eventRepository.save(event);
 
@@ -169,7 +181,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(1),
 			now.plusHours(2),
 			now.plusHours(3),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		Event event2 = createEvent(
 			EventStatus.READY,
@@ -177,7 +190,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(1),
 			now.plusHours(2),
 			now.plusHours(3),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.saveAll(List.of(event1, event2));
 
@@ -212,7 +226,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(1),
 			now.plusHours(2),
 			now.plusHours(3),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -223,7 +238,6 @@ class EventOpenSchedulerTest {
 		Event result = eventRepository.findById(event.getId()).orElseThrow();
 		assertThat(result.getStatus()).isEqualTo(EventStatus.PRE_OPEN);
 	}
-
 
 	@Test
 	@DisplayName("전체 이벤트 라이프사이클 상태 전환 통합 테스트 (QUEUE_READY 제외)")
@@ -236,7 +250,8 @@ class EventOpenSchedulerTest {
 			now.minusHours(4),    // preCloseAt: 4시간 전
 			now.minusHours(3),    // ticketOpenAt: 3시간 전
 			now.minusHours(1),    // ticketCloseAt: 1시간 전
-			now.plusDays(1)       // eventDate
+			now.plusDays(1),       // eventDate
+			store
 		);
 		eventRepository.save(event);
 
@@ -293,7 +308,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(1),
 			now.plusHours(2),
 			now.plusHours(3),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		Event event2 = createEvent(
 			EventStatus.READY,
@@ -301,7 +317,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(1),
 			now.plusHours(2),
 			now.plusHours(3),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.saveAll(List.of(event1, event2));
 
@@ -324,7 +341,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(1),
 			now.plusHours(2),
 			now.plusHours(3),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -347,7 +365,8 @@ class EventOpenSchedulerTest {
 			now,  // 정확히 현재 시간
 			now.plusHours(1),
 			now.plusHours(2),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -370,7 +389,8 @@ class EventOpenSchedulerTest {
 			now.minusHours(2),
 			now,  // 정확히 현재 시간
 			now.plusHours(2),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -393,7 +413,8 @@ class EventOpenSchedulerTest {
 			now.minusHours(3),
 			now.minusHours(2),
 			now,  // 정확히 현재 시간
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -416,7 +437,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(1),
 			now.plusHours(2),
 			now.plusHours(3),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		Event event2 = createEvent(
 			EventStatus.READY,
@@ -424,7 +446,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(1),
 			now.plusHours(2),
 			now.plusHours(3),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.saveAll(List.of(event1, event2));
 
@@ -463,7 +486,6 @@ class EventOpenSchedulerTest {
 		verify(spyEventRepository, times(1)).findByStatus(EventStatus.READY);
 	}
 
-
 	@Test
 	@DisplayName("closePreRegistration lambda 조건: isBefore만 참인 경우")
 	void closePreRegistration_condition_onlyIsBefore() {
@@ -475,7 +497,8 @@ class EventOpenSchedulerTest {
 			now.minusSeconds(1),  // preCloseAt: 1초 전 (과거)
 			now.plusHours(1),
 			now.plusHours(2),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -498,7 +521,8 @@ class EventOpenSchedulerTest {
 			now.plusHours(1),  // preCloseAt: 1시간 후 (미래)
 			now.plusHours(2),
 			now.plusHours(3),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -521,7 +545,8 @@ class EventOpenSchedulerTest {
 			now.minusHours(2),
 			now.minusSeconds(1),  // ticketOpenAt: 1초 전 (과거)
 			now.plusHours(2),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -544,7 +569,8 @@ class EventOpenSchedulerTest {
 			now.minusHours(2),
 			now.plusHours(1),  // ticketOpenAt: 1시간 후 (미래)
 			now.plusHours(2),
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -567,7 +593,8 @@ class EventOpenSchedulerTest {
 			now.minusHours(3),
 			now.minusHours(2),
 			now.minusSeconds(1),  // ticketCloseAt: 1초 전 (과거)
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -590,7 +617,8 @@ class EventOpenSchedulerTest {
 			now.minusHours(3),
 			now.minusHours(2),
 			now.plusHours(1),  // ticketCloseAt: 1시간 후 (미래)
-			now.plusDays(1)
+			now.plusDays(1),
+			store
 		);
 		eventRepository.save(event);
 
@@ -608,7 +636,8 @@ class EventOpenSchedulerTest {
 		LocalDateTime preCloseAt,
 		LocalDateTime ticketOpenAt,
 		LocalDateTime ticketCloseAt,
-		LocalDateTime eventDate
+		LocalDateTime eventDate,
+		Store store
 	) {
 		return Event.builder()
 			.title("Test Event " + System.nanoTime())
@@ -625,6 +654,7 @@ class EventOpenSchedulerTest {
 			.ticketCloseAt(ticketCloseAt)
 			.eventDate(eventDate)
 			.status(status)
+			.store(store)
 			.build();
 	}
 }

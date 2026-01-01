@@ -56,7 +56,7 @@ class SessionMissingOnAccessAuthTest {
 	@DisplayName("ActiveSession이 없으면(access 인증 단계) UNAUTHORIZED")
 	void access_auth_fails_when_active_session_missing() throws Exception {
 		// given
-		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
+		TestUser testUser = userHelper.createUser(UserRole.NORMAL, null);
 		User user = testUser.user();
 
 		// 세션 제거 (없도록 보장)

@@ -2,6 +2,7 @@ package com.back.global.security;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -106,10 +107,16 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		}
 
 		long userId = claims.userId();
+		Optional<Long> storeId = claims.storeId();
 		String nickname = claims.nickname();
 		UserRole role = claims.role();
 		String sid = claims.sessionId();
 		long tokenVersion = claims.tokenVersion();
+
+		if (role == UserRole.ADMIN && storeId.isEmpty()) {
+			log.error("Store manager must have storeId, payload: {}", claims);
+			throw new ErrorException(AuthErrorCode.INVALID_TOKEN);
+		}
 
 		// ActiveSession Redis 캐싱 적용
 		try {
@@ -126,6 +133,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			"",
 			nickname,
 			role,
+			storeId,
 			List.of(new SimpleGrantedAuthority(role.toAuthority()))
 		);
 

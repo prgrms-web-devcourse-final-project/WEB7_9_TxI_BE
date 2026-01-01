@@ -4,6 +4,7 @@ import static com.back.domain.payment.order.entity.OrderStatus.*;
 
 import java.util.UUID;
 
+import com.back.domain.payment.payment.entity.Payment;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.entity.BaseEntity;
 
@@ -22,12 +23,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "v2_orders")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Getter
+@Setter
 @Builder
 public class V2_Order extends BaseEntity {
 	@Id
@@ -47,6 +50,10 @@ public class V2_Order extends BaseEntity {
 
 	@Column(name = "payment_key", nullable = true)
 	private String paymentKey; // TossPaymentKey
+
+	@JoinColumn(name = "payment_id", nullable = true)
+	@OneToOne(fetch = FetchType.LAZY)
+	private Payment payment;
 
 	@PrePersist
 	public void generateOrderId() {

@@ -58,6 +58,10 @@ public class HttpRequestContext {
 		return getSecurityUser().getId();
 	}
 
+	public Optional<Long> getStoreId() {
+		return getSecurityUser().getStoreId();
+	}
+
 	public String getHeader(String name, String defaultValue) {
 		return Optional
 			.ofNullable(request.getHeader(name))

@@ -24,12 +24,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.config.TestRedisConfig;
 import com.back.domain.event.entity.Event;
 import com.back.domain.queue.entity.QueueEntryStatus;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.support.factory.UserFactory;
 import com.back.support.helper.EventHelper;
 import com.back.support.helper.QueueEntryHelper;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -62,16 +64,21 @@ public class AdminQueueEntryControllerTest {
 	@Autowired
 	private TestAuthHelper authHelper;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	private Event testEvent;
 	private User adminUser;
 
 	private String accessToken;
+	private Store store;
 
 	@BeforeEach
 	void setUp() {
-		testEvent = eventHelper.createEvent("TestEvent");
+		store = storeHelper.createStore();
+		testEvent = eventHelper.createEvent(store, "TestEvent");
 
-		adminUser = UserFactory.fakeUser(UserRole.ADMIN, passwordEncoder).user();
+		adminUser = UserFactory.fakeUser(UserRole.ADMIN, passwordEncoder, store).user();
 		userRepository.save(adminUser);
 
 		accessToken = authHelper.issueAccessToken(adminUser);
@@ -87,9 +94,9 @@ public class AdminQueueEntryControllerTest {
 		void shuffleQueue_Success() throws Exception {
 
 			//given
-			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			userRepository.save(user1);
 			userRepository.save(user2);
 			userRepository.save(user3);
@@ -132,11 +139,11 @@ public class AdminQueueEntryControllerTest {
 		@DisplayName("이미 존재하는 대기열")
 		void shuffleQueue_AlreadyExists_Fail() throws Exception {
 			// given
-			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			userRepository.save(user1);
 			queueEntryHelper.createQueueEntry(testEvent, user1, 1);
 
-			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			userRepository.save(user2);
 			List<Long> userIds = List.of(user2.getId());
 			String requestBody = objectMapper.writeValueAsString(
@@ -163,10 +170,10 @@ public class AdminQueueEntryControllerTest {
 		void getQueueStatistics_Success() throws Exception {
 
 			// given
-			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user4 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user4 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			userRepository.save(user1);
 			userRepository.save(user2);
 			userRepository.save(user3);
@@ -212,7 +219,7 @@ public class AdminQueueEntryControllerTest {
 		void completePayment_Success() throws Exception {
 
 			// given
-			User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			userRepository.save(user);
 			queueEntryHelper.createEnteredQueueEntryWithRedis(testEvent, user);
 
@@ -232,7 +239,7 @@ public class AdminQueueEntryControllerTest {
 		@DisplayName("대기 중인 사용자는 결제 완료 처리 실패")
 		void completePayment_Waiting_Fail() throws Exception {
 			// given
-			User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			userRepository.save(user);
 			queueEntryHelper.createQueueEntry(testEvent, user, 1);
 
@@ -249,7 +256,7 @@ public class AdminQueueEntryControllerTest {
 		@DisplayName("이미 결제가 된 사용자")
 		void completePayment_AlreadyCompleted_Fail() throws Exception {
 			// given
-			User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			userRepository.save(user);
 			queueEntryHelper.createCompletedQueueEntry(testEvent, user);
 
@@ -271,8 +278,8 @@ public class AdminQueueEntryControllerTest {
 		@DisplayName("대기열 초기화")
 		void resetQueue_Success() throws Exception {
 			// GIVEN: 대기열 데이터 생성
-			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			userRepository.save(user1);
 			userRepository.save(user2);
 
@@ -297,9 +304,9 @@ public class AdminQueueEntryControllerTest {
 		@DisplayName("이벤트별 대기열 목록 조회 성공 (페이징)")
 		void getQueueEntries_Success() throws Exception {
 			// given
-			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			userRepository.saveAll(List.of(user1, user2, user3));
 
 			queueEntryHelper.createQueueEntry(testEvent, user1, 1);
@@ -339,7 +346,7 @@ public class AdminQueueEntryControllerTest {
 		void getQueueEntries_CustomPageSize() throws Exception {
 			// given
 			for (int i = 1; i <= 25; i++) {
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				userRepository.save(user);
 				queueEntryHelper.createQueueEntry(testEvent, user, i);
 			}

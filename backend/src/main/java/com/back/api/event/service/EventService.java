@@ -15,10 +15,13 @@ import com.back.api.event.dto.response.EventListResponse;
 import com.back.api.event.dto.response.EventResponse;
 import com.back.api.s3.service.S3MoveService;
 import com.back.api.s3.service.S3PresignedService;
+import com.back.api.store.service.StoreService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.store.entity.Store;
+import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.code.EventErrorCode;
 import com.back.global.error.exception.ErrorException;
 
@@ -32,9 +35,11 @@ public class EventService {
 	private final EventRepository eventRepository;
 	private final S3MoveService s3MoveService;
 	private final S3PresignedService s3PresignedService;
+	private final StoreService storeService;
 
 	@Transactional
-	public EventResponse createEvent(EventCreateRequest request) {
+	public EventResponse createEvent(EventCreateRequest request, long storeId) {
+		Store store = storeService.getStoreById(storeId);
 
 		validateEventDates(
 			request.preOpenAt(),
@@ -49,7 +54,7 @@ public class EventService {
 			request.ticketOpenAt()
 		);
 
-		Event event = request.toEntity();
+		Event event = request.toEntity(store);
 		Event savedEvent = eventRepository.save(event);
 
 		// 이미지가 있으면 temp → events/{eventId}/main.{ext}
@@ -73,8 +78,12 @@ public class EventService {
 	}
 
 	@Transactional
-	public EventResponse updateEvent(Long eventId, EventUpdateRequest request) {
+	public EventResponse updateEvent(Long eventId, long storeId, EventUpdateRequest request) {
 		Event event = findEventById(eventId);
+
+		if (!event.getStore().getId().equals(storeId)) {
+			throw new ErrorException(AuthErrorCode.FORBIDDEN);
+		}
 
 		validateEventDates(
 			request.preOpenAt(),
@@ -122,8 +131,13 @@ public class EventService {
 	}
 
 	@Transactional
-	public void deleteEvent(Long eventId) {
+	public void deleteEvent(Long eventId, Long storeId) {
 		Event event = findEventById(eventId);
+
+		if (!event.getStore().getId().equals(storeId)) {
+			throw new ErrorException(AuthErrorCode.FORBIDDEN);
+		}
+
 		event.delete();
 	}
 
@@ -154,7 +168,7 @@ public class EventService {
 		return findEventById(eventId);
 	}
 
-	private Event findEventById(Long eventId) {
+	public Event findEventById(Long eventId) {
 		return eventRepository.findById(eventId)
 			.orElseThrow(() -> new ErrorException(EventErrorCode.NOT_FOUND_EVENT));
 	}

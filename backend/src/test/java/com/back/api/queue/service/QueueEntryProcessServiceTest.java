@@ -32,6 +32,7 @@ import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.QueueEntryErrorCode;
@@ -39,6 +40,7 @@ import com.back.global.error.exception.ErrorException;
 import com.back.global.event.EventPublisher;
 import com.back.global.properties.QueueSchedulerProperties;
 import com.back.support.factory.EventFactory;
+import com.back.support.factory.StoreFactory;
 import com.back.support.factory.UserFactory;
 
 @ExtendWith(MockitoExtension.class)
@@ -74,6 +76,7 @@ class QueueEntryProcessServiceTest {
 	private Long eventId;
 	private Long userId;
 	private PasswordEncoder passwordEncoder;
+	private final Store store = StoreFactory.fakeStore(1L);
 
 	@BeforeEach
 	void setUp() {
@@ -97,8 +100,8 @@ class QueueEntryProcessServiceTest {
 			ticketService
 		);
 
-		testEvent = EventFactory.fakeEvent("TestEvent");
-		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+		testEvent = EventFactory.fakeEvent(store, "TestEvent");
+		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 
 		ReflectionTestUtils.setField(testEvent, "id", eventId);
 		ReflectionTestUtils.setField(testUser, "id", userId);
@@ -236,9 +239,9 @@ class QueueEntryProcessServiceTest {
 			Long userId3 = 102L;
 			List<Long> userIds = List.of(userId1, userId2, userId3);
 
-			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			ReflectionTestUtils.setField(user1, "id", userId1);
 			ReflectionTestUtils.setField(user2, "id", userId2);
 			ReflectionTestUtils.setField(user3, "id", userId3);
@@ -273,8 +276,8 @@ class QueueEntryProcessServiceTest {
 			Long userId3 = 102L;
 			List<Long> userIds = List.of(userId1, userId2, userId3);
 
-			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			ReflectionTestUtils.setField(user1, "id", userId1);
 			ReflectionTestUtils.setField(user3, "id", userId3);
 
@@ -355,7 +358,7 @@ class QueueEntryProcessServiceTest {
 			// Mock QueueEntry 설정
 			for (Object userIdObj : topUsers) {
 				Long uid = Long.parseLong(userIdObj.toString());
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				ReflectionTestUtils.setField(user, "id", uid);
 				QueueEntry entry = new QueueEntry(user, testEvent, 1);
 
@@ -393,7 +396,7 @@ class QueueEntryProcessServiceTest {
 
 			for (Object userIdObj : topUsers) {
 				Long uid = Long.parseLong(userIdObj.toString());
-				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+				User user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 				ReflectionTestUtils.setField(user, "id", uid);
 				QueueEntry entry = new QueueEntry(user, testEvent, 1);
 
@@ -545,8 +548,8 @@ class QueueEntryProcessServiceTest {
 		@DisplayName("여러 대기열 일괄 만료 처리")
 		void expireBatchEntries_Success() {
 			// given
-			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
-			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+			User user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
+			User user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 			ReflectionTestUtils.setField(user1, "id", 100L);
 			ReflectionTestUtils.setField(user2, "id", 101L);
 

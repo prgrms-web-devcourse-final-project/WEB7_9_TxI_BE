@@ -122,7 +122,6 @@ public class SecurityConfig {
 				.requestMatchers("/.well-known/**").permitAll()
 				.requestMatchers("/api/v1/auth/signup").permitAll()
 				.requestMatchers("/api/v1/auth/login").permitAll()
-				.requestMatchers("/api/v1/admin/auth/**").permitAll()
 				.requestMatchers("/api/v1/events/**").permitAll()
 				.requestMatchers("/ws/**").permitAll()  // WebSocket 핸드셰이크 허용
 				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

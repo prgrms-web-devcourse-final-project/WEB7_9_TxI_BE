@@ -12,6 +12,8 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.store.entity.Store;
+import com.back.domain.store.repository.StoreRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class EventDataInit implements ApplicationRunner {
 
 	private final EventRepository eventRepository;
+	private final StoreRepository storeRepository;
 
 	@Override
 	public void run(ApplicationArguments args) {
@@ -33,6 +36,8 @@ public class EventDataInit implements ApplicationRunner {
 		}
 
 		log.info("Event 초기 데이터를 생성합니다.");
+
+		Store store = storeRepository.findAll().getFirst();
 
 		LocalDateTime now = LocalDateTime.now();
 
@@ -51,6 +56,7 @@ public class EventDataInit implements ApplicationRunner {
 			.eventDate(now.plusDays(40))
 			.maxTicketAmount(5000)
 			.status(EventStatus.PRE_OPEN)
+			.store(store)
 			.build();
 
 		Event event2 = Event.builder()
@@ -68,6 +74,7 @@ public class EventDataInit implements ApplicationRunner {
 			.eventDate(now.plusDays(10))
 			.maxTicketAmount(500)
 			.status(EventStatus.READY)
+			.store(store)
 			.build();
 
 		Event event3 = Event.builder()
@@ -85,6 +92,7 @@ public class EventDataInit implements ApplicationRunner {
 			.eventDate(now.plusDays(21))
 			.maxTicketAmount(3000)
 			.status(EventStatus.PRE_OPEN)
+			.store(store)
 			.build();
 
 		Event event4 = Event.builder()
@@ -102,6 +110,7 @@ public class EventDataInit implements ApplicationRunner {
 			.eventDate(now.plusDays(21))
 			.maxTicketAmount(3000)
 			.status(EventStatus.PRE_OPEN)
+			.store(store)
 			.build();
 
 		eventRepository.save(event1);

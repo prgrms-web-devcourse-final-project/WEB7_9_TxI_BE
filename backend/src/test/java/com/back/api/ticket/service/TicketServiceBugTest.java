@@ -9,12 +9,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.back.domain.event.entity.Event;
+import com.back.domain.store.entity.Store;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 import com.back.domain.ticket.repository.TicketRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.support.helper.EventHelper;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.UserHelper;
 
 @SpringBootTest
@@ -35,12 +37,16 @@ class TicketServiceBugTest {
 	@Autowired
 	private EventHelper eventHelper;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	@Test
 	@DisplayName("seat=null인 티켓에 failPayment() 호출 시 정상적으로 FAILED로 변경")
 	void failPayment_withNullSeat_success() {
+		Store store = storeHelper.createStore();
 		// given: seat=null인 Draft 티켓 생성
-		User user = userHelper.createUser(UserRole.NORMAL).user();
-		Event event = eventHelper.createEvent();
+		User user = userHelper.createUser(UserRole.NORMAL, null).user();
+		Event event = eventHelper.createEvent(store);
 
 		Ticket ticket = Ticket.builder()
 			.owner(user)

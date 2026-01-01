@@ -30,6 +30,7 @@ import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 import com.back.domain.user.entity.User;
@@ -40,6 +41,7 @@ import com.back.global.error.exception.ErrorException;
 import com.back.support.data.TestUser;
 import com.back.support.factory.EventFactory;
 import com.back.support.factory.UserFactory;
+import com.back.support.helper.StoreHelper;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -70,12 +72,16 @@ public class SeatSelectionServiceIntegrationTest {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	private Event event;
 	private User user;
 
 	@BeforeEach
 	void setUp() {
-		event = EventFactory.fakeEvent("테스트 콘서트");
+		Store store = storeHelper.createStore();
+		event = EventFactory.fakeEvent(store, "테스트 콘서트");
 		eventRepository.save(event);
 
 		long uniqueId = System.nanoTime() % 100000000;
@@ -142,7 +148,7 @@ public class SeatSelectionServiceIntegrationTest {
 		List<Long> enteredUserIds = new ArrayList<>();
 
 		for (int i = 0; i < threadCount; i++) {
-			TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+			TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 			userRepository.save(testUser.user());
 
 			// QueueEntry 생성 (WAITING 상태)

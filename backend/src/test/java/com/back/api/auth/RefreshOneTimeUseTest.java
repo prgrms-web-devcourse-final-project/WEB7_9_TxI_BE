@@ -47,7 +47,7 @@ class RefreshOneTimeUseTest {
 	@Test
 	@DisplayName("같은 refreshToken으로 rotate를 두 번 시도하면 두 번째는 REFRESH_TOKEN_NOT_FOUND")
 	void rotate_twice_should_fail_second_time() {
-		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
+		TestUser testUser = userHelper.createUser(UserRole.NORMAL, null);
 		User user = testUser.user();
 
 		ActiveSession session = activeSessionRepository.findByUserId(user.getId())

@@ -32,6 +32,7 @@ import com.back.domain.event.repository.EventRepository;
 import com.back.domain.preregister.entity.PreRegister;
 import com.back.domain.preregister.entity.PreRegisterStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
@@ -45,6 +46,7 @@ import com.back.support.factory.EventFactory;
 import com.back.support.factory.PreRegisterFactory;
 import com.back.support.factory.PreRegisterRequestFactory;
 import com.back.support.factory.UserFactory;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -77,6 +79,9 @@ class PreRegisterControllerTest {
 	private StringRedisTemplate redisTemplate;
 
 	@Autowired
+	private StoreHelper storeHelper;
+
+	@Autowired
 	private TestAuthHelper testAuthHelper;
 
 	@MockitoBean
@@ -97,15 +102,18 @@ class PreRegisterControllerTest {
 	private Event testEvent;
 	private LocalDateTime now;
 
+	private Store store;
+
 	@BeforeEach
 	void setUp() {
+		store = storeHelper.createStore();
 		now = LocalDateTime.now();
 
 		// Factory를 사용한 테스트 데이터 생성
-		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+		testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, store);
 		userRepository.save(testUser.user());
 
-		testEvent = EventFactory.fakePreOpenEvent();
+		testEvent = EventFactory.fakePreOpenEvent(store);
 		eventRepository.save(testEvent);
 
 		when(s3MoveService.moveImage(anyLong(), anyString()))
@@ -113,7 +121,6 @@ class PreRegisterControllerTest {
 
 		when(s3PresignedService.issueDownloadUrl(anyString()))
 			.thenReturn("https://s3.amazonaws.com/bucket/events/1/main.jpg?signature=xxx");
-
 
 		token = testAuthHelper.issueAccessToken(testUser.user());
 	}
@@ -279,7 +286,7 @@ class PreRegisterControllerTest {
 			// given: 사전등록 기간이 지난 이벤트
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
-			Event closedEvent = EventFactory.fakePreClosedEvent();
+			Event closedEvent = EventFactory.fakePreClosedEvent(store);
 			eventRepository.save(closedEvent);
 
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
@@ -473,7 +480,7 @@ class PreRegisterControllerTest {
 		@DisplayName("내 사전등록 다건 조회 성공")
 		void getMyPreRegister_Success() throws Exception {
 			// given: 여러 이벤트에 사전등록
-			Event event2 = EventFactory.fakePreOpenEvent();
+			Event event2 = EventFactory.fakePreOpenEvent(store);
 			eventRepository.save(event2);
 
 			PreRegister preRegister1 = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
@@ -508,7 +515,7 @@ class PreRegisterControllerTest {
 		@DisplayName("취소된 사전등록도 포함하여 전체 조회")
 		void getMyPreRegister_IncludeCanceled() throws Exception {
 			// given
-			Event event2 = EventFactory.fakePreOpenEvent();
+			Event event2 = EventFactory.fakePreOpenEvent(store);
 			eventRepository.save(event2);
 
 			PreRegister activePreRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
@@ -681,7 +688,7 @@ class PreRegisterControllerTest {
 			// given: 삭제된 이벤트
 			setSmsVerified(DEFAULT_PHONE_NUMBER);
 
-			Event deletedEvent = EventFactory.fakePreOpenEvent();
+			Event deletedEvent = EventFactory.fakePreOpenEvent(store);
 			eventRepository.save(deletedEvent);
 			deletedEvent.delete();
 			eventRepository.flush();
@@ -705,7 +712,7 @@ class PreRegisterControllerTest {
 		@DisplayName("삭제된 이벤트에 대한 사전등록 현황 조회 시 404 에러")
 		void getRegistrationCount_Fail_DeletedEvent() throws Exception {
 			// given: 삭제된 이벤트
-			Event deletedEvent = EventFactory.fakePreOpenEvent();
+			Event deletedEvent = EventFactory.fakePreOpenEvent(store);
 			eventRepository.save(deletedEvent);
 			deletedEvent.delete();
 			eventRepository.flush();
@@ -721,7 +728,7 @@ class PreRegisterControllerTest {
 
 	// Helper methods
 	private TestUser createUser() {
-		TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+		TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, store);
 		userRepository.save(testUser.user());
 		return testUser;
 	}

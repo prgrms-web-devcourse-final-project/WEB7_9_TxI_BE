@@ -1,4 +1,29 @@
-### 회원가입
+### 상점 관리자 회원가입
+POST {{BASE_URL}}/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "email": "admin1234@test.com",
+  "password": "qwer1234",
+  "fullName": "Admin User",
+  "nickname": "Admin1234",
+  "role": "ADMIN",
+  "year": "2002",
+  "month": "2",
+  "day": "11",
+  "registrationNumber": "123-45-67890"
+}
+
+### 상점 관리자 로그인
+POST {{BASE_URL}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin1234@test.com",
+  "password": "qwer1234"
+}
+
+### 일반 사용자 회원가입
 POST {{BASE_URL}}/api/v1/auth/signup
 Content-Type: application/json
 
@@ -7,12 +32,14 @@ Content-Type: application/json
   "password": "qwer1234",
   "fullName": "Test User",
   "nickname": "테스트유저",
+  "role": "NORMAL",
   "year": "2002",
   "month": "2",
-  "day": "11"
+  "day": "11",
+  "registrationNumber": ""
 }
 
-### 로그인
+### 일반 사용자 로그인
 POST {{BASE_URL}}/api/v1/auth/login
 Content-Type: application/json
 
