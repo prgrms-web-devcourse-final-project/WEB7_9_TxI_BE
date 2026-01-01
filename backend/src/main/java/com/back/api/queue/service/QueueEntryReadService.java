@@ -103,7 +103,7 @@ public class QueueEntryReadService {
 			estimatedWaitTime = 1;
 			progress = 99;
 		} else {
-			estimatedWaitTime = waitingAhead * 3;
+			estimatedWaitTime = waitingAhead * 2;
 			progress = totalWaitingCount > 0
 				? (int)(((totalWaitingCount - waitingAhead) * 100) / totalWaitingCount)
 				: 0;

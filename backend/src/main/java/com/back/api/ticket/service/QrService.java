@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -24,18 +25,28 @@ import com.back.global.utils.JwtUtil;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class QrService {
 
 	private final RedisTemplate<String, String> redisTemplate;
+
 	private final SiteProperties siteProperties;
 
 	private final TicketService ticketService;
+
+	public QrService(
+		@Qualifier("activeSessionRedisTemplate")
+		RedisTemplate<String, String> redisTemplate,
+		SiteProperties siteProperties,
+		TicketService ticketService
+	) {
+		this.redisTemplate = redisTemplate;
+		this.siteProperties = siteProperties;
+		this.ticketService = ticketService;
+	}
 
 	@Value("${custom.jwt.qr-secret}")
 	private String qrSecret;

@@ -13,7 +13,7 @@ public record QrTokenResponse(
 	@Schema(description = "QR 코드 갱신 간격(초)", example = "30")
 	int refreshIntervalSecond,
 
-	@Schema(description = "QR 코드 URL", example = "https://www.waitfair.com/qr?token=abc123xyz456")
+	@Schema(description = "QR 코드 URL", example = "https://www.waitfair.com/tickets/verifiy?token=abc123xyz456")
 	String qrUrl
 
 ) {
