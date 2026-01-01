@@ -24,8 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * 동작 방식:
  * 1. 프론트엔드에서 visitorId(fingerprint) 전송
  * 2. Redis에 fingerprint별 시도 횟수, 실패 횟수 저장
- * 3. 실패율 계산: (실패 횟수 / 전체 시도 횟수)
- * 4. 기준 초과 시 차단 (예: 5회 이상 시도 + 80% 이상 실패)
+ * 3. 차단 기준 검증 (2가지)
  *
  * Redis 저장 구조:
  * - Key: "fingerprint:{visitorId}"
@@ -33,8 +32,10 @@ import lombok.extern.slf4j.Slf4j;
  * - TTL: 24시간
  *
  * 차단 기준:
- * - 전체 시도 >= 5회
- * - 실패율 >= 80%
+ * 1. 최대 시도 횟수 초과 (성공 폭탄 공격 방어)
+ *    - 전체 시도 >= 10회
+ * 2. 높은 실패율 (봇/어뷰징 방어)
+ *    - 전체 시도 >= 5회 AND 실패율 >= 80%
  *
  * 예외 처리:
  * - visitorId가 없는 요청: 1차 허용 (IP Rate Limit으로만 통제)
@@ -77,14 +78,22 @@ public class FingerprintService {
 			Integer totalAttempts = getHashValueAsInt(key, "totalAttempts");
 			Integer failedAttempts = getHashValueAsInt(key, "failedAttempts");
 
-			// 차단 기준 확인
+			// 차단 기준 1: 최대 시도 횟수 초과 (성공 폭탄 공격 방어)
+			int maxAttempts = securityProperties.getFingerprint().getMaxAttempts();
+			if (totalAttempts >= maxAttempts) {
+				log.warn("[FingerprintService] Fingerprint 차단 (최대 시도 횟수 초과) - visitorId: {}, 시도: {}/{}, 실패: {}",
+					visitorId, totalAttempts, maxAttempts, failedAttempts);
+				return false;
+			}
+
+			// 차단 기준 2: 최소 시도 횟수 이상 + 높은 실패율 (봇/어뷰징 방어)
 			if (totalAttempts >= securityProperties.getFingerprint().getMinAttempts()) {
 				// 부동소수점 오차 방지: 백분율 정수 비교
 				int failureRatePercent = (failedAttempts * 100) / totalAttempts;
 				int thresholdPercent = (int)(securityProperties.getFingerprint().getFailureRateThreshold() * 100);
 
 				if (failureRatePercent >= thresholdPercent) {
-					log.warn("[FingerprintService] Fingerprint 차단 - visitorId: {}, 시도: {}, 실패율: {}%",
+					log.warn("[FingerprintService] Fingerprint 차단 (높은 실패율) - visitorId: {}, 시도: {}, 실패율: {}%",
 						visitorId, totalAttempts, failureRatePercent);
 					return false;
 				}

@@ -42,6 +42,7 @@ class FingerprintServiceTest {
 		SecurityProperties.Fingerprint fingerprintProps = new SecurityProperties.Fingerprint();
 		fingerprintProps.setEnabled(true);
 		fingerprintProps.setMinAttempts(5);
+		fingerprintProps.setMaxAttempts(10);
 		fingerprintProps.setFailureRateThreshold(0.8);
 		fingerprintProps.setTtlSeconds(86400L);
 		securityProperties.setFingerprint(fingerprintProps);
@@ -80,8 +81,8 @@ class FingerprintServiceTest {
 		void validateFingerprint_AllowedWhenBelowThreshold() {
 			// given
 			String visitorId = "good-visitor";
-			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn("10");
-			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("3"); // 실패율 30%
+			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn("7");
+			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("2"); // 실패율 약 28.6%
 
 			// when
 			boolean allowed = fingerprintService.validateFingerprint(visitorId);
@@ -126,6 +127,51 @@ class FingerprintServiceTest {
 			String visitorId = "edge-case-visitor";
 			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn("10");
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("8"); // 실패율 정확히 80%
+
+			// when
+			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+
+			// then
+			assertThat(allowed).isFalse();
+		}
+
+		@Test
+		@DisplayName("총 시도 횟수 >= 10회이면 실패율 관계없이 차단 (성공 폭탄 공격 방어)")
+		void validateFingerprint_BlockedWhenMaxAttemptsExceeded() {
+			// given
+			String visitorId = "spam-attacker";
+			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn("10");
+			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("0"); // 실패율 0%
+
+			// when
+			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+
+			// then
+			assertThat(allowed).isFalse();
+		}
+
+		@Test
+		@DisplayName("총 시도 횟수 9회이면 실패율 0%일 때 허용")
+		void validateFingerprint_AllowedWhenBelowMaxAttempts() {
+			// given
+			String visitorId = "normal-user";
+			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn("9");
+			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("0"); // 실패율 0%
+
+			// when
+			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+
+			// then
+			assertThat(allowed).isTrue();
+		}
+
+		@Test
+		@DisplayName("총 시도 횟수 15회 성공이면 차단 (최대 시도 횟수 초과)")
+		void validateFingerprint_BlockedWhen15SuccessfulAttempts() {
+			// given
+			String visitorId = "success-bomber";
+			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn("15");
+			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("0"); // 모두 성공
 
 			// when
 			boolean allowed = fingerprintService.validateFingerprint(visitorId);
@@ -260,11 +306,11 @@ class FingerprintServiceTest {
 		}
 
 		@Test
-		@DisplayName("실패율 0% - 허용")
+		@DisplayName("실패율 0%, 총 시도 < 10회 - 허용")
 		void validateFingerprint_ZeroFailureRate() {
 			// given
 			String visitorId = "perfect-visitor";
-			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn("10");
+			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn("8");
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("0"); // 실패율 0%
 
 			// when
@@ -293,8 +339,8 @@ class FingerprintServiceTest {
 		void validateFingerprint_IntegerTypeFromRedis() {
 			// given
 			String visitorId = "integer-type-visitor";
-			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn(10); // Integer 타입
-			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn(3);
+			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn(7); // Integer 타입
+			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn(2);
 
 			// when
 			boolean allowed = fingerprintService.validateFingerprint(visitorId);

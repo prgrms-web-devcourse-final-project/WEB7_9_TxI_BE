@@ -103,6 +103,13 @@ public class SecurityProperties {
 		private int minAttempts = 5;
 
 		/**
+		 * 차단 기준: 최대 시도 횟수
+		 * 성공/실패 관계없이 총 시도 횟수가 이 값을 초과하면 차단
+		 * 시나리오 A (성공 폭탄 공격) 방어용
+		 */
+		private int maxAttempts = 10;
+
+		/**
 		 * 차단 기준: 실패율 (0.0 ~ 1.0)
 		 * 예: 0.8 = 80%
 		 */
