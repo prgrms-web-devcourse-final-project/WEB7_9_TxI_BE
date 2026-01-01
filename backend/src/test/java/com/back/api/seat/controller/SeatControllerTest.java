@@ -24,12 +24,14 @@ import com.back.domain.queue.repository.QueueEntryRedisRepository;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.repository.SeatRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.support.factory.EventFactory;
 import com.back.support.factory.UserFactory;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 
 @SpringBootTest
@@ -61,6 +63,9 @@ class SeatControllerTest {
 	private TestAuthHelper authHelper;
 
 	@Autowired
+	private StoreHelper storeHelper;
+
+	@Autowired
 	private TestSeatStatusEventListener testEventListener;
 
 	private Event testEvent;
@@ -68,12 +73,13 @@ class SeatControllerTest {
 
 	@BeforeEach
 	void setUp() {
+		Store store = storeHelper.createStore();
 		// 1. 이벤트 생성
-		testEvent = EventFactory.fakeEvent("Test Event");
+		testEvent = EventFactory.fakeEvent(store, "Test Event");
 		eventRepository.save(testEvent);
 
 		// 2. 테스트 유저 생성 & 저장
-		user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+		user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 		userRepository.save(user);
 
 		// 3. 인증 흐름 통과시키기

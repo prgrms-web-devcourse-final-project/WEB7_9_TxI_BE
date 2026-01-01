@@ -29,6 +29,7 @@ import com.back.domain.event.repository.EventRepository;
 import com.back.domain.preregister.entity.PreRegister;
 import com.back.domain.preregister.entity.PreRegisterStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
@@ -41,6 +42,7 @@ import com.back.support.factory.EventFactory;
 import com.back.support.factory.PreRegisterFactory;
 import com.back.support.factory.PreRegisterRequestFactory;
 import com.back.support.factory.UserFactory;
+import com.back.support.helper.StoreHelper;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -63,12 +65,14 @@ class PreRegisterServiceTest {
 	@Autowired
 	private StringRedisTemplate redisTemplate;
 
+	@Autowired
+	private StoreHelper storeHelper;
+
 	@MockitoBean
 	private S3MoveService s3MoveService;
 
 	@MockitoBean
 	private S3PresignedService s3PresignedService;
-
 
 	private static final String DEFAULT_PHONE_NUMBER = "01012345678";
 	private static final String SMS_VERIFIED_KEY_PREFIX = "SMS_VERIFIED:";
@@ -77,6 +81,8 @@ class PreRegisterServiceTest {
 	private Event testEvent;
 	private LocalDateTime now;
 
+	private Store store;
+
 	private void setSmsVerified(String phoneNumber) {
 		String key = SMS_VERIFIED_KEY_PREFIX + phoneNumber;
 		redisTemplate.opsForValue().set(key, "true");
@@ -84,13 +90,14 @@ class PreRegisterServiceTest {
 
 	@BeforeEach
 	void setUp() {
+		store = storeHelper.createStore();
 		now = LocalDateTime.now();
 
 		// Factory를 사용한 테스트 데이터 생성
 		testUser = UserFactory.fakeUser(UserRole.NORMAL);
 		userRepository.save(testUser.user());
 
-		testEvent = EventFactory.fakePreOpenEvent();
+		testEvent = EventFactory.fakePreOpenEvent(store);
 		eventRepository.save(testEvent);
 
 		when(s3MoveService.moveImage(anyLong(), anyString()))
@@ -239,6 +246,7 @@ class PreRegisterServiceTest {
 				.eventDate(now.plusDays(25))
 				.maxTicketAmount(100)
 				.status(EventStatus.READY)
+				.store(store)
 				.build();
 			eventRepository.save(futureEvent);
 
@@ -276,6 +284,7 @@ class PreRegisterServiceTest {
 				.eventDate(now.plusDays(15))
 				.maxTicketAmount(100)
 				.status(EventStatus.OPEN)
+				.store(store)
 				.build();
 			eventRepository.save(closedEvent);
 
@@ -505,7 +514,7 @@ class PreRegisterServiceTest {
 		@DisplayName("내 사전등록 목록 조회 성공")
 		void getMyPreRegister_Success() {
 			// given: 여러 이벤트에 사전등록
-			Event event2 = EventFactory.fakePreOpenEvent();
+			Event event2 = EventFactory.fakePreOpenEvent(store);
 			eventRepository.save(event2);
 
 			PreRegister preRegister1 = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
@@ -536,7 +545,7 @@ class PreRegisterServiceTest {
 		@DisplayName("취소된 사전등록도 포함하여 조회")
 		void getMyPreRegister_IncludeCanceled() {
 			// given
-			Event event2 = EventFactory.fakePreOpenEvent();
+			Event event2 = EventFactory.fakePreOpenEvent(store);
 			eventRepository.save(event2);
 
 			PreRegister activePreRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
@@ -885,7 +894,7 @@ class PreRegisterServiceTest {
 		@DisplayName("삭제된 이벤트에 사전등록 시도 시 NOT_FOUND_EVENT 예외 발생")
 		void register_Fail_DeletedEvent() {
 			// given: 삭제된 이벤트 생성
-			Event deletedEvent = EventFactory.fakePreOpenEvent();
+			Event deletedEvent = EventFactory.fakePreOpenEvent(store);
 			eventRepository.save(deletedEvent);
 			deletedEvent.delete(); // soft delete
 			eventRepository.flush();
@@ -949,7 +958,7 @@ class PreRegisterServiceTest {
 		@DisplayName("삭제된 이벤트에 대한 사전등록 현황 조회 시 NOT_FOUND_EVENT 예외 발생")
 		void getRegistrationCount_Fail_DeletedEvent() {
 			// given: 삭제된 이벤트
-			Event deletedEvent = EventFactory.fakePreOpenEvent();
+			Event deletedEvent = EventFactory.fakePreOpenEvent(store);
 			eventRepository.save(deletedEvent);
 			deletedEvent.delete();
 			eventRepository.flush();

@@ -33,7 +33,7 @@ public class NotificationController implements NotificationApi {
 		List<NotificationResponseDto> notifications =
 			notificationService.getNotifications(userId);
 
-		return ApiResponse.ok("알림 목록을 불러왔습니다",notifications);
+		return ApiResponse.ok("알림 목록을 불러왔습니다", notifications);
 	}
 
 	/**
@@ -45,7 +45,7 @@ public class NotificationController implements NotificationApi {
 	) {
 		Long userId = httpRequestContext.getUserId();
 		long count = notificationService.getUnreadCount(userId);
-		return ApiResponse.ok("읽지 않은 알림수",new UnreadCountResponseDto(count));
+		return ApiResponse.ok("읽지 않은 알림수", new UnreadCountResponseDto(count));
 	}
 
 	/**
@@ -59,7 +59,7 @@ public class NotificationController implements NotificationApi {
 		Long userId = httpRequestContext.getUserId();
 		notificationService.markAsRead(notificationId, userId);
 
-		return ApiResponse.ok("개별 알림을 읽음 처리 하였습니다.",null);
+		return ApiResponse.ok("개별 알림을 읽음 처리 하였습니다.", null);
 	}
 
 	/**
@@ -70,6 +70,6 @@ public class NotificationController implements NotificationApi {
 	public ApiResponse<Void> markAllAsRead() {
 		Long userId = httpRequestContext.getUserId();
 		notificationService.markAllAsRead(userId);
-		return ApiResponse.ok("모든 알림을 읽음 처리 하였습니다.",null);
+		return ApiResponse.ok("모든 알림을 읽음 처리 하였습니다.", null);
 	}
 }

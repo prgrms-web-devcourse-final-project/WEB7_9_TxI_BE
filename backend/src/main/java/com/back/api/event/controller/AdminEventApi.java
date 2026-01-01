@@ -1,9 +1,9 @@
 package com.back.api.event.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.back.api.event.dto.request.EventCreateRequest;
 import com.back.api.event.dto.request.EventUpdateRequest;
@@ -62,10 +62,16 @@ public interface AdminEventApi {
 
 	@Operation(
 		summary = "전체 이벤트 대시보드 현황 조회 (관리자)",
-		description = "관리자 대시보드에서 모든 이벤트의 전체 현황을 조회합니다. "
+		description = "관리자 대시보드에서 모든 이벤트의 전체 현황을 페이징을 통해 조회합니다. "
 			+ "각 이벤트별 상태, 사전등록 인원 수, 총 판매 좌석, 총 판매 금액을 포함합니다."
 	)
-	ApiResponse<List<AdminEventDashboardResponse>> getAllEventsDashboard();
+	ApiResponse<Page<AdminEventDashboardResponse>> getAllEventsDashboard(
+		@Parameter(description = "페이지 번호 (0부터 시작)")
+		@RequestParam(defaultValue = "0") int page,
+
+		@Parameter(description = "페이지 크기")
+		@RequestParam(defaultValue = "20") int size
+	);
 
 
 	@Operation(

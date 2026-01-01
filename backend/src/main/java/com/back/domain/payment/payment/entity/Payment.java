@@ -1,5 +1,7 @@
 package com.back.domain.payment.payment.entity;
 
+import com.back.global.entity.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -7,11 +9,15 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
 @NoArgsConstructor
-public class Payment {
+@Table(name = "payments")
+public class Payment extends BaseEntity {
 	@Id
 	@Column(name = "payment_id", nullable = false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

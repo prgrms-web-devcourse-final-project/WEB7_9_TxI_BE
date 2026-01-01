@@ -2,6 +2,7 @@ package com.back.global.security;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +31,7 @@ public class JwtProvider {
 	private long refreshTokenDurationSeconds;
 
 	private static final String CLAIM_ID = "id";
+	private static final String CLAIM_STORE_ID = "storeId";
 	private static final String CLAIM_NICKNAME = "nickname";
 	private static final String CLAIM_ROLE = "role";
 	private static final String CLAIM_TOKEN_TYPE = "tokenType";
@@ -54,6 +56,11 @@ public class JwtProvider {
 	) {
 		Map<String, Object> claims = new HashMap<>();
 		claims.put(CLAIM_ID, user.getId());
+
+		if (user.getStore() != null && user.getStore().getId() != null) {
+			claims.put(CLAIM_STORE_ID, user.getStore().getId());
+		}
+
 		claims.put(CLAIM_NICKNAME, user.getNickname());
 		claims.put(CLAIM_ROLE, user.getRole().name());
 		claims.put(CLAIM_TOKEN_TYPE, tokenType);
@@ -78,12 +85,23 @@ public class JwtProvider {
 	public JwtClaims payloadOrNull(String jwt) {
 		Map<String, Object> payload = JwtUtil.payloadOrNull(jwt, secret);
 
-		if (payload == null) {
+		if (payload == null || payload.isEmpty()) {
 			return null;
 		}
 
 		Object idObj = payload.get("id");
 		if (!(idObj instanceof Number idNo)) {
+			return null;
+		}
+
+		Optional<Long> storeId = Optional.empty();
+		Object storeIdObj = payload.get(CLAIM_STORE_ID);
+		if (storeIdObj == null) {
+			storeId = Optional.empty();
+		} else if (storeIdObj instanceof Number storeIdNo) {
+			storeId = Optional.of(storeIdNo.longValue());
+		} else {
+			log.error("JwtClaims storeId must be null or number, payload: {}", payload);
 			return null;
 		}
 
@@ -118,6 +136,7 @@ public class JwtProvider {
 
 		return new JwtClaims(
 			idNo.longValue(),
+			storeId,
 			nickname == null ? "" : nickname,
 			role,
 			tokenType,

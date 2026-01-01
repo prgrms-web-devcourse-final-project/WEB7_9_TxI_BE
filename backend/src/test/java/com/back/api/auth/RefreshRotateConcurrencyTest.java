@@ -49,7 +49,7 @@ class RefreshRotateConcurrencyTest {
 	@DisplayName("동일한 refresh token으로 동시에 2번 재발급 요청이 들어오면, 1번만 성공하고 나머지는 차단")
 	void rotate_concurrently_only_one_succeeds() throws Exception {
 		// given
-		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
+		TestUser testUser = userHelper.createUser(UserRole.NORMAL, null);
 		User user = testUser.user();
 
 		ActiveSession session = activeSessionRepository.save(ActiveSession.create(user));

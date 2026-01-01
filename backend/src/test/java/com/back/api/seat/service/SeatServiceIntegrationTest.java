@@ -28,12 +28,14 @@ import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.support.factory.EventFactory;
 import com.back.support.helper.SeatHelper;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.UserHelper;
 
 @SpringBootTest
@@ -60,6 +62,9 @@ public class SeatServiceIntegrationTest {
 	private SeatHelper seatHelper;
 
 	@Autowired
+	private StoreHelper storeHelper;
+
+	@Autowired
 	private QueueEntryRepository queueEntryRepository;
 
 	@Autowired
@@ -69,7 +74,8 @@ public class SeatServiceIntegrationTest {
 
 	@BeforeEach
 	void setUp() {
-		event = EventFactory.fakeEvent("테스트 콘서트");
+		Store store = storeHelper.createStore();
+		event = EventFactory.fakeEvent(store, "테스트 콘서트");
 		eventRepository.save(event);
 
 		// Redis 초기화
@@ -85,7 +91,7 @@ public class SeatServiceIntegrationTest {
 		seatHelper.createSeat(event, "A3", SeatGrade.R, 50000);
 
 		// User 생성
-		User user = userHelper.createUser(UserRole.NORMAL).user();
+		User user = userHelper.createUser(UserRole.NORMAL, null).user();
 		Long eventId = event.getId();
 		Long userId = user.getId();
 

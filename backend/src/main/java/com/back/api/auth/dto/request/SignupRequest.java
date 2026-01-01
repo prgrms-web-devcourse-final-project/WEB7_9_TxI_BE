@@ -2,9 +2,12 @@ package com.back.api.auth.dto.request;
 
 import java.time.LocalDate;
 
+import com.back.domain.user.entity.UserRole;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -35,6 +38,13 @@ public record SignupRequest(
 	@Size(min = 3, max = 10, message = "닉네임은 3~10 글자여야 합니다.")
 	String nickname,
 
+	@NotNull(message = "사용자 권한 설정은 필수입니다.")
+	@Schema(
+		description = "사용자 권한",
+		example = "NORMAL | ADMIN"
+	)
+	UserRole role,
+
 	@Schema(
 		description = "생년월일 중 연도",
 		example = "2002"
@@ -57,7 +67,13 @@ public record SignupRequest(
 	)
 	@NotBlank(message = "생년월일은 필수입니다.")
 	@Pattern(regexp = "\\d{1,2}", message = "일은 숫자여야합니다.")
-	String day
+	String day,
+
+	@Schema(
+		description = "사업자 등록 번호",
+		example = "000-00-00000"
+	)
+	String registrationNumber
 ) {
 	public LocalDate toBirthDate() {
 		return LocalDate.of(

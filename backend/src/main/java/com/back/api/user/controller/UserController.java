@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 @Validated
-@PreAuthorize("hasRole('NORMAL')")
+@PreAuthorize("hasAnyRole('NORMAL', 'ADMIN')")
 public class UserController implements UserApi {
 
 	private final UserService userService;

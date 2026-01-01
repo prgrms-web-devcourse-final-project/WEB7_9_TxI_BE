@@ -6,15 +6,20 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 
+import com.back.domain.store.entity.Store;
 import com.back.global.entity.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -67,9 +72,13 @@ public class User extends BaseEntity {
 	@Column(name = "deleted_at")
 	private LocalDateTime deleteDate;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "store_id", foreignKey = @ForeignKey(name = "fk_user_store"))
+	private Store store;
+
 	@Builder
 	public User(String email, String fullName, String nickname, String password,
-		LocalDate birthDate, UserRole role, UserActiveStatus activeStatus) {
+		LocalDate birthDate, UserRole role, UserActiveStatus activeStatus, Store store) {
 		this.email = email;
 		this.fullName = fullName;
 		this.nickname = nickname;
@@ -77,11 +86,7 @@ public class User extends BaseEntity {
 		this.birthDate = birthDate;
 		this.role = role;
 		this.activeStatus = activeStatus;
-	}
-
-	public User(Long id, String nickname) {
-		this.id = id;
-		this.nickname = nickname;
+		this.store = store;
 	}
 
 	public void update(String fullName, String nickname, LocalDate birthDate) {
@@ -93,5 +98,9 @@ public class User extends BaseEntity {
 	public void softDelete() {
 		this.deleteDate = LocalDateTime.now();
 		this.activeStatus = UserActiveStatus.BLOCKED;
+	}
+
+	public void changeStore(Store store) {
+		this.store = store;
 	}
 }

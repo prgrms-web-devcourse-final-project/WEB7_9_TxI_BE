@@ -17,12 +17,14 @@ import com.back.api.preregister.dto.response.PreRegisterListResponse;
 import com.back.domain.event.entity.Event;
 import com.back.domain.preregister.entity.PreRegister;
 import com.back.domain.preregister.repository.PreRegisterRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.support.data.TestUser;
 import com.back.support.factory.PreRegisterFactory;
 import com.back.support.factory.UserFactory;
 import com.back.support.helper.EventHelper;
+import com.back.support.helper.StoreHelper;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -43,13 +45,17 @@ class AdminPreRegisterServiceTest {
 	private EventHelper eventHelper;
 
 	@Autowired
+	private StoreHelper storeHelper;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	private Event testEvent;
 
 	@BeforeEach
 	void setUp() {
-		testEvent = eventHelper.createEvent("테스트 이벤트");
+		Store store = storeHelper.createStore();
+		testEvent = eventHelper.createEvent(store, "테스트 이벤트");
 	}
 
 	@Nested
@@ -61,7 +67,7 @@ class AdminPreRegisterServiceTest {
 		void getPreRegistersByEventId_Success() {
 			// given: 30명의 사용자 사전 등록
 			for (int i = 1; i <= 30; i++) {
-				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 				userRepository.save(testUser.user());
 
 				PreRegister preRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
@@ -92,7 +98,7 @@ class AdminPreRegisterServiceTest {
 		void getPreRegistersByEventId_SecondPage() {
 			// given
 			for (int i = 1; i <= 30; i++) {
-				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 				userRepository.save(testUser.user());
 
 				PreRegister preRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
@@ -146,7 +152,7 @@ class AdminPreRegisterServiceTest {
 		void getPreRegisterCount_Success() {
 			// given: 150명의 사용자 사전 등록
 			for (int i = 1; i <= 150; i++) {
-				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+				TestUser testUser = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 				userRepository.save(testUser.user());
 
 				PreRegister preRegister = PreRegisterFactory.fakePreRegister(testEvent, testUser.user());
@@ -174,9 +180,9 @@ class AdminPreRegisterServiceTest {
 		@DisplayName("REGISTERED 상태만 카운트")
 		void getPreRegisterCount_OnlyRegisteredStatus() {
 			// given: REGISTERED 2명, CANCELED 1명
-			TestUser user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
-			TestUser user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
-			TestUser user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder);
+			TestUser user1 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
+			TestUser user2 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
+			TestUser user3 = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null);
 
 			userRepository.save(user1.user());
 			userRepository.save(user2.user());

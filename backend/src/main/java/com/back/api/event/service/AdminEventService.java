@@ -1,8 +1,8 @@
 package com.back.api.event.service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +16,8 @@ import com.back.domain.preregister.entity.PreRegisterStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
+import com.back.global.error.code.AuthErrorCode;
+import com.back.global.error.exception.ErrorException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,54 +32,57 @@ public class AdminEventService {
 	private final SeatRepository seatRepository;
 
 	@Transactional
-	public EventResponse createEvent(EventCreateRequest request) {
-		return eventService.createEvent(request);
+	public EventResponse createEvent(EventCreateRequest request, long storeId) {
+		return eventService.createEvent(request, storeId);
 	}
 
 	@Transactional
-	public EventResponse updateEvent(Long eventId, EventUpdateRequest request) {
-		return eventService.updateEvent(eventId, request);
+	public EventResponse updateEvent(Long eventId, long storeId, EventUpdateRequest request) {
+		return eventService.updateEvent(eventId, storeId, request);
 	}
 
 	@Transactional
-	public void deleteEvent(Long eventId) {
-		eventService.deleteEvent(eventId);
+	public void deleteEvent(Long eventId, Long storeId) {
+		eventService.deleteEvent(eventId, storeId);
 	}
 
-	public List<AdminEventDashboardResponse> getAllEventsDashboard() {
-		List<Event> events = eventRepository.findAll();
+	public Page<AdminEventDashboardResponse> getAllEventsDashboard(int page, int size, long storeId) {
+		Pageable pageable = PageRequest.of(page, size);
+		Page<Event> eventPage = eventRepository.findAllByStore_Id(pageable, storeId);
 
-		return events.stream()
-			.map(event -> {
-				Long eventId = event.getId();
+		return eventPage.map(event -> {
+			Long eventId = event.getId();
 
-				// 1. 이벤트별 현재 사전등록 인원 수 조회
-				Long preRegisterCount = preRegisterRepository.countByEvent_IdAndPreRegisterStatus(
-					eventId,
-					PreRegisterStatus.REGISTERED
-				);
+			// 1. 이벤트별 현재 사전등록 인원 수 조회
+			Long preRegisterCount = preRegisterRepository.countByEvent_IdAndPreRegisterStatus(
+				eventId,
+				PreRegisterStatus.REGISTERED
+			);
 
-				// 2. 이벤트별 총 판매 좌석 조회 (SOLD 상태인 좌석)
-				Long totalSoldSeats = seatRepository.countByEventIdAndSeatStatus(eventId, SeatStatus.SOLD);
+			// 2. 이벤트별 총 판매 좌석 조회 (SOLD 상태인 좌석)
+			Long totalSoldSeats = seatRepository.countByEventIdAndSeatStatus(eventId, SeatStatus.SOLD);
 
-				// 3. 이벤트별 총 판매 금액 조회
-				Long totalSalesAmount = seatRepository.sumPriceByEventIdAndSeatStatus(eventId, SeatStatus.SOLD);
+			// 3. 이벤트별 총 판매 금액 조회
+			Long totalSalesAmount = seatRepository.sumPriceByEventIdAndSeatStatus(eventId, SeatStatus.SOLD);
 
-				return AdminEventDashboardResponse.of(
-					event.getId(),
-					event.getTitle(),
-					event.getStatus(),
-					preRegisterCount,
-					totalSoldSeats,
-					totalSalesAmount != null ? totalSalesAmount : 0L,
-					event.isDeleted()
-				);
-			})
-			.collect(Collectors.toList());
+			return AdminEventDashboardResponse.of(
+				event.getId(),
+				event.getTitle(),
+				event.getStatus(),
+				preRegisterCount,
+				totalSoldSeats,
+				totalSalesAmount != null ? totalSalesAmount : 0L,
+				event.isDeleted()
+			);
+		});
 	}
 
 	@Transactional(readOnly = true)
-	public EventResponse getEventForAdmin(Long eventId) {
+	public EventResponse getEventForAdmin(Long eventId, Long storeId) {
+		Event event = eventService.findEventById(eventId);
+		if (!event.getStore().getId().equals(storeId)) {
+			throw new ErrorException(AuthErrorCode.FORBIDDEN);
+		}
 		return eventService.getEvent(eventId);
 	}
 }

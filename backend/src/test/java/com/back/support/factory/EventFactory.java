@@ -5,10 +5,11 @@ import java.time.LocalDateTime;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
+import com.back.domain.store.entity.Store;
 
 public class EventFactory extends BaseFactory {
 
-	public static Event fakeEvent() {
+	public static Event fakeEvent(Store store) {
 		int minPrice = faker.number().numberBetween(10000, 50000);
 		int maxPrice = faker.number().numberBetween(minPrice, 200000);
 
@@ -27,10 +28,11 @@ public class EventFactory extends BaseFactory {
 			.eventDate(LocalDateTime.now().plusDays(35))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.OPEN)
+			.store(store)
 			.build();
 	}
 
-	public static Event fakeEvent(String title) {
+	public static Event fakeEvent(Store store, String title) {
 		int minPrice = faker.number().numberBetween(10000, 50000);
 		int maxPrice = faker.number().numberBetween(minPrice, 200000);
 
@@ -49,10 +51,11 @@ public class EventFactory extends BaseFactory {
 			.eventDate(LocalDateTime.now().plusDays(35))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.OPEN)
+			.store(store)
 			.build();
 	}
 
-	public static Event fakeEvent(EventCategory category, EventStatus status) {
+	public static Event fakeEvent(Store store, EventCategory category, EventStatus status) {
 		int minPrice = faker.number().numberBetween(10000, 50000);
 		int maxPrice = faker.number().numberBetween(minPrice, 200000);
 
@@ -71,10 +74,11 @@ public class EventFactory extends BaseFactory {
 			.eventDate(LocalDateTime.now().plusDays(35))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(status)
+			.store(store)
 			.build();
 	}
 
-	public static Event fakePreOpenEvent() {
+	public static Event fakePreOpenEvent(Store store) {
 		int minPrice = faker.number().numberBetween(10000, 50000);
 		int maxPrice = faker.number().numberBetween(minPrice, 200000);
 
@@ -93,10 +97,11 @@ public class EventFactory extends BaseFactory {
 			.eventDate(LocalDateTime.now().plusDays(35))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.PRE_OPEN)
+			.store(store)
 			.build();
 	}
 
-	public static Event fakeReadyEvent() {
+	public static Event fakeReadyEvent(Store store) {
 		int minPrice = faker.number().numberBetween(10000, 50000);
 		int maxPrice = faker.number().numberBetween(minPrice, 200000);
 
@@ -115,10 +120,11 @@ public class EventFactory extends BaseFactory {
 			.eventDate(LocalDateTime.now().plusDays(35))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.READY)
+			.store(store)
 			.build();
 	}
 
-	public static Event fakePreClosedEvent() {
+	public static Event fakePreClosedEvent(Store store) {
 		int minPrice = faker.number().numberBetween(10000, 50000);
 		int maxPrice = faker.number().numberBetween(minPrice, 200000);
 
@@ -137,10 +143,11 @@ public class EventFactory extends BaseFactory {
 			.eventDate(LocalDateTime.now().plusDays(15))
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.OPEN)
+			.store(store)
 			.build();
 	}
 
-	public static Event fakePastEvent(String title) {
+	public static Event fakePastEvent(Store store, String title) {
 		int minPrice = faker.number().numberBetween(10000, 50000);
 		int maxPrice = faker.number().numberBetween(minPrice, 200000);
 
@@ -159,6 +166,7 @@ public class EventFactory extends BaseFactory {
 			.eventDate(LocalDateTime.now().minusDays(1)) // 이미 지난 날짜
 			.maxTicketAmount(faker.number().numberBetween(1000, 10000))
 			.status(EventStatus.OPEN)
+			.store(store)
 			.build();
 	}
 }

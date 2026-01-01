@@ -3,6 +3,7 @@ package com.back.support.helper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
@@ -20,8 +21,8 @@ public class UserHelper {
 		this.passwordEncoder = encoder;
 	}
 
-	public TestUser createUser(UserRole role) {
-		TestUser testUser = UserFactory.fakeUser(role, this.passwordEncoder);
+	public TestUser createUser(UserRole role, Store store) {
+		TestUser testUser = UserFactory.fakeUser(role, this.passwordEncoder, store);
 		saveUser(testUser.user());
 		return testUser;
 	}

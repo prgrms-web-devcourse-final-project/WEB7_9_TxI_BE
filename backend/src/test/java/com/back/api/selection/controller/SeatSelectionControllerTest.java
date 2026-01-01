@@ -28,6 +28,7 @@ import com.back.domain.seat.entity.Seat;
 import com.back.domain.seat.entity.SeatGrade;
 import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
+import com.back.domain.store.entity.Store;
 import com.back.domain.ticket.repository.TicketRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
@@ -35,6 +36,7 @@ import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.support.factory.EventFactory;
 import com.back.support.factory.UserFactory;
+import com.back.support.helper.StoreHelper;
 import com.back.support.helper.TestAuthHelper;
 
 @SpringBootTest
@@ -61,18 +63,21 @@ class SeatSelectionControllerTest {
 	private PasswordEncoder passwordEncoder;
 	@Autowired
 	private TestAuthHelper authHelper;
+	@Autowired
+	private StoreHelper storeHelper;
 
 	private Event event;
 	private User user;
 
 	@BeforeEach
 	void setUp() {
+		Store store = storeHelper.createStore();
 		// 이벤트 생성
-		event = EventFactory.fakeEvent("테스트 선택 이벤트");
+		event = EventFactory.fakeEvent(store, "테스트 선택 이벤트");
 		eventRepository.save(event);
 
 		// 테스트 유저 직접 생성
-		user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder).user();
+		user = UserFactory.fakeUser(UserRole.NORMAL, passwordEncoder, null).user();
 		userRepository.save(user);
 
 		authHelper.authenticate(user);

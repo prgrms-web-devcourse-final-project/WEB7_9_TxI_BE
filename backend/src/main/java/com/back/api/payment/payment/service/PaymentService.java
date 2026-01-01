@@ -141,10 +141,12 @@ public class PaymentService {
 
 		// OrderService가 order의 정합성(주문자/주문상태/amount) 보장
 		V2_Order order = orderService.v2_getOrderForPayment(orderId, userId, clientAmount);
-		log.info("[v2 결제 디버깅] - 결제 승인 메서드: 결제 서비스 로그");
-		log.info("[v2 결제 디버깅] - orderId : {}", orderId);
-		log.info("[v2 결제 디버깅] - paymentKey : {}", paymentKey);
-		log.info("[v2 결제 디버깅] - userId : {}", userId);
+
+		// log.info("[v2 결제 디버깅] - 결제 승인 메서드: 결제 서비스 로그");
+		// log.info("[v2 결제 디버깅] - orderId : {}", orderId);
+		// log.info("[v2 결제 디버깅] - paymentKey : {}", paymentKey);
+		// log.info("[v2 결제 디버깅] - userId : {}", userId);
+
 		V2_PaymentConfirmRequest request = new V2_PaymentConfirmRequest(orderId, paymentKey, order.getAmount());
 
 		TossPaymentResponse result = tossPaymentService.confirmPayment(request);
@@ -168,6 +170,8 @@ public class PaymentService {
 				result.status()
 			)
 		);
+
+		order.setPayment(savedPayment);
 
 		// Order status PENDING -> PAID, paymentKey DB 저장 (주문 상태 업테이트)
 		order.markPaid(result.paymentKey());
@@ -199,6 +203,6 @@ public class PaymentService {
 			)
 		);
 
-		return new V2_PaymentConfirmResponse(orderId, true);
+		return V2_PaymentConfirmResponse.from(order, true);
 	}
 }

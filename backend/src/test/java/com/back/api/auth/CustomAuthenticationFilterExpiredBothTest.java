@@ -61,7 +61,7 @@ public class CustomAuthenticationFilterExpiredBothTest {
 	@Test
 	@DisplayName("accessToken, refreshToken 모두 만료되면 TOKEN_EXPIRED 에러가 발생한다")
 	void token_expired_when_both_access_and_refresh_invalid() throws Exception {
-		TestUser testUser = userHelper.createUser(UserRole.NORMAL);
+		TestUser testUser = userHelper.createUser(UserRole.NORMAL, null);
 		User user = testUser.user();
 
 		ActiveSession session = activeSessionRepository.save(ActiveSession.create(user));
