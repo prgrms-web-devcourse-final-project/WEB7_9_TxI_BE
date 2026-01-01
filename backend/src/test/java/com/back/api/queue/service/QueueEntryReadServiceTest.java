@@ -426,7 +426,7 @@ class QueueEntryReadServiceTest {
 
 			// then
 			assertThat(response.waitingAhead()).isEqualTo(4);
-			assertThat(response.estimatedWaitTime()).isEqualTo(12); // 4 * 3분
+			assertThat(response.estimatedWaitTime()).isEqualTo(8); // 4 * 2분
 			assertThat(response.progress()).isEqualTo(60); // (10-4)*100/10
 		}
 
@@ -445,7 +445,7 @@ class QueueEntryReadServiceTest {
 
 			// then
 			assertThat(response.waitingAhead()).isEqualTo(99);
-			assertThat(response.estimatedWaitTime()).isEqualTo(297); // 99 * 3분
+			assertThat(response.estimatedWaitTime()).isEqualTo(198); // 99 * 2분
 			assertThat(response.progress()).isEqualTo(1); // (100-99)*100/100
 		}
 	}
