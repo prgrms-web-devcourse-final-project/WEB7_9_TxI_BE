@@ -4,9 +4,9 @@ spring:
       on-profile: perf
 
   datasource:
-    url: ${PERF_SUPABASE_URL}
-    username: ${PERF_SUPABASE_USERNAME}
-    password: ${PERF_SUPABASE_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/waitfair
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -27,6 +27,9 @@ spring:
         format_sql: false
         use_sql_comments: false
         highlight_sql: false
+
+  flyway:
+    enabled: false  # perf 환경에서는 Hibernate DDL 사용
 
 logging:
   level:

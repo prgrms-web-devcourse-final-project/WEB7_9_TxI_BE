@@ -11,6 +11,8 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.domain.store.entity.Store;
+import com.back.domain.store.repository.StoreRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PerfEventDataInitializer {
 
 	private final EventRepository eventRepository;
+	private final StoreRepository storeRepository;
 
 	public void init(int eventCount) {
 		if (eventRepository.count() > 0) {
@@ -30,6 +33,18 @@ public class PerfEventDataInitializer {
 		}
 
 		log.info("Event 초기 데이터 생성 중: {}개", eventCount);
+
+		// 기본 Store 생성 또는 조회
+		Store defaultStore = storeRepository.findAll().stream()
+			.findFirst()
+			.orElseGet(() -> {
+				Store store = Store.builder()
+					.name("Perf Test Store")
+					.registrationNumber("123-45-67890")
+					.address("서울시 강남구 테헤란로 123")
+					.build();
+				return storeRepository.save(store);
+			});
 
 		LocalDateTime now = LocalDateTime.now();
 		List<Event> events = new ArrayList<>();
@@ -51,6 +66,7 @@ public class PerfEventDataInitializer {
 			.eventDate(now.plusDays(35))
 			.maxTicketAmount(500)
 			.status(EventStatus.PRE_OPEN)
+			.store(defaultStore)
 			.build());
 
 		// 2. 대기열 준비중인 이벤트
@@ -69,6 +85,7 @@ public class PerfEventDataInitializer {
 			.eventDate(now.plusDays(25))
 			.maxTicketAmount(500)
 			.status(EventStatus.QUEUE_READY)
+			.store(defaultStore)
 			.build());
 
 		// 3. 티켓팅 진행중인 이벤트 (부하 테스트 메인 타겟 - 티켓팅 경쟁)
@@ -87,6 +104,7 @@ public class PerfEventDataInitializer {
 			.eventDate(now.plusDays(8))
 			.maxTicketAmount(500)
 			.status(EventStatus.OPEN)
+			.store(defaultStore)
 			.build());
 
 		// 4. 티켓 완판 이벤트 (부하 테스트 타겟 - 티켓 조회/관리)
@@ -106,6 +124,7 @@ public class PerfEventDataInitializer {
 				.eventDate(now.minusDays(5))
 				.maxTicketAmount(500)
 				.status(EventStatus.CLOSED)
+				.store(defaultStore)
 				.build());
 		}
 
@@ -114,11 +133,11 @@ public class PerfEventDataInitializer {
 
 		for (int i = 0; i < additionalCount; i++) {
 			if (i % 3 == 0) {
-				events.add(createConcertEvent("테스트 콘서트 " + (i + 5), now, 15000, 85000, 10000));
+				events.add(createConcertEvent("테스트 콘서트 " + (i + 5), now, 15000, 85000, 10000, defaultStore));
 			} else if (i % 3 == 1) {
-				events.add(createPopupEvent("테스트 팝업 " + (i + 5), now, 0, 250000, 15000));
+				events.add(createPopupEvent("테스트 팝업 " + (i + 5), now, 0, 250000, 15000, defaultStore));
 			} else if (i % 3 == 2) {
-				events.add(createDropEvent("테스트 드롭 " + (i + 5), now, 159000, 159000, 2000));
+				events.add(createDropEvent("테스트 드롭 " + (i + 5), now, 159000, 159000, 2000, defaultStore));
 			}
 		}
 
@@ -129,7 +148,7 @@ public class PerfEventDataInitializer {
 	}
 
 	private Event createConcertEvent(String title, LocalDateTime baseTime,
-		int minPrice, int maxPrice, int maxTickets) {
+		int minPrice, int maxPrice, int maxTickets, Store store) {
 		return Event.builder()
 			.title(title)
 			.category(EventCategory.CONCERT)
@@ -145,11 +164,12 @@ public class PerfEventDataInitializer {
 			.eventDate(baseTime.plusDays(35))
 			.maxTicketAmount(maxTickets)
 			.status(EventStatus.READY)
+			.store(store)
 			.build();
 	}
 
 	private Event createPopupEvent(String title, LocalDateTime baseTime,
-		int minPrice, int maxPrice, int maxTickets) {
+		int minPrice, int maxPrice, int maxTickets, Store store) {
 		return Event.builder()
 			.title(title)
 			.category(EventCategory.POPUP)
@@ -165,11 +185,12 @@ public class PerfEventDataInitializer {
 			.eventDate(baseTime.plusDays(25))
 			.maxTicketAmount(maxTickets)
 			.status(EventStatus.READY)
+			.store(store)
 			.build();
 	}
 
 	private Event createDropEvent(String title, LocalDateTime baseTime,
-		int minPrice, int maxPrice, int maxTickets) {
+		int minPrice, int maxPrice, int maxTickets, Store store) {
 		return Event.builder()
 			.title(title)
 			.category(EventCategory.DROP)
@@ -185,6 +206,7 @@ public class PerfEventDataInitializer {
 			.eventDate(baseTime.plusDays(12))
 			.maxTicketAmount(maxTickets)
 			.status(EventStatus.READY)
+			.store(store)
 			.build();
 	}
 }
