@@ -33,7 +33,7 @@ public class SeatController implements SeatApi {
 		@PathVariable Long eventId,
 		@RequestParam(required = false) SeatGrade grade
 	) {
-		Long userId = httpRequestContext.getUser().getId();
+		Long userId = httpRequestContext.getUserId();
 
 		List<Seat> seats = seatService.getSeatsByEvent(eventId, userId, grade);
 

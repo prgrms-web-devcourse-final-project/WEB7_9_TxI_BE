@@ -29,7 +29,7 @@ public class PaymentController implements PaymentApi {
 	public ApiResponse<PaymentReceiptResponse> confirmPayment(
 		@Valid @RequestBody PaymentConfirmRequest request
 	) {
-		Long userId = httpRequestContext.getUser().getId();
+		Long userId = httpRequestContext.getUserId();
 
 		PaymentReceiptResponse response = paymentService.confirmPayment(
 			request.orderId(),
@@ -67,7 +67,7 @@ public class PaymentController implements PaymentApi {
 		@Valid @RequestBody V2_PaymentConfirmRequest request
 	) {
 
-		Long userId = httpRequestContext.getUser().getId();
+		Long userId = httpRequestContext.getUserId();
 
 		V2_PaymentConfirmResponse response = paymentService.v2_confirmPayment(
 			request.orderId(),
