@@ -119,7 +119,7 @@ public class SeatServiceIntegrationTest {
 		seatHelper.createSeat(event, "R1", SeatGrade.R, 50000);
 
 		// User 생성
-		User user = userHelper.createUser(UserRole.NORMAL).user();
+		User user = userHelper.createUser(UserRole.NORMAL, null).user();
 		Long eventId = event.getId();
 		Long userId = user.getId();
 
@@ -142,7 +142,7 @@ public class SeatServiceIntegrationTest {
 
 		seatHelper.createSeat(event, "A1", SeatGrade.VIP, 150000);
 
-		User user = userHelper.createUser(UserRole.NORMAL).user();
+		User user = userHelper.createUser(UserRole.NORMAL, null).user();
 		Long eventId = event.getId();
 		Long userId = user.getId();
 
