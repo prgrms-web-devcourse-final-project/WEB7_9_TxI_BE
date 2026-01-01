@@ -172,7 +172,7 @@ public class QrService {
 
 	// QR URL 생성
 	private String buildQrUrl(String qrToken) {
-		return siteProperties.getDomain() + "/tickets/verify?token=" + qrToken;
+		return siteProperties.getFrontUrl() + "/tickets/verify?token=" + qrToken;
 	}
 
 	// 입장 처리 기록 -> Redis
