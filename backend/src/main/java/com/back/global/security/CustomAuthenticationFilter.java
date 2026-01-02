@@ -42,7 +42,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 	private static final Set<String> AUTH_WHITELIST = Set.of(
 		"/api/v1/auth/login",
-		"/api/v1/auth/signup"
+		"/api/v1/auth/signup",
+		"/api/v1/tickets/entry/verify"
 	);
 
 	private static final Set<String> PATH_PREFIX_WHITELIST = Set.of(
