@@ -1,6 +1,5 @@
 package com.back.api.ticket.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,7 +35,7 @@ public class QrController implements QrApi {
 
 	//TODO 관리자 전용 API로 변경 고려
 	@Override
-	@GetMapping("/entry/verify")
+	@PostMapping("/entry/verify")
 	public ApiResponse<QrValidationResponse> validateQrCode(
 		@RequestParam String token
 	){
