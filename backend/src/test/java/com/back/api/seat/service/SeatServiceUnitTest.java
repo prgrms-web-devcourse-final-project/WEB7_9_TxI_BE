@@ -168,8 +168,14 @@ class SeatServiceUnitTest {
 		@DisplayName("정상적으로 좌석을 예약한다")
 		void reserveSeat_Success() {
 			// given
-			given(seatRepository.findByEventIdAndId(eventId, seatId)).willReturn(Optional.of(testSeat));
-			given(seatRepository.save(any(Seat.class))).willReturn(testSeat);
+			Seat reservedSeat = Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000);
+			reservedSeat.markAsReserved();
+
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.AVAILABLE, SeatStatus.RESERVED
+			)).willReturn(1); // 성공
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(reservedSeat));
 
 			// when
 			Seat result = seatService.reserveSeat(eventId, seatId, userId);
@@ -177,8 +183,10 @@ class SeatServiceUnitTest {
 			// then
 			assertThat(result).isNotNull();
 			assertThat(result.getSeatStatus()).isEqualTo(SeatStatus.RESERVED);
+			then(seatRepository).should().updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.AVAILABLE, SeatStatus.RESERVED
+			);
 			then(seatRepository).should().findByEventIdAndId(eventId, seatId);
-			then(seatRepository).should().save(testSeat);
 			then(eventPublisher).should().publishEvent(any(SeatStatusMessage.class));
 		}
 
@@ -186,29 +194,37 @@ class SeatServiceUnitTest {
 		@DisplayName("존재하지 않는 좌석 예약에 실패한다")
 		void reserveSeat_SeatNotFound_ThrowsException() {
 			// given
-			given(seatRepository.findByEventIdAndId(eventId, seatId)).willReturn(Optional.empty());
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.AVAILABLE, SeatStatus.RESERVED
+			)).willReturn(0); // 실패
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.empty());
 
 			// when & then
 			assertThatThrownBy(() -> seatService.reserveSeat(eventId, seatId, userId))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.NOT_FOUND_SEAT);
 
-			then(seatRepository).should(never()).save(any());
 			then(eventPublisher).should(never()).publishEvent(any());
 		}
 
 		@Test
-		@DisplayName("낙관적 락 충돌 발생 시 SEAT_CONCURRENCY_FAILURE 예외를 던진다")
-		void reserveSeat_OptimisticLockingFailure_ThrowsException() {
+		@DisplayName("이미 RESERVED 좌석 예약 시 SEAT_ALREADY_RESERVED 예외를 던진다")
+		void reserveSeat_AlreadyReserved_ThrowsException() {
 			// given
-			given(seatRepository.findByEventIdAndId(eventId, seatId)).willReturn(Optional.of(testSeat));
-			given(seatRepository.save(any(Seat.class)))
-				.willThrow(new ObjectOptimisticLockingFailureException(Seat.class, seatId));
+			Seat reservedSeat = Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000);
+			reservedSeat.markAsReserved();
+
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.AVAILABLE, SeatStatus.RESERVED
+			)).willReturn(0); // 실패
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(reservedSeat));
 
 			// when & then
 			assertThatThrownBy(() -> seatService.reserveSeat(eventId, seatId, userId))
 				.isInstanceOf(ErrorException.class)
-				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.SEAT_CONCURRENCY_FAILURE);
+				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.SEAT_ALREADY_RESERVED);
 		}
 	}
 
@@ -279,8 +295,14 @@ class SeatServiceUnitTest {
 		@DisplayName("AVAILABLE -> RESERVED 상태 변경이 성공한다")
 		void seatStatus_AvailableToReserved_Success() {
 			// given
-			given(seatRepository.findByEventIdAndId(eventId, seatId)).willReturn(Optional.of(testSeat));
-			given(seatRepository.save(any(Seat.class))).willReturn(testSeat);
+			Seat reservedSeat = Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000);
+			reservedSeat.markAsReserved();
+
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.AVAILABLE, SeatStatus.RESERVED
+			)).willReturn(1);
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(reservedSeat));
 
 			// when
 			Seat result = seatService.reserveSeat(eventId, seatId, userId);
@@ -328,8 +350,14 @@ class SeatServiceUnitTest {
 		@DisplayName("좌석 예약 시 SeatStatusMessage 이벤트가 발행된다")
 		void reserveSeat_PublishesEvent() {
 			// given
-			given(seatRepository.findByEventIdAndId(eventId, seatId)).willReturn(Optional.of(testSeat));
-			given(seatRepository.save(any(Seat.class))).willReturn(testSeat);
+			Seat reservedSeat = Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000);
+			reservedSeat.markAsReserved();
+
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.AVAILABLE, SeatStatus.RESERVED
+			)).willReturn(1);
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(reservedSeat));
 
 			// when
 			seatService.reserveSeat(eventId, seatId, userId);
@@ -372,7 +400,11 @@ class SeatServiceUnitTest {
 		@DisplayName("좌석 예약 실패 시 이벤트가 발행되지 않는다")
 		void reserveSeat_Failure_DoesNotPublishEvent() {
 			// given
-			given(seatRepository.findByEventIdAndId(eventId, seatId)).willReturn(Optional.empty());
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.AVAILABLE, SeatStatus.RESERVED
+			)).willReturn(0); // 실패
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.empty());
 
 			// when & then
 			assertThatThrownBy(() -> seatService.reserveSeat(eventId, seatId, userId))

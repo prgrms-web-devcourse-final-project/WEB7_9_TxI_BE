@@ -60,6 +60,7 @@ dependencies {
 
     //redis
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.redisson:redisson-spring-boot-starter:3.27.2")
     testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
 
     implementation("org.springframework.boot:spring-boot-starter-websocket")

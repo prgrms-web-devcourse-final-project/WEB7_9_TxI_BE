@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -52,6 +56,12 @@ class SeatSelectServiceUnitTest {
 	private QueueEntryReadService queueEntryReadService;
 
 	@Mock
+	private RedissonClient redissonClient;
+
+	@Mock
+	private RLock rLock;
+
+	@Mock
 	private PasswordEncoder passwordEncoder;
 
 	private Event testEvent;
@@ -63,7 +73,7 @@ class SeatSelectServiceUnitTest {
 	private Long userId;
 
 	@BeforeEach
-	void setUp() {
+	void setUp() throws InterruptedException {
 		eventId = 1L;
 		seatId = 1L;
 		userId = 100L;
@@ -79,6 +89,11 @@ class SeatSelectServiceUnitTest {
 			.seat(testSeat)
 			.ticketStatus(TicketStatus.DRAFT)
 			.build();
+
+		// Redisson lock mock 기본 설정
+		given(redissonClient.getLock(anyString())).willReturn(rLock);
+		given(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).willReturn(true);
+		given(rLock.isHeldByCurrentThread()).willReturn(true);
 	}
 
 	@Nested

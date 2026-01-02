@@ -18,6 +18,8 @@ public enum SeatErrorCode implements ErrorCode {
 	SEAT_SELECTION_FAILED(HttpStatus.BAD_REQUEST, "좌석 선택에 실패했습니다."),
 	SEAT_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "좌석 상태 충돌이 발생했습니다. 다시 시도해주세요."),
 	SEAT_CONCURRENCY_FAILURE(HttpStatus.BAD_REQUEST, "다른 사용자가 해당 좌석을 선택하는 중입니다. 다시 시도해주세요."),
+	SEAT_LOCK_ACQUISITION_FAILED(HttpStatus.BAD_REQUEST, "다른 사용자가 해당 좌석을 선택하는 중입니다. 잠시 후 다시 시도해주세요."),
+	SEAT_LOCK_INTERRUPTED(HttpStatus.BAD_REQUEST, "좌석 선택 처리가 중단되었습니다. 다시 시도해주세요."),
 
 	SEAT_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "1개 이상 좌석을 선택할 수 없습니다."),
 	SEAT_NOT_SELECTED(HttpStatus.BAD_REQUEST, "선택된 좌석이 없거나 다른 좌석이 선택되어 있습니다."),
