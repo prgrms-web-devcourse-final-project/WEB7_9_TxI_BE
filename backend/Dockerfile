@@ -39,4 +39,4 @@ COPY --from=builder /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["/bin/sh", "-c", "doppler secrets download --project waitfair --config prd --format env --no-file > /tmp/.env && set -a && . /tmp/.env && exec java -jar -Dspring.profiles.active=prod app.jar"]
+ENTRYPOINT ["/bin/sh", "-c", "doppler secrets download --project waitfair --config prd --format env --no-file > /tmp/.env && set -a && . /tmp/.env && exec java -Duser.timezone=Asia/Seoul -jar -Dspring.profiles.active=prod app.jar"]
