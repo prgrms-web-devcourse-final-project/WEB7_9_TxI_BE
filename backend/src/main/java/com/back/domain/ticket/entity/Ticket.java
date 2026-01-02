@@ -156,4 +156,15 @@ public class Ticket extends BaseEntity {
 	public boolean hasSeat() {
 		return this.seat != null;
 	}
+
+	public void changeStatus(TicketStatus status) {
+		this.ticketStatus = status;
+
+		if (status == TicketStatus.ISSUED && this.issuedAt == null) {
+			this.issuedAt = LocalDateTime.now();
+		}
+		if (status == TicketStatus.USED && this.usedAt == null) {
+			this.usedAt = LocalDateTime.now();
+		}
+	}
 }
