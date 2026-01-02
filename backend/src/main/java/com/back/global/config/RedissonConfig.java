@@ -1,5 +1,6 @@
 package com.back.global.config;
 
+import java.time.Duration;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -27,8 +28,8 @@ public class RedissonConfig {
 	@Value("${spring.data.redis.password:}")
 	private String password;
 
-	@Value("${spring.data.redis.timeout:200}")
-	private int timeout;
+	@Value("${spring.data.redis.timeout:200ms}")
+	private Duration timeout;
 
 	@Bean
 	public RedissonClient redissonClient() {
@@ -38,8 +39,8 @@ public class RedissonConfig {
 		config.useSingleServer()
 			.setAddress(address)
 			.setPassword(password.isBlank() ? null : password)
-			.setTimeout(timeout)
-			.setConnectTimeout(timeout)
+			.setTimeout((int) timeout.toMillis())
+			.setConnectTimeout((int) timeout.toMillis())
 			.setRetryAttempts(0)  // fast-fail: Redis 실패 시 재시도 없음
 			.setRetryInterval(0);
 
