@@ -41,6 +41,6 @@ public class QrController implements QrApi {
 	){
 		QrValidationResponse response = qrService.validateAndProcessEntry(token);
 
-		return ApiResponse.ok("QR 코드 검증 성공", response);
+		return ApiResponse.ok("QR 코드 검증 & 사용 처리 성공", response);
 	}
 }
