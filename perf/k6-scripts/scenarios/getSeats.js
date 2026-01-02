@@ -45,7 +45,7 @@ export function getSeats(baseUrl, jwt, testId, eventId, grade = null) {
     "status 200": (r) => r.status === 200,
     "data exists": () => data !== null,
     "data is array": () => Array.isArray(data),
-    "seats length ≥ 0": () => data.length >= 0,
+    "seats length ≥ 0": () => Array.isArray(data) && data.length >= 0,
   });
 
   // 좌석이 있을 경우 첫 번째 좌석 구조 검증
