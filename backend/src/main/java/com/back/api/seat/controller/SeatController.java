@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.back.api.queue.service.QueueEntryReadService;
 import com.back.api.seat.dto.response.SeatResponse;
 import com.back.api.seat.service.SeatService;
 import com.back.domain.seat.entity.Seat;
@@ -24,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 public class SeatController implements SeatApi {
 
 	private final SeatService seatService;
-	private final QueueEntryReadService queueEntryReadService;
 	private final HttpRequestContext httpRequestContext;
 
 	@Override

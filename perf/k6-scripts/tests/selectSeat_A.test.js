@@ -1,4 +1,4 @@
-import { selectSeat } from "../scenarios/selectSeat.js";
+import { selectSeat, deselectSeat } from "../scenarios/selectSeat.js";
 import { generateJWT } from "../util/jwt.js";
 import { sleep } from "k6";
 
@@ -29,9 +29,14 @@ export const options = {
  * - 이 테스트의 TPS = 시스템의 이론적 최대 처리량 (베이스라인)
  * - 이후 경합 테스트와 비교를 위한 기준선 설정
  *
+ * 시나리오 패턴:
+ * - select → (고민 시간) → deselect → (대기) → 반복
+ * - 좌석을 재사용하므로 무한 iteration 가능
+ * - VU 수 제한 없음 (625를 초과해도 순환으로 처리)
+ *
  * 주의:
- * - Event #3은 500석이므로, PEAK_VUS는 500 이하로 설정 권장
- * - VU 수가 500을 초과하면 좌석이 중복될 수 있음
+ * - select와 deselect가 쌍으로 동작하여 좌석 재사용
+ * - 실제 사용자가 좌석을 보고 취소하는 패턴 시뮬레이션
  */
 export function setup() {
   const secret = __ENV.JWT_SECRET;
@@ -69,17 +74,26 @@ export default function (data) {
   // VU별 JWT 토큰 사용
   const jwt = data.tokens[(__VU - 1) % data.tokens.length];
 
-  // Event #3 (OPEN 상태, 500석)
+  // Event #3 (OPEN 상태, 625석)
   const eventId = 3;
 
   // ✅ VU별 고유 좌석 할당 (경합 없음)
-  // VU 1 → 좌석 1, VU 2 → 좌석 2, ..., VU 500 → 좌석 500
-  // VU가 500을 초과하면 순환 (VU 501 → 좌석 1)
-  const totalSeats = 500;
-  const seatId = ((__VU - 1) % totalSeats) + 1;
+  // Event #3의 좌석 ID 범위: 1~625 (625석)
+  // VU 1 → 좌석 1, VU 2 → 좌석 2, ..., VU 625 → 좌석 625
+  // VU가 625를 초과하면 순환 (VU 626 → 좌석 1)
+  // select → deselect 패턴으로 좌석 재사용
+  const totalSeats = 625;
+  const seatId = ((__VU - 1) % totalSeats) + 1; // 1~625
 
+  // 좌석 선택
   selectSeat(baseUrl, jwt, data.testId, eventId, seatId);
 
-  // 사용자 반응 시간 랜덤화 (0.5~2.0초)
+  // 사용자가 좌석을 확인하고 고민하는 시간 시뮬레이션 (0.5~2.0초)
   sleep(Math.random() * 1.5 + 0.5);
+
+  // 좌석 선택 취소 (재사용을 위해)
+  deselectSeat(baseUrl, jwt, data.testId, eventId, seatId);
+
+  // 다음 선택 전 대기
+  sleep(0.5);
 }

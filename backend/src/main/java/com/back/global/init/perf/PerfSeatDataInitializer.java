@@ -31,10 +31,18 @@ public class PerfSeatDataInitializer {
 		}
 
 		int totalSeats = 0;
-		int seatsPerEvent = 625; // 500명 유저 x 5개 티켓 / 4개 이벤트 = 625석
+		int seatsPerEvent = 625;
 
-		// Event #1-4: 각 이벤트마다 625석씩 생성 (총 2,500석)
+		log.info("Seat 초기 데이터 생성 중: Event #3, #4만 생성 (빠른 초기화)");
+
+		// Event #3, #4만 좌석 생성 (Event #1, #2는 건너뜀)
 		for (long eventId = 1L; eventId <= 4L; eventId++) {
+			// Event #1, #2: 좌석 생성 건너뜀 (초기화 시간 단축)
+			if (eventId == 1L || eventId == 2L) {
+				log.info("Event #{} 건너뜀: 초기화 시간 단축 (좌석 생성 안 함)", eventId);
+				continue;
+			}
+
 			Event event = eventRepository.findById(eventId).orElse(null);
 			if (event == null) {
 				log.warn("Event #{}를 찾을 수 없습니다.", eventId);
@@ -51,7 +59,7 @@ public class PerfSeatDataInitializer {
 			log.info("✅ Event #{} Seat 데이터 생성 완료: {}석", eventId, seats.size());
 		}
 
-		log.info("✅ Seat 데이터 생성 완료: 총 {}석 (이벤트당 {}석씩)", totalSeats, seatsPerEvent);
+		log.info("✅ Seat 데이터 생성 완료: 총 {}석 (Event #3: 625석, Event #4: 625석)", totalSeats);
 	}
 
 	/**

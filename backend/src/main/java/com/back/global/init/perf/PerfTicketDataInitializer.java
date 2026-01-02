@@ -44,15 +44,25 @@ public class PerfTicketDataInitializer {
 			return;
 		}
 
-		log.info("Ticket 초기 데이터 생성 중: 모든 유저({}명)에게 5개씩 티켓 배정 (총 {}장)",
-			users.size(), users.size() * 5);
+		log.info("Ticket 초기 데이터 생성 중: Event #4에만 티켓 배정 (빠른 초기화)");
 
 		int totalTickets = 0;
-		int ticketsPerUser = 5;
-		int ticketsPerEvent = (users.size() * ticketsPerUser) / 4; // 4개 이벤트에 균등 분배
 
-		// Event #1-4: 각 이벤트마다 티켓 생성
+		// Event #4에만 티켓 생성 (getMyTickets, getTicketDetail 테스트용)
+		// Event #1~3: 티켓 생성 건너뜀 (초기화 시간 단축)
 		for (long eventId = 1L; eventId <= 4L; eventId++) {
+			// Event #1, #2: 티켓 생성 건너뜀 (초기화 시간 단축)
+			if (eventId == 1L || eventId == 2L) {
+				log.info("Event #{} 건너뜀: 초기화 시간 단축", eventId);
+				continue;
+			}
+
+			// Event #3: selectSeat 부하 테스트용 (좌석 AVAILABLE 상태 유지)
+			if (eventId == 3L) {
+				log.info("Event #3 건너뜀: selectSeat 부하 테스트용 이벤트 (좌석은 모두 AVAILABLE 상태 유지)");
+				continue;
+			}
+
 			Event event = eventRepository.findById(eventId).orElse(null);
 			if (event == null) {
 				log.warn("Event #{}를 찾을 수 없습니다. 티켓 생성을 건너뜁니다.", eventId);
@@ -70,8 +80,9 @@ public class PerfTicketDataInitializer {
 				continue;
 			}
 
-			// 티켓 생성 개수 제한 (좌석 개수와 계획된 티켓 개수 중 작은 값)
-			int ticketCount = Math.min(ticketsPerEvent, seats.size());
+			// Event #4: getMyTickets, getTicketDetail 테스트용 티켓 100개 생성
+			// userId 1~100에게 각각 1장씩 배정 (순환 배정)
+			int ticketCount = Math.min(100, seats.size());
 
 			log.info("Event #{} ({})에 {}장의 티켓 생성 중...", eventId, event.getTitle(), ticketCount);
 
