@@ -38,7 +38,7 @@ public class QrService {
 	private final TicketService ticketService;
 
 	public QrService(
-		@Qualifier("activeSessionRedisTemplate")
+		@Qualifier("stringTemplate")
 		RedisTemplate<String, String> redisTemplate,
 		SiteProperties siteProperties,
 		TicketService ticketService

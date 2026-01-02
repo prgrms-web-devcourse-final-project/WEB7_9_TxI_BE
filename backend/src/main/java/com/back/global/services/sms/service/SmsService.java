@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.Random;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Service;
 
 import com.back.global.error.code.SmsErrorCode;
 import com.back.global.error.exception.ErrorException;

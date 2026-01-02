@@ -37,7 +37,7 @@ public class ActiveSessionCache {
 	private final ActiveSessionRepository activeSessionRepository;
 
 	public ActiveSessionCache(
-		@Qualifier("activeSessionRedisTemplate") RedisTemplate<String, String> redisTemplate,
+		@Qualifier("stringTemplate") RedisTemplate<String, String> redisTemplate,
 		ActiveSessionRepository activeSessionRepository
 	) {
 		this.redisTemplate = redisTemplate;

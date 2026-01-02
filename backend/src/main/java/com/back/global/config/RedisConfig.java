@@ -66,10 +66,11 @@ public class RedisConfig {
 		return template;
 	}
 
-	//ActiveSession용 RedisTemplate (String 직렬화)
+	//ActiveSession, QR용 RedisTemplate (String 직렬화)
 	//필드 2개(sessionId, tokenVersion)만 저장하므로 경량 String 직렬화 사용
-	@Bean(name = "activeSessionRedisTemplate")
-	public RedisTemplate<String, String> activeSessionRedisTemplate(
+	//스프링부트에서 기본적으로 제공하는 StringRedisTemplate과 이름 충돌하기 때문에 다르게 작명
+	@Bean(name = "stringTemplate")
+	public RedisTemplate<String, String> stringTemplate(
 		RedisConnectionFactory connectionFactory
 	) {
 		RedisTemplate<String, String> template = new RedisTemplate<>();
