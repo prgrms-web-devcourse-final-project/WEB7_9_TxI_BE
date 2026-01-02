@@ -110,14 +110,17 @@ export default function (data) {
   const offset = (__VU - 1 + __ITER) % data.hotSeats;
   const seatId = offset + 1; // 1~50
 
-  selectSeat(baseUrl, jwt, data.testId, eventId, seatId);
+  const selectRes = selectSeat(baseUrl, jwt, data.testId, eventId, seatId);
 
   // 사용자 반응 시간 랜덤화 (0.5~2.0초)
   // 실제 사용자처럼 행동하여 Pending Thread 과장 방지
   sleep(Math.random() * 1.5 + 0.5);
 
-  // 좌석 선택 취소 (재사용을 위해)
-  deselectSeat(baseUrl, jwt, data.testId, eventId, seatId);
+  // 좌석 선택에 성공했을 때만 취소 (재사용을 위해)
+  // 실패한 경우 deselectSeat 호출 방지 (불필요한 에러 로그 제거)
+  if (selectRes.status === 200) {
+    deselectSeat(baseUrl, jwt, data.testId, eventId, seatId);
+  }
 
   // 다음 선택 전 대기
   sleep(0.5);

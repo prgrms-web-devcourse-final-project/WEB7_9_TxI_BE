@@ -86,13 +86,16 @@ export default function (data) {
   const seatId = ((__VU - 1) % totalSeats) + 1; // 1~625
 
   // 좌석 선택
-  selectSeat(baseUrl, jwt, data.testId, eventId, seatId);
+  const selectRes = selectSeat(baseUrl, jwt, data.testId, eventId, seatId);
 
   // 사용자가 좌석을 확인하고 고민하는 시간 시뮬레이션 (0.5~2.0초)
   sleep(Math.random() * 1.5 + 0.5);
 
-  // 좌석 선택 취소 (재사용을 위해)
-  deselectSeat(baseUrl, jwt, data.testId, eventId, seatId);
+  // 좌석 선택에 성공했을 때만 취소 (재사용을 위해)
+  // 실패한 경우 deselectSeat 호출 방지 (불필요한 에러 로그 제거)
+  if (selectRes.status === 200) {
+    deselectSeat(baseUrl, jwt, data.testId, eventId, seatId);
+  }
 
   // 다음 선택 전 대기
   sleep(0.5);
