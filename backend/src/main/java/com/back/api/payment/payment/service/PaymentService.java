@@ -24,6 +24,7 @@ import com.back.domain.payment.payment.repository.PaymentRepository;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.error.code.PaymentErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.global.observability.metrics.BusinessMetrics;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,7 @@ public class PaymentService {
 	private final ApplicationEventPublisher eventPublisher;
 	private final PaymentRepository paymentRepository;
 	private final TossPaymentService tossPaymentService;
+	private final BusinessMetrics businessMetrics;
 
 	@Transactional
 	public PaymentReceiptResponse confirmPayment(
@@ -75,11 +77,13 @@ public class PaymentService {
 		if (!result.success()) {
 			order.markFailed();
 			ticketService.failPayment(order.getTicket().getId()); // Ticket FAILED + Seat 해제
+			businessMetrics.paymentConfirmFailure("PAYMENT_FAILED");
 			throw new ErrorException(PaymentErrorCode.PAYMENT_FAILED);
 		}
 
 		// PG사에서 받은 paymentKey와 클라이언트가 보낸 paymentKey 일치 여부 검증
 		if (!result.paymentKey().equals(clientPaymentKey)) {
+			businessMetrics.paymentConfirmFailure("PAYMENT_KEY_MISMATCH");
 			throw new ErrorException(PaymentErrorCode.PAYMENT_KEY_MISMATCH);
 		}
 
@@ -91,6 +95,9 @@ public class PaymentService {
 			order.getTicket().getId(),
 			userId
 		);
+
+		// 결제 성공 메트릭
+		businessMetrics.paymentConfirmSuccess(ticket.getEvent().getId());
 
 		// Queue 완료
 		queueEntryProcessService.completePayment(
@@ -156,6 +163,7 @@ public class PaymentService {
 		if (result.status() != ApproveStatus.DONE) { // 결제 승인 완료시 토스 API 응답 : Status = "DONE"
 			order.markFailed();
 			ticketService.failPayment(order.getTicket().getId()); // Ticket FAILED + Seat 해제
+			businessMetrics.paymentConfirmFailure("TOSS_PAYMENT_NOT_DONE");
 			//TODO 결제 실패 로직 추가
 			throw new ErrorException(PaymentErrorCode.PAYMENT_FAILED);
 		}
@@ -184,6 +192,9 @@ public class PaymentService {
 			order.getTicket().getId(),
 			userId
 		);
+
+		// 결제 성공 메트릭
+		businessMetrics.paymentConfirmSuccess(ticket.getEvent().getId());
 
 		// Queue 완료 // 테스트 데이터로 진행 시 : 큐 대기열이 없으므로 이부분도 주석처리
 		queueEntryProcessService.completePayment(

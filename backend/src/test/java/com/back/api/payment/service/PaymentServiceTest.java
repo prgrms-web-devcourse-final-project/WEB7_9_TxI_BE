@@ -59,6 +59,9 @@ class PaymentServiceTest {
 	@Mock
 	private ApplicationEventPublisher eventPublisher;
 
+	@Mock
+	private com.back.global.observability.metrics.BusinessMetrics businessMetrics;
+
 	private final Store store = StoreFactory.fakeStore(1L);
 
 	@Test
