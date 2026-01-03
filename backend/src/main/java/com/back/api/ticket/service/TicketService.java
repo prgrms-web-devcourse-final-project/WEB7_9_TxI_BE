@@ -89,7 +89,7 @@ public class TicketService {
 	@Transactional
 	public Ticket confirmPayment(Long ticketId, Long userId) {
 
-		Ticket ticket = ticketRepository.findById(ticketId)
+		Ticket ticket = ticketRepository.findByIdWithDetails(ticketId)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));
 
 		if (!ticket.getOwner().getId().equals(userId)) {
@@ -112,7 +112,7 @@ public class TicketService {
 	@Transactional
 	public void failPayment(Long ticketId) {
 
-		Ticket ticket = ticketRepository.findById(ticketId)
+		Ticket ticket = ticketRepository.findByIdWithDetails(ticketId)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));
 
 		// 티켓 실패 처리
@@ -157,7 +157,7 @@ public class TicketService {
 	 */
 	@Transactional
 	public void expireDraftTicket(Long ticketId) {
-		Ticket ticket = ticketRepository.findById(ticketId)
+		Ticket ticket = ticketRepository.findByIdWithDetails(ticketId)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));
 
 		// 핵심 책임: 상태 변경은 무조건
@@ -184,7 +184,7 @@ public class TicketService {
 			draftTicket.cancel();
 
 			if (draftTicket.getSeat() != null) {
-				seatService.markSeatAsAvailable(draftTicket.getEvent().getId(), draftTicket.getSeat().getId());
+				seatService.markSeatAsAvailable(eventId, draftTicket.getSeat().getId());
 			}
 
 		} catch (Exception e) {

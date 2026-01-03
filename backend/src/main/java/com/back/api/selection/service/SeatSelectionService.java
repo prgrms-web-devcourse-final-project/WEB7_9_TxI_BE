@@ -57,7 +57,7 @@ public class SeatSelectionService {
 
 		// 새 좌석 예약 성공했을 때만 기존 좌석 해제
 		if (oldSeat != null) {
-			seatService.markSeatAsAvailable(oldSeat.getEvent().getId(), oldSeat.getId());
+			seatService.markSeatAsAvailable(eventId, oldSeat.getId());
 		}
 
 		return ticket;
@@ -78,7 +78,7 @@ public class SeatSelectionService {
 
 		// 좌석 해제
 		Seat seat = ticket.getSeat();
-		seatService.markSeatAsAvailable(seat.getEvent().getId(), seat.getId());
+		seatService.markSeatAsAvailable(eventId, seat.getId());
 
 		// Ticket에서 좌석 제거 (티켓은 유지)
 		ticket.clearSeat();
