@@ -51,15 +51,15 @@ WaitFair는 이러한 환경적 편차를 제거하고, **누구나 동일한 �
 
 ## ✅ 주요 기능
 
-1. **JWT 기반 인증 / 인가 및 소셜 로그인**
-2. **CoolSMS를 비롯한 봇/매크로 차단 사전 등록**
-3. **Fisher-Yates Shuffle 기반 공정한 대기열 배정 & WebSocket 기반 실시간 순서 확인**
-4. **WebSocket 기반 실시간 좌석 선택**
-5. **Toss Payments 기반 결제**
-6. **Dynamic QR 티켓**
-7. **WebSocket 기반 실시간 알림**
-8. **관리자 대시보드**
-9. **Grafana Alloy 기반 서버 관측 파이프라인**
+1. JWT 기반 인증 / 인가 및 소셜 로그인
+2. CoolSMS를 비롯한 봇/매크로 차단 사전 등록
+3. Fisher-Yates Shuffle 기반 공정한 대기열 배정 & WebSocket 기반 실시간 순서 확인
+4. WebSocket 기반 실시간 좌석 선택
+5. Toss Payments 기반 결제
+6. Dynamic QR 티켓
+7. WebSocket 기반 실시간 알림
+8. 관리자 대시보드
+9. Grafana Alloy 기반 서버 관측 파이프라인
 
 ---
 
