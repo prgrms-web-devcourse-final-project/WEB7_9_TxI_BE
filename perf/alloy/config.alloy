@@ -59,3 +59,29 @@ loki.relabel "add_labels" {
     replacement  = "waitfair"
   }
 }
+
+// ============================
+// Prometheus Metrics → Grafana Cloud
+// ============================
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = env("PROMETHEUS_REMOTE_WRITE_URL")
+
+    basic_auth {
+      username = env("GRAFANA_USER_ID")
+      password = env("GRAFANA_API_TOKEN")
+    }
+  }
+}
+
+prometheus.scrape "waitfair_backend" {
+  targets = [{
+    __address__ = env("SPRING_BOOT_HOST"),
+  }]
+
+  metrics_path = "/actuator/prometheus"
+  scrape_interval = "15s"
+
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}

@@ -22,7 +22,7 @@ import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.code.ErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.global.http.CookieManager;
-import com.back.global.logging.MdcContext;
+import com.back.global.observability.MdcContext;
 import com.back.global.response.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

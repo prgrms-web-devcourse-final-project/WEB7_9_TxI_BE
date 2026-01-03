@@ -16,7 +16,7 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
-import com.back.global.logging.MdcContext;
+import com.back.global.observability.MdcContext;
 import com.back.global.properties.QueueSchedulerProperties;
 
 import lombok.RequiredArgsConstructor;

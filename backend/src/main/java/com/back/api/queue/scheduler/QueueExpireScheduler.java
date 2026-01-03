@@ -14,7 +14,7 @@ import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRepository;
-import com.back.global.logging.MdcContext;
+import com.back.global.observability.MdcContext;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

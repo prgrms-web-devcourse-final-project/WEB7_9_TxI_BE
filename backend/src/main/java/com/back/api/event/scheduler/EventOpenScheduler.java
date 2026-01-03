@@ -13,7 +13,7 @@ import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
-import com.back.global.logging.MdcContext;
+import com.back.global.observability.MdcContext;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

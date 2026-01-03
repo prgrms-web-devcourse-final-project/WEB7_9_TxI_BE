@@ -1,4 +1,4 @@
-package com.back.global.logging;
+package com.back.global.observability;
 
 import java.io.IOException;
 import java.util.Optional;

@@ -43,16 +43,17 @@ public class SeatService {
 	}
 
 	// 좌석 예약 (AVAILABLE -> RESERVED)
+	// 원자적 업데이트로 동시성 제어
 	@Transactional
 	public Seat reserveSeat(Long eventId, Long seatId, Long userId) {
-		// 1) AVAILABLE -> RESERVED를 원자적으로 시도
+		// AVAILABLE -> RESERVED를 원자적으로 시도
 		int updated = seatRepository.updateSeatStatusIfMatch(
 			eventId, seatId,
 			SeatStatus.AVAILABLE, SeatStatus.RESERVED
 		);
 
 		if (updated == 0) {
-			// 2) 실패 원인 구분
+			// 실패: 좌석이 없거나, 이미 다른 상태로 변경됨
 			Seat current = seatRepository.findByEventIdAndId(eventId, seatId)
 				.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
@@ -62,59 +63,76 @@ public class SeatService {
 			if (current.getSeatStatus() == SeatStatus.RESERVED) {
 				throw new ErrorException(SeatErrorCode.SEAT_ALREADY_RESERVED);
 			}
-			// 그 외 상태면 경합/선점
 			throw new ErrorException(SeatErrorCode.SEAT_CONCURRENCY_FAILURE);
 		}
 
-		// 3) 성공했으면 최신 상태의 Seat 반환 (이벤트 발행용)
-		Seat reserved = seatRepository.findByEventIdAndId(eventId, seatId)
+		// 성공: 좌석 조회 후 이벤트 발행
+		Seat seat = seatRepository.findByEventIdAndId(eventId, seatId)
 			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
-		eventPublisher.publishEvent(SeatStatusMessage.from(reserved));
-		return reserved;
+		SeatStatusMessage message = new SeatStatusMessage(
+			eventId,
+			seat.getId(),
+			seat.getSeatCode(),
+			seat.getSeatStatus().name(),
+			seat.getPrice(),
+			seat.getGrade().name()
+		);
+
+		eventPublisher.publishEvent(message);
+
+		return seat;
 	}
 
 	// 좌석을 SOLD 상태로 변경 (결제 완료 시)
 	// RESERVED -> SOLD 원자적 업데이트
 	@Transactional
 	public void markSeatAsSold(Long eventId, Long seatId) {
-		// 1) RESERVED -> SOLD를 원자적으로 시도
+		// RESERVED -> SOLD를 원자적으로 시도
 		int updated = seatRepository.updateSeatStatusIfMatch(
 			eventId, seatId,
 			SeatStatus.RESERVED, SeatStatus.SOLD
 		);
 
 		if (updated == 0) {
-			// 2) 실패 원인 구분
+			// 실패: 실패 원인 구분
 			Seat current = seatRepository.findByEventIdAndId(eventId, seatId)
 				.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
 			if (current.getSeatStatus() == SeatStatus.SOLD) {
 				throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
 			}
-			// AVAILABLE 또는 다른 상태면 상태 전이 오류
 			throw new ErrorException(SeatErrorCode.SEAT_STATUS_TRANSITION);
 		}
 
-		// 3) 성공했으면 최신 상태의 Seat 반환 (이벤트 발행용)
-		Seat sold = seatRepository.findByEventIdAndId(eventId, seatId)
+		// 성공: 좌석 조회 후 이벤트 발행
+		Seat seat = seatRepository.findByEventIdAndId(eventId, seatId)
 			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
-		eventPublisher.publishEvent(SeatStatusMessage.from(sold));
+		SeatStatusMessage message = new SeatStatusMessage(
+			eventId,
+			seat.getId(),
+			seat.getSeatCode(),
+			seat.getSeatStatus().name(),
+			seat.getPrice(),
+			seat.getGrade().name()
+		);
+
+		eventPublisher.publishEvent(message);
 	}
 
 	// 예약 취소 또는 결제 실패 시
 	// RESERVED -> AVAILABLE 원자적 업데이트
 	@Transactional
 	public void markSeatAsAvailable(Long eventId, Long seatId) {
-		// 1) RESERVED -> AVAILABLE를 원자적으로 시도
+		// RESERVED -> AVAILABLE를 원자적으로 시도
 		int updated = seatRepository.updateSeatStatusIfMatch(
 			eventId, seatId,
 			SeatStatus.RESERVED, SeatStatus.AVAILABLE
 		);
 
 		if (updated == 0) {
-			// 2) 실패 원인 구분
+			// 실패: 실패 원인 구분
 			Seat current = seatRepository.findByEventIdAndId(eventId, seatId)
 				.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
@@ -125,14 +143,22 @@ public class SeatService {
 				// 이미 AVAILABLE이면 무시 (멱등성)
 				return;
 			}
-			// 다른 상태면 상태 전이 오류
 			throw new ErrorException(SeatErrorCode.SEAT_STATUS_TRANSITION);
 		}
 
-		// 3) 성공했으면 최신 상태의 Seat 반환 (이벤트 발행용)
-		Seat available = seatRepository.findByEventIdAndId(eventId, seatId)
+		// 성공: 좌석 조회 후 이벤트 발행
+		Seat seat = seatRepository.findByEventIdAndId(eventId, seatId)
 			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
-		eventPublisher.publishEvent(SeatStatusMessage.from(available));
+		SeatStatusMessage message = new SeatStatusMessage(
+			eventId,
+			seat.getId(),
+			seat.getSeatCode(),
+			seat.getSeatStatus().name(),
+			seat.getPrice(),
+			seat.getGrade().name()
+		);
+
+		eventPublisher.publishEvent(message);
 	}
 }

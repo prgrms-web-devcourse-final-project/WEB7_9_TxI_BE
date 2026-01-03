@@ -20,7 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.code.ErrorCode;
-import com.back.global.logging.RequestIdFilter;
+import com.back.global.observability.RequestIdFilter;
 import com.back.global.properties.CorsProperties;
 import com.back.global.response.ApiResponse;
 import com.back.global.security.CustomAuthenticationFilter;

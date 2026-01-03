@@ -16,7 +16,7 @@ import com.back.api.ticket.service.TicketService;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 import com.back.domain.ticket.repository.TicketRepository;
-import com.back.global.logging.MdcContext;
+import com.back.global.observability.MdcContext;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
