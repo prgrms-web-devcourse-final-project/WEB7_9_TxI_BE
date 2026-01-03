@@ -44,7 +44,7 @@ WaitFair는 이러한 환경적 편차를 제거하고, **누구나 동일한 �
 
 - 사전 등록 + 대기열 랜덤 셔플로 공정한 티켓팅 환경 제공
 - 배치 단위 입장으로 트래픽 분산
-- reCAPTCHA & ****IP Rate Limiting & IDC IP 차단 & Device Fingerprintin 으로 봇/매크로 차단
+- reCAPTCHA & IP Rate Limiting & IDC IP 차단 & Device Fingerprintin 으로 봇/매크로 차단
 - Dynamic QR, 디바이스 중복 차단으로 암표 문제 방지
 
 ---
