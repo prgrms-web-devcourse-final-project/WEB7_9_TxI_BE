@@ -75,18 +75,64 @@ public class SeatService {
 	}
 
 	// 좌석을 SOLD 상태로 변경 (결제 완료 시)
+	// RESERVED -> SOLD 원자적 업데이트
 	@Transactional
-	public void markSeatAsSold(Seat seat) {
-		seat.markAsSold();
-		seatRepository.save(seat);
-		eventPublisher.publishEvent(SeatStatusMessage.from(seat));
+	public void markSeatAsSold(Long eventId, Long seatId) {
+		// 1) RESERVED -> SOLD를 원자적으로 시도
+		int updated = seatRepository.updateSeatStatusIfMatch(
+			eventId, seatId,
+			SeatStatus.RESERVED, SeatStatus.SOLD
+		);
+
+		if (updated == 0) {
+			// 2) 실패 원인 구분
+			Seat current = seatRepository.findByEventIdAndId(eventId, seatId)
+				.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+
+			if (current.getSeatStatus() == SeatStatus.SOLD) {
+				throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
+			}
+			// AVAILABLE 또는 다른 상태면 상태 전이 오류
+			throw new ErrorException(SeatErrorCode.SEAT_STATUS_TRANSITION);
+		}
+
+		// 3) 성공했으면 최신 상태의 Seat 반환 (이벤트 발행용)
+		Seat sold = seatRepository.findByEventIdAndId(eventId, seatId)
+			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+
+		eventPublisher.publishEvent(SeatStatusMessage.from(sold));
 	}
 
 	// 예약 취소 또는 결제 실패 시
+	// RESERVED -> AVAILABLE 원자적 업데이트
 	@Transactional
-	public void markSeatAsAvailable(Seat seat) {
-		seat.markAsAvailable();
-		seatRepository.save(seat);
-		eventPublisher.publishEvent(SeatStatusMessage.from(seat));
+	public void markSeatAsAvailable(Long eventId, Long seatId) {
+		// 1) RESERVED -> AVAILABLE를 원자적으로 시도
+		int updated = seatRepository.updateSeatStatusIfMatch(
+			eventId, seatId,
+			SeatStatus.RESERVED, SeatStatus.AVAILABLE
+		);
+
+		if (updated == 0) {
+			// 2) 실패 원인 구분
+			Seat current = seatRepository.findByEventIdAndId(eventId, seatId)
+				.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+
+			if (current.getSeatStatus() == SeatStatus.SOLD) {
+				throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
+			}
+			if (current.getSeatStatus() == SeatStatus.AVAILABLE) {
+				// 이미 AVAILABLE이면 무시 (멱등성)
+				return;
+			}
+			// 다른 상태면 상태 전이 오류
+			throw new ErrorException(SeatErrorCode.SEAT_STATUS_TRANSITION);
+		}
+
+		// 3) 성공했으면 최신 상태의 Seat 반환 (이벤트 발행용)
+		Seat available = seatRepository.findByEventIdAndId(eventId, seatId)
+			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+
+		eventPublisher.publishEvent(SeatStatusMessage.from(available));
 	}
 }

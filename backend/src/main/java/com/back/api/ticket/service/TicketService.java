@@ -100,7 +100,8 @@ public class TicketService {
 		ticket.markPaid(); // 결제 성공
 		ticket.issue();
 
-		seatService.markSeatAsSold(ticket.getSeat()); // 좌석 SOLD 처리
+		// 좌석 SOLD 처리 (원자적 업데이트)
+		seatService.markSeatAsSold(ticket.getEvent().getId(), ticket.getSeat().getId());
 
 		return ticket;
 	}
@@ -117,9 +118,9 @@ public class TicketService {
 		// 티켓 실패 처리
 		ticket.fail();
 
-		// 좌석 해제
+		// 좌석 해제 (원자적 업데이트)
 		if (ticket.getSeat() != null) {
-			seatService.markSeatAsAvailable(ticket.getSeat());
+			seatService.markSeatAsAvailable(ticket.getEvent().getId(), ticket.getSeat().getId());
 		}
 	}
 
@@ -162,9 +163,9 @@ public class TicketService {
 		// 핵심 책임: 상태 변경은 무조건
 		ticket.fail();
 
-		// 부가 책임: 좌석이 있으면 해제
+		// 부가 책임: 좌석이 있으면 해제 (원자적 업데이트)
 		if (ticket.getSeat() != null) {
-			seatService.markSeatAsAvailable(ticket.getSeat());
+			seatService.markSeatAsAvailable(ticket.getEvent().getId(), ticket.getSeat().getId());
 		}
 	}
 
@@ -183,7 +184,7 @@ public class TicketService {
 			draftTicket.cancel();
 
 			if (draftTicket.getSeat() != null) {
-				seatService.markSeatAsAvailable(draftTicket.getSeat());
+				seatService.markSeatAsAvailable(draftTicket.getEvent().getId(), draftTicket.getSeat().getId());
 			}
 
 		} catch (Exception e) {

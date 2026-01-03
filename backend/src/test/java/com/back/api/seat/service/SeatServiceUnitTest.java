@@ -236,30 +236,42 @@ class SeatServiceUnitTest {
 		@DisplayName("정상적으로 좌석을 판매 완료 상태로 변경한다")
 		void markSeatAsSold_Success() {
 			// given
-			testSeat.markAsReserved(); // 먼저 예약 상태로 변경
+			Seat soldSeat = Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000);
+			soldSeat.markAsReserved();
+			soldSeat.markAsSold();
 
-			given(seatRepository.save(any(Seat.class))).willReturn(testSeat);
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.RESERVED, SeatStatus.SOLD
+			)).willReturn(1); // 성공
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(soldSeat));
 
 			// when
-			seatService.markSeatAsSold(testSeat);
+			seatService.markSeatAsSold(eventId, seatId);
 
 			// then
-			assertThat(testSeat.getSeatStatus()).isEqualTo(SeatStatus.SOLD);
-			then(seatRepository).should().save(testSeat);
+			then(seatRepository).should().updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.RESERVED, SeatStatus.SOLD
+			);
+			then(seatRepository).should().findByEventIdAndId(eventId, seatId);
 			then(eventPublisher).should().publishEvent(any(SeatStatusMessage.class));
 		}
 
 		@Test
 		@DisplayName("AVAILABLE 상태에서 SOLD로 변경 시 실패한다")
 		void markSeatAsSold_FromAvailable_ThrowsException() {
-			// given - testSeat은 기본적으로 AVAILABLE 상태
+			// given - AVAILABLE 상태의 좌석
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.RESERVED, SeatStatus.SOLD
+			)).willReturn(0); // 실패
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(testSeat)); // AVAILABLE 상태
 
 			// when & then
-			assertThatThrownBy(() -> seatService.markSeatAsSold(testSeat))
+			assertThatThrownBy(() -> seatService.markSeatAsSold(eventId, seatId))
 				.isInstanceOf(ErrorException.class)
 				.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.SEAT_STATUS_TRANSITION);
 
-			then(seatRepository).should(never()).save(any());
 			then(eventPublisher).should(never()).publishEvent(any());
 		}
 	}
@@ -272,16 +284,22 @@ class SeatServiceUnitTest {
 		@DisplayName("정상적으로 좌석을 사용 가능 상태로 복구한다")
 		void markSeatAsAvailable_Success() {
 			// given
-			testSeat.markAsReserved(); // 먼저 예약 상태로 변경
+			Seat availableSeat = Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000);
 
-			given(seatRepository.save(any(Seat.class))).willReturn(testSeat);
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.RESERVED, SeatStatus.AVAILABLE
+			)).willReturn(1); // 성공
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(availableSeat));
 
 			// when
-			seatService.markSeatAsAvailable(testSeat);
+			seatService.markSeatAsAvailable(eventId, seatId);
 
 			// then
-			assertThat(testSeat.getSeatStatus()).isEqualTo(SeatStatus.AVAILABLE);
-			then(seatRepository).should().save(testSeat);
+			then(seatRepository).should().updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.RESERVED, SeatStatus.AVAILABLE
+			);
+			then(seatRepository).should().findByEventIdAndId(eventId, seatId);
 			then(eventPublisher).should().publishEvent(any(SeatStatusMessage.class));
 		}
 	}
@@ -315,30 +333,40 @@ class SeatServiceUnitTest {
 		@DisplayName("RESERVED -> SOLD 상태 변경이 성공한다")
 		void seatStatus_ReservedToSold_Success() {
 			// given
-			testSeat.markAsReserved();
+			Seat soldSeat = Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000);
+			soldSeat.markAsReserved();
+			soldSeat.markAsSold();
 
-			given(seatRepository.save(any(Seat.class))).willReturn(testSeat);
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.RESERVED, SeatStatus.SOLD
+			)).willReturn(1);
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(soldSeat));
 
 			// when
-			seatService.markSeatAsSold(testSeat);
+			seatService.markSeatAsSold(eventId, seatId);
 
-			// then
-			assertThat(testSeat.getSeatStatus()).isEqualTo(SeatStatus.SOLD);
+			// then - 실제 조회된 좌석의 상태 확인
+			assertThat(soldSeat.getSeatStatus()).isEqualTo(SeatStatus.SOLD);
 		}
 
 		@Test
 		@DisplayName("RESERVED -> AVAILABLE 상태 변경이 성공한다")
 		void seatStatus_ReservedToAvailable_Success() {
 			// given
-			testSeat.markAsReserved();
+			Seat availableSeat = Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000);
 
-			given(seatRepository.save(any(Seat.class))).willReturn(testSeat);
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.RESERVED, SeatStatus.AVAILABLE
+			)).willReturn(1);
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(availableSeat));
 
 			// when
-			seatService.markSeatAsAvailable(testSeat);
+			seatService.markSeatAsAvailable(eventId, seatId);
 
-			// then
-			assertThat(testSeat.getSeatStatus()).isEqualTo(SeatStatus.AVAILABLE);
+			// then - 실제 조회된 좌석의 상태 확인
+			assertThat(availableSeat.getSeatStatus()).isEqualTo(SeatStatus.AVAILABLE);
 		}
 	}
 
@@ -370,12 +398,18 @@ class SeatServiceUnitTest {
 		@DisplayName("좌석 판매 완료 시 SeatStatusMessage 이벤트가 발행된다")
 		void markSeatAsSold_PublishesEvent() {
 			// given
-			testSeat.markAsReserved();
+			Seat soldSeat = Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000);
+			soldSeat.markAsReserved();
+			soldSeat.markAsSold();
 
-			given(seatRepository.save(any(Seat.class))).willReturn(testSeat);
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.RESERVED, SeatStatus.SOLD
+			)).willReturn(1);
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(soldSeat));
 
 			// when
-			seatService.markSeatAsSold(testSeat);
+			seatService.markSeatAsSold(eventId, seatId);
 
 			// then
 			then(eventPublisher).should().publishEvent(any(SeatStatusMessage.class));
@@ -385,12 +419,16 @@ class SeatServiceUnitTest {
 		@DisplayName("좌석 복구 시 SeatStatusMessage 이벤트가 발행된다")
 		void markSeatAsAvailable_PublishesEvent() {
 			// given
-			testSeat.markAsReserved();
+			Seat availableSeat = Seat.createSeat(testEvent, "A1", SeatGrade.VIP, 150000);
 
-			given(seatRepository.save(any(Seat.class))).willReturn(testSeat);
+			given(seatRepository.updateSeatStatusIfMatch(
+				eventId, seatId, SeatStatus.RESERVED, SeatStatus.AVAILABLE
+			)).willReturn(1);
+			given(seatRepository.findByEventIdAndId(eventId, seatId))
+				.willReturn(Optional.of(availableSeat));
 
 			// when
-			seatService.markSeatAsAvailable(testSeat);
+			seatService.markSeatAsAvailable(eventId, seatId);
 
 			// then
 			then(eventPublisher).should().publishEvent(any(SeatStatusMessage.class));

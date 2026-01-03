@@ -4,9 +4,9 @@ spring:
       on-profile: perf
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/waitfair
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: ${PERF_SUPABASE_URL}
+    username: ${PERF_SUPABASE_USERNAME}
+    password: ${PERF_SUPABASE_PASSWORD}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2

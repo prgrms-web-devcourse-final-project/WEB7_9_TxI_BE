@@ -226,8 +226,8 @@ public class SeatServiceIntegrationTest {
 		// RESERVED로 변경 (version = 1)
 		Seat reserved = seatService.reserveSeat(eventId, seatId, userId);
 
-		// SOLD로 변경 (version = 2)
-		seatService.markSeatAsSold(reserved);
+		// SOLD로 변경 (version = 2) - 원자적 업데이트
+		seatService.markSeatAsSold(eventId, seatId);
 
 		Seat updatedSeat = seatRepository.findById(seatId).orElseThrow();
 		assertThat(updatedSeat.getSeatStatus()).isEqualTo(SeatStatus.SOLD);
@@ -249,8 +249,8 @@ public class SeatServiceIntegrationTest {
 		// RESERVED로 변경 (version = 1)
 		Seat reserved = seatService.reserveSeat(eventId, seatId, userId);
 
-		// AVAILABLE로 복구 (version = 2)
-		seatService.markSeatAsAvailable(reserved);
+		// AVAILABLE로 복구 (version = 2) - 원자적 업데이트
+		seatService.markSeatAsAvailable(eventId, seatId);
 
 		Seat updatedSeat = seatRepository.findById(seatId).orElseThrow();
 		assertThat(updatedSeat.getSeatStatus()).isEqualTo(SeatStatus.AVAILABLE);
@@ -265,7 +265,7 @@ public class SeatServiceIntegrationTest {
 		seatRepository.save(seat);
 
 		assertThatThrownBy(() ->
-			seatService.markSeatAsSold(seat)
+			seatService.markSeatAsSold(event.getId(), seat.getId())
 		).isInstanceOf(ErrorException.class)
 			.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.SEAT_STATUS_TRANSITION);
 	}

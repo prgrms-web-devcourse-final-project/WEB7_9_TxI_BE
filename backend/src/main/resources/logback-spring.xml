@@ -13,7 +13,7 @@
          - Spring Boot 기본 콘솔 로그 그대로
          - 파일로만 rolling
          ========================= -->
-    <springProfile name="local,dev">
+    <springProfile name="perf,local,dev">
 
         <!-- Spring Boot 기본 console appender 그대로 사용 -->
         <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
@@ -44,7 +44,7 @@
          PERF / PROD
          - JSON stdout only
          ========================= -->
-    <springProfile name="perf,prod">
+    <springProfile name="prod">
 
         <appender name="JSON_CONSOLE"
                   class="ch.qos.logback.core.ConsoleAppender">
