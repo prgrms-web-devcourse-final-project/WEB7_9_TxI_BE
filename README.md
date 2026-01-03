@@ -22,7 +22,7 @@ WaitFair는 이러한 환경적 편차를 제거하고, **누구나 동일한 �
 
 ### **팀원**
 
-| <a href="https://github.com/LeeMinwoo115”><img src=”https://github.com/LeeMinwoo115.png” width="100"/></a> | <a href="https://github.com/gksdud1109"><img src="https://github.com/gksdud1109.png" width="100"/></a> | <a href="https://github.com/kimeunkyoungg"><img src="https://github.com/kimeunkyoungg.png" width="100"/></a> | <a href="https://github.com/No-366"><img src="https://github.com/No-366.png" width="100"/></a> | <a href="https://github.com/thatgirls00"><img src="https://github.com/thatgirls00.png" width="100"/></a> |
+| <a href="https://github.com/LeeMinwoo115"><img src="https://github.com/LeeMinwoo115.png" width="100"/></a> | <a href="https://github.com/gksdud1109"><img src="https://github.com/gksdud1109.png" width="100"/></a> | <a href="https://github.com/kimeunkyoungg"><img src="https://github.com/kimeunkyoungg.png" width="100"/></a> | <a href="https://github.com/No-366"><img src="https://github.com/No-366.png" width="100"/></a> | <a href="https://github.com/thatgirls00"><img src="https://github.com/thatgirls00.png" width="100"/></a> |
 | --- | --- | --- | --- | --- |
 | **이민우** | **정한영** | **김은경** | **나웅철** | **전현수** |
 | PO | BE 팀장 | 팀원 | 팀원 | 팀원 |
