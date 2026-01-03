@@ -1,4 +1,4 @@
-package com.back.global.observability;
+package com.back.global.observability.metrics;
 
 import org.springframework.stereotype.Component;
 

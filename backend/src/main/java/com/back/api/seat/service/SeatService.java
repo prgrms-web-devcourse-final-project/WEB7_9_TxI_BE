@@ -14,6 +14,7 @@ import com.back.domain.seat.repository.SeatRepository;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.global.event.EventPublisher;
+import com.back.global.observability.metrics.BusinessMetrics;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +28,7 @@ public class SeatService {
 	private final SeatRepository seatRepository;
 	private final QueueEntryReadService queueEntryReadService;
 	private final EventPublisher eventPublisher;
+	private final BusinessMetrics businessMetrics;
 
 	// 이벤트의 좌석 목록 조회
 	@Transactional(readOnly = true)
@@ -53,16 +55,22 @@ public class SeatService {
 		);
 
 		if (updated == 0) {
+			// 동시성 충돌 발생 (CAS 실패)
+			businessMetrics.seatConcurrencyConflict(eventId);
+
 			// 실패: 좌석이 없거나, 이미 다른 상태로 변경됨
 			Seat current = seatRepository.findByEventIdAndId(eventId, seatId)
 				.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
 			if (current.getSeatStatus() == SeatStatus.SOLD) {
+				businessMetrics.seatSelectionFailure(eventId, "ALREADY_SOLD");
 				throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
 			}
 			if (current.getSeatStatus() == SeatStatus.RESERVED) {
+				businessMetrics.seatSelectionFailure(eventId, "ALREADY_RESERVED");
 				throw new ErrorException(SeatErrorCode.SEAT_ALREADY_RESERVED);
 			}
+			businessMetrics.seatSelectionFailure(eventId, "CONCURRENCY_FAILURE");
 			throw new ErrorException(SeatErrorCode.SEAT_CONCURRENCY_FAILURE);
 		}
 
@@ -80,6 +88,9 @@ public class SeatService {
 		);
 
 		eventPublisher.publishEvent(message);
+
+		// 좌석 선택 성공 메트릭
+		businessMetrics.seatSelectionSuccess(eventId);
 
 		return seat;
 	}
