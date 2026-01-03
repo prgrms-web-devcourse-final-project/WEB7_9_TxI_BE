@@ -11,8 +11,6 @@ import com.back.api.seat.service.SeatService;
 import com.back.api.ticket.dto.response.TicketResponse;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.seat.entity.Seat;
-import com.back.domain.seat.repository.SeatRepository;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 import com.back.domain.ticket.repository.TicketRepository;
@@ -20,7 +18,6 @@ import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.CommonErrorCode;
 import com.back.global.error.code.EventErrorCode;
-import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.code.TicketErrorCode;
 import com.back.global.error.exception.ErrorException;
 
@@ -38,47 +35,7 @@ public class TicketService {
 	private final TicketRepository ticketRepository;
 	private final UserRepository userRepository;
 	private final EventRepository eventRepository;
-	private final SeatRepository seatRepository;
 	private final SeatService seatService;
-
-	/**
-	 * Draft Ticket 생성 (좌석 선택 직후)
-	 *  - 결제 전 임시 티켓
-	 *  - 좌석 RESERVED 상태 이후에 호출됨
-	 */
-	public Ticket createDraftTicket(Long eventId, Long seatId, Long userId) {
-
-		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new ErrorException(CommonErrorCode.NOT_FOUND_USER));
-
-		Event event = eventRepository.findById(eventId)
-			.orElseThrow(() -> new ErrorException(EventErrorCode.NOT_FOUND_EVENT));
-
-		Seat seat = seatRepository.findByEventIdAndId(eventId, seatId)
-			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
-
-		// 좌석에 이미 PAID or ISSUED 티켓 있으면 안 됨
-		if (ticketRepository.existsBySeatIdAndTicketStatusIn(
-			seatId,
-			List.of(TicketStatus.PAID, TicketStatus.ISSUED))
-		) {
-			throw new ErrorException(TicketErrorCode.SEAT_ALREADY_PURCHASED);
-		}
-
-		// 이미 Draft Ticket이 존재하면 중복 생성 금지, 예외처리
-		if (ticketRepository.existsBySeatIdAndTicketStatus(seatId, TicketStatus.DRAFT)) {
-			throw new ErrorException(TicketErrorCode.TICKET_ALREADY_IN_PROGRESS);
-		}
-
-		Ticket ticket = Ticket.builder()
-			.owner(user)
-			.event(event)
-			.seat(seat)
-			.ticketStatus(TicketStatus.DRAFT)
-			.build();
-
-		return ticketRepository.save(ticket);
-	}
 
 	/**
 	 * Draft Ticket 조회 또는 생성 (유저+이벤트당 1개 유지)
@@ -132,7 +89,7 @@ public class TicketService {
 	@Transactional
 	public Ticket confirmPayment(Long ticketId, Long userId) {
 
-		Ticket ticket = ticketRepository.findById(ticketId)
+		Ticket ticket = ticketRepository.findByIdWithDetails(ticketId)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));
 
 		if (!ticket.getOwner().getId().equals(userId)) {
@@ -143,7 +100,8 @@ public class TicketService {
 		ticket.markPaid(); // 결제 성공
 		ticket.issue();
 
-		seatService.markSeatAsSold(ticket.getSeat()); // 좌석 SOLD 처리
+		// 좌석 SOLD 처리 (원자적 업데이트)
+		seatService.markSeatAsSold(ticket.getEvent().getId(), ticket.getSeat().getId());
 
 		return ticket;
 	}
@@ -154,15 +112,15 @@ public class TicketService {
 	@Transactional
 	public void failPayment(Long ticketId) {
 
-		Ticket ticket = ticketRepository.findById(ticketId)
+		Ticket ticket = ticketRepository.findByIdWithDetails(ticketId)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));
 
 		// 티켓 실패 처리
 		ticket.fail();
 
-		// 좌석 해제
+		// 좌석 해제 (원자적 업데이트)
 		if (ticket.getSeat() != null) {
-			seatService.markSeatAsAvailable(ticket.getSeat());
+			seatService.markSeatAsAvailable(ticket.getEvent().getId(), ticket.getSeat().getId());
 		}
 	}
 
@@ -205,15 +163,15 @@ public class TicketService {
 	 */
 	@Transactional
 	public void expireDraftTicket(Long ticketId) {
-		Ticket ticket = ticketRepository.findById(ticketId)
+		Ticket ticket = ticketRepository.findByIdWithDetails(ticketId)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));
 
 		// 핵심 책임: 상태 변경은 무조건
 		ticket.fail();
 
-		// 부가 책임: 좌석이 있으면 해제
+		// 부가 책임: 좌석이 있으면 해제 (원자적 업데이트)
 		if (ticket.getSeat() != null) {
-			seatService.markSeatAsAvailable(ticket.getSeat());
+			seatService.markSeatAsAvailable(ticket.getEvent().getId(), ticket.getSeat().getId());
 		}
 	}
 
@@ -232,7 +190,7 @@ public class TicketService {
 			draftTicket.cancel();
 
 			if (draftTicket.getSeat() != null) {
-				seatService.markSeatAsAvailable(draftTicket.getSeat());
+				seatService.markSeatAsAvailable(eventId, draftTicket.getSeat().getId());
 			}
 
 		} catch (Exception e) {

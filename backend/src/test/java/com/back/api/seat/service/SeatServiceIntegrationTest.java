@@ -83,8 +83,8 @@ public class SeatServiceIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("이벤트의 좌석 목록 조회 성공")
-	void getSeatsByEvent_Success() {
+	@DisplayName("전체 좌석 조회 성공 (grade = null)")
+	void getSeatsByEvent_AllSeats_Success() {
 
 		seatHelper.createSeat(event, "A1", SeatGrade.VIP, 150000);
 		seatHelper.createSeat(event, "A2", SeatGrade.S, 100000);
@@ -102,22 +102,56 @@ public class SeatServiceIntegrationTest {
 		// WAITING -> ENTERED 상태로 변경
 		queueEntryProcessService.processEntry(eventId, userId);
 
-		List<Seat> seats = seatService.getSeatsByEvent(eventId, userId);
+		// 전체 조회 (grade = null)
+		List<Seat> seats = seatService.getSeatsByEvent(eventId, userId, null);
 
 		assertThat(seats).hasSize(3);
 		assertThat(seats).extracting(Seat::getSeatCode).containsExactly("A3", "A2", "A1");
 	}
 
 	@Test
-	@DisplayName("존재하지 않는 이벤트의 좌석 조회 시 예외 발생")
-	void getSeatsByEvent_EventNotFound_Fail() {
+	@DisplayName("특정 grade 좌석만 조회 성공")
+	void getSeatsByEvent_ByGrade_Success() {
 
-		Long notExistEventId = 999L;
-		Long userId = 1L;
+		seatHelper.createSeat(event, "V1", SeatGrade.VIP, 150000);
+		seatHelper.createSeat(event, "V2", SeatGrade.VIP, 150000);
+		seatHelper.createSeat(event, "S1", SeatGrade.S, 100000);
+		seatHelper.createSeat(event, "R1", SeatGrade.R, 50000);
+
+		// User 생성
+		User user = userHelper.createUser(UserRole.NORMAL, null).user();
+		Long eventId = event.getId();
+		Long userId = user.getId();
+
+		// QueueEntry 생성 및 ENTERED 상태로 변경
+		QueueEntry queueEntry = new QueueEntry(user, event, 1);
+		queueEntryRepository.save(queueEntry);
+		queueEntryProcessService.processEntry(eventId, userId);
+
+		// VIP만 조회
+		List<Seat> vipSeats = seatService.getSeatsByEvent(eventId, userId, SeatGrade.VIP);
+
+		assertThat(vipSeats).hasSize(2);
+		assertThat(vipSeats).allMatch(seat -> seat.getGrade() == SeatGrade.VIP);
+		assertThat(vipSeats).extracting(Seat::getSeatCode).containsExactly("V1", "V2");
+	}
+
+	@Test
+	@DisplayName("큐에 입장하지 않은 사용자의 좌석 조회 실패")
+	void getSeatsByEvent_NotInQueue_Fail() {
+
+		seatHelper.createSeat(event, "A1", SeatGrade.VIP, 150000);
+
+		User user = userHelper.createUser(UserRole.NORMAL, null).user();
+		Long eventId = event.getId();
+		Long userId = user.getId();
+
+		// 큐에 입장하지 않은 상태
 
 		assertThatThrownBy(() ->
-			seatService.getSeatsByEvent(notExistEventId, userId)
-		).isInstanceOf(ErrorException.class);
+			seatService.getSeatsByEvent(eventId, userId, null)
+		).isInstanceOf(ErrorException.class)
+			.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.NOT_IN_QUEUE);
 	}
 
 	@Test
@@ -192,8 +226,8 @@ public class SeatServiceIntegrationTest {
 		// RESERVED로 변경 (version = 1)
 		Seat reserved = seatService.reserveSeat(eventId, seatId, userId);
 
-		// SOLD로 변경 (version = 2)
-		seatService.markSeatAsSold(reserved);
+		// SOLD로 변경 (version = 2) - 원자적 업데이트
+		seatService.markSeatAsSold(eventId, seatId);
 
 		Seat updatedSeat = seatRepository.findById(seatId).orElseThrow();
 		assertThat(updatedSeat.getSeatStatus()).isEqualTo(SeatStatus.SOLD);
@@ -215,8 +249,8 @@ public class SeatServiceIntegrationTest {
 		// RESERVED로 변경 (version = 1)
 		Seat reserved = seatService.reserveSeat(eventId, seatId, userId);
 
-		// AVAILABLE로 복구 (version = 2)
-		seatService.markSeatAsAvailable(reserved);
+		// AVAILABLE로 복구 (version = 2) - 원자적 업데이트
+		seatService.markSeatAsAvailable(eventId, seatId);
 
 		Seat updatedSeat = seatRepository.findById(seatId).orElseThrow();
 		assertThat(updatedSeat.getSeatStatus()).isEqualTo(SeatStatus.AVAILABLE);
@@ -231,7 +265,7 @@ public class SeatServiceIntegrationTest {
 		seatRepository.save(seat);
 
 		assertThatThrownBy(() ->
-			seatService.markSeatAsSold(seat)
+			seatService.markSeatAsSold(event.getId(), seat.getId())
 		).isInstanceOf(ErrorException.class)
 			.hasFieldOrPropertyWithValue("errorCode", SeatErrorCode.SEAT_STATUS_TRANSITION);
 	}

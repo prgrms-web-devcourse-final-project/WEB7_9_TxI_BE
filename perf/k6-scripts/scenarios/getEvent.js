@@ -3,17 +3,19 @@ import { check } from "k6";
 
 /**
  * GET /api/v1/events/{eventId}
- * 이벤트 단건 조회 시나리오 (공개 API, 인증 불필요)
+ * 이벤트 단건 조회 시나리오 (인증 필요)
  *
  * @param {string} baseUrl - API 기본 주소
+ * @param {string} jwt - 사용자 JWT 토큰
  * @param {string} testId - 테스트 실행 ID (로그/메트릭 태깅용)
  * @param {number} eventId - 조회할 이벤트 ID
  */
-export function getEvent(baseUrl, testId, eventId) {
+export function getEvent(baseUrl, jwt, testId, eventId) {
   const url = `${baseUrl}/api/v1/events/${eventId}`;
 
   const params = {
     headers: {
+      Authorization: `Bearer ${jwt}`,
       Accept: "application/json",
     },
     tags: {

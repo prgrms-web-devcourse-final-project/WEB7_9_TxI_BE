@@ -32,7 +32,7 @@ public class SeatSelectionController implements SeatSelectionApi {
 		@PathVariable Long eventId,
 		@PathVariable Long seatId
 	) {
-		Long userId = httpRequestContext.getUser().getId();
+		Long userId = httpRequestContext.getUserId();
 
 		Ticket draftTicket = seatSelectionService.selectSeatAndCreateTicket(eventId, seatId, userId);
 
@@ -51,7 +51,7 @@ public class SeatSelectionController implements SeatSelectionApi {
 	public ApiResponse<Void> deselectSeat(
 		@PathVariable Long eventId, @PathVariable Long seatId
 	) {
-		Long userId = httpRequestContext.getUser().getId();
+		Long userId = httpRequestContext.getUserId();
 
 		seatSelectionService.deselectSeatAndCancelTicket(eventId, seatId, userId);
 

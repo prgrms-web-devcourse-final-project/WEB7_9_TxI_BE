@@ -22,7 +22,7 @@ export const options = {
  *
  * 테스트 데이터 구조 (Event #4 기준):
  * - 총 사용자: 500명 (test1@test.com ~ test500@test.com)
- * - Event #4: CLOSED 상태, 100석 (모두 ISSUED 티켓)
+ * - Event #4: CLOSED 상태, 625석 (100장만 ISSUED 티켓 생성)
  * - 티켓 배정: 순환 배정 (i % users.size())
  *   → userId 1~100: 티켓 1장씩 보유 (Event #4)
  *   → userId 101~500: 티켓 없음 (빈 배열)

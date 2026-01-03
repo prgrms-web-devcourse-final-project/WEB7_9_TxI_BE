@@ -28,6 +28,9 @@ spring:
         use_sql_comments: false
         highlight_sql: false
 
+  flyway:
+    enabled: false  # perf 환경에서는 Hibernate DDL 사용
+
 logging:
   level:
     com.back: INFO

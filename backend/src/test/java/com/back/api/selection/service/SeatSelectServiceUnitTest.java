@@ -25,6 +25,7 @@ import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.store.entity.Store;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
+import com.back.domain.ticket.repository.TicketRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.code.SeatErrorCode;
@@ -47,6 +48,9 @@ class SeatSelectServiceUnitTest {
 
 	@Mock
 	private TicketService ticketService;
+
+	@Mock
+	private TicketRepository ticketRepository;
 
 	@Mock
 	private QueueEntryReadService queueEntryReadService;
@@ -99,6 +103,7 @@ class SeatSelectServiceUnitTest {
 			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
 			given(ticketService.getOrCreateDraft(eventId, userId)).willReturn(draftTicket);
 			given(seatService.reserveSeat(eventId, seatId, userId)).willReturn(testSeat);
+			given(ticketRepository.save(any(Ticket.class))).willReturn(draftTicket);
 
 			// when
 			Ticket result = seatSelectionService.selectSeatAndCreateTicket(eventId, seatId, userId);
@@ -113,7 +118,8 @@ class SeatSelectServiceUnitTest {
 			then(queueEntryReadService).should().isUserEntered(eventId, userId);
 			then(ticketService).should().getOrCreateDraft(eventId, userId);
 			then(seatService).should().reserveSeat(eventId, seatId, userId);
-			then(seatService).should(never()).markSeatAsAvailable(any());  // 기존 좌석 없음
+			then(ticketRepository).should().save(any(Ticket.class));
+			then(seatService).should(never()).markSeatAsAvailable(any(), any());  // 기존 좌석 없음
 		}
 
 		@Test
@@ -176,6 +182,7 @@ class SeatSelectServiceUnitTest {
 			given(queueEntryReadService.isUserEntered(eventId, userId)).willReturn(true);
 			given(ticketService.getOrCreateDraft(eventId, userId)).willReturn(draftTicket);
 			given(seatService.reserveSeat(eventId, seatId, userId)).willReturn(testSeat);
+			given(ticketRepository.save(any(Ticket.class))).willReturn(draftTicket);
 
 			// when
 			Ticket result = seatSelectionService.selectSeatAndCreateTicket(eventId, seatId, userId);

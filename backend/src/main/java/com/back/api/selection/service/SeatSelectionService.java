@@ -8,6 +8,7 @@ import com.back.api.seat.service.SeatService;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.seat.entity.Seat;
 import com.back.domain.ticket.entity.Ticket;
+import com.back.domain.ticket.repository.TicketRepository;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.exception.ErrorException;
 
@@ -22,32 +23,42 @@ public class SeatSelectionService {
 
 	private final SeatService seatService;
 	private final TicketService ticketService;
+	private final TicketRepository ticketRepository;
 	private final QueueEntryReadService queueEntryReadService;
 
 	/**
 	 * 좌석 선택 + DraftTicket 생성/업데이트
 	 * - 기존 Draft가 있으면 재사용 (좌석만 변경)
 	 * - 없으면 새로 생성
+	 *
+	 * 안전성 보장: 새 좌석 예약 성공 후에만 기존 좌석 해제
+	 * 동시성 제어: DB 원자적 업데이트 (updateSeatStatusIfMatch)
 	 */
 	@Transactional
 	public Ticket selectSeatAndCreateTicket(Long eventId, Long seatId, Long userId) {
+		// 큐 검증
 		if (!queueEntryReadService.isUserEntered(eventId, userId)) {
 			throw new ErrorException(SeatErrorCode.NOT_IN_QUEUE);
 		}
 
 		// Draft Ticket 조회 또는 생성 (1개 보장)
 		Ticket ticket = ticketService.getOrCreateDraft(eventId, userId);
+		Seat oldSeat = ticket.getSeat();
 
-		// 기존 좌석이 있으면 먼저 해제
-		if (ticket.hasSeat()) {
-			seatService.markSeatAsAvailable(ticket.getSeat());
-		}
-
-		// 새 좌석 예약
+		// 새 좌석 먼저 예약 (실패 시 기존 좌석 유지)
+		// updateSeatStatusIfMatch로 원자적 동시성 제어
 		Seat newSeat = seatService.reserveSeat(eventId, seatId, userId);
 
 		// Ticket에 좌석 할당
 		ticket.assignSeat(newSeat);
+
+		// 변경 사항을 명시적으로 저장
+		ticketRepository.save(ticket);
+
+		// 새 좌석 예약 성공했을 때만 기존 좌석 해제
+		if (oldSeat != null) {
+			seatService.markSeatAsAvailable(eventId, oldSeat.getId());
+		}
 
 		return ticket;
 	}
@@ -67,9 +78,12 @@ public class SeatSelectionService {
 
 		// 좌석 해제
 		Seat seat = ticket.getSeat();
-		seatService.markSeatAsAvailable(seat);
+		seatService.markSeatAsAvailable(eventId, seat.getId());
 
 		// Ticket에서 좌석 제거 (티켓은 유지)
 		ticket.clearSeat();
+
+		// 변경 사항을 명시적으로 저장
+		ticketRepository.save(ticket);
 	}
 }

@@ -31,69 +31,71 @@ public class PerfSeatDataInitializer {
 		}
 
 		int totalSeats = 0;
+		int seatsPerEvent = 625;
 
-		// Event #3 (OPEN 상태 콘서트): 500석 생성
-		Event event3 = eventRepository.findById(3L).orElse(null);
-		if (event3 == null) {
-			log.warn("Event #3을 찾을 수 없습니다.");
-		} else {
-			log.info("Seat 초기 데이터 생성 중: Event #3 ({}) - 500석 (VIP-A 50석, R-C 100석, S-B 150석, A-D 200석)",
-				event3.getTitle());
+		log.info("Seat 초기 데이터 생성 중: Event #3, #4만 생성 (빠른 초기화)");
 
-			List<Seat> seats3 = createSeatsForEvent3and4(event3);
-			seatRepository.saveAll(seats3);
-			totalSeats += seats3.size();
+		// Event #3, #4만 좌석 생성 (Event #1, #2는 건너뜀)
+		for (long eventId = 1L; eventId <= 4L; eventId++) {
+			// Event #1, #2: 좌석 생성 건너뜀 (초기화 시간 단축)
+			if (eventId == 1L || eventId == 2L) {
+				log.info("Event #{} 건너뜀: 초기화 시간 단축 (좌석 생성 안 함)", eventId);
+				continue;
+			}
 
-			log.info("✅ Event #3 Seat 데이터 생성 완료: {}석 (티켓팅 경쟁 부하테스트용)", seats3.size());
+			Event event = eventRepository.findById(eventId).orElse(null);
+			if (event == null) {
+				log.warn("Event #{}를 찾을 수 없습니다.", eventId);
+				continue;
+			}
+
+			log.info("Seat 초기 데이터 생성 중: Event #{} ({}) - {}석",
+				eventId, event.getTitle(), seatsPerEvent);
+
+			List<Seat> seats = createSeatsForEvent(event, eventId, seatsPerEvent);
+			seatRepository.saveAll(seats);
+			totalSeats += seats.size();
+
+			log.info("✅ Event #{} Seat 데이터 생성 완료: {}석", eventId, seats.size());
 		}
 
-		// Event #4 (CLOSED 상태 콘서트): 100석 생성
-		Event event4 = eventRepository.findById(4L).orElse(null);
-		if (event4 == null) {
-			log.warn("Event #4를 찾을 수 없습니다.");
-		} else {
-			log.info("Seat 초기 데이터 생성 중: Event #4 ({}) - 100석 (VIP-E 20석, R-G 30석, S-F 30석, A-H 20석)",
-				event4.getTitle());
-
-			List<Seat> seats4 = createSeatsForEvent3and4(event4);
-			seatRepository.saveAll(seats4);
-			totalSeats += seats4.size();
-
-			log.info("✅ Event #4 Seat 데이터 생성 완료: {}석 (티켓 조회/관리 부하테스트용)", seats4.size());
-		}
-
-		log.info("✅ Seat 데이터 생성 완료: 총 {}석 (Event #3: 500석, Event #4: 100석)", totalSeats);
+		log.info("✅ Seat 데이터 생성 완료: 총 {}석 (Event #3: 625석, Event #4: 625석)", totalSeats);
 	}
 
 	/**
-	 * Event #3용 좌석 생성
-	 * - 총 500석
-	 * - VIP: A1~A50 (50석)
-	 * - R: C1~C100 (100석)
-	 * - S: B1~B150 (150석)
-	 * - A: D1~D200 (200석)
+	 * 각 이벤트용 좌석 생성
+	 * - VIP: 10%
+	 * - R: 30%
+	 * - S: 40%
+	 * - A: 20%
 	 */
-	private List<Seat> createSeatsForEvent3and4(Event event) {
+	private List<Seat> createSeatsForEvent(Event event, long eventId, int totalSeats) {
 		List<Seat> seats = new ArrayList<>();
+		String prefix = String.valueOf((char) ('A' + (eventId - 1)));
 
-		// VIP: A1 ~ A50 (50석)
-		for (int i = 1; i <= 50; i++) {
-			seats.add(Seat.createSeat(event, "A" + i, SeatGrade.VIP, event.getMaxPrice()));
+		int vipCount = (int) (totalSeats * 0.1);
+		int rCount = (int) (totalSeats * 0.3);
+		int sCount = (int) (totalSeats * 0.4);
+		int aCount = totalSeats - vipCount - rCount - sCount;
+
+		// VIP
+		for (int i = 1; i <= vipCount; i++) {
+			seats.add(Seat.createSeat(event, prefix + "VIP" + i, SeatGrade.VIP, event.getMaxPrice()));
 		}
 
-		// R: C1 ~ C100 (100석)
-		for (int i = 1; i <= 100; i++) {
-			seats.add(Seat.createSeat(event, "C" + i, SeatGrade.R, event.getMaxPrice() - 20000));
+		// R
+		for (int i = 1; i <= rCount; i++) {
+			seats.add(Seat.createSeat(event, prefix + "R" + i, SeatGrade.R, event.getMaxPrice() - 20000));
 		}
 
-		// S: B1 ~ B150 (150석)
-		for (int i = 1; i <= 150; i++) {
-			seats.add(Seat.createSeat(event, "B" + i, SeatGrade.S, event.getMinPrice() + 30000));
+		// S
+		for (int i = 1; i <= sCount; i++) {
+			seats.add(Seat.createSeat(event, prefix + "S" + i, SeatGrade.S, event.getMinPrice() + 30000));
 		}
 
-		// A: D1 ~ D200 (200석)
-		for (int i = 1; i <= 200; i++) {
-			seats.add(Seat.createSeat(event, "D" + i, SeatGrade.A, event.getMinPrice()));
+		// A
+		for (int i = 1; i <= aCount; i++) {
+			seats.add(Seat.createSeat(event, prefix + "A" + i, SeatGrade.A, event.getMinPrice()));
 		}
 
 		return seats;

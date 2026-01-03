@@ -9,9 +9,13 @@ import { check } from "k6";
  * @param {string} jwt - 사용자 JWT 토큰
  * @param {string} testId - 테스트 실행 ID (로그/메트릭 태깅용)
  * @param {number} eventId - 조회할 이벤트 ID
+ * @param {string} grade - 좌석 등급 (VIP, R, S, A) - optional
  */
-export function getSeats(baseUrl, jwt, testId, eventId) {
-  const url = `${baseUrl}/api/v1/events/${eventId}/seats`;
+export function getSeats(baseUrl, jwt, testId, eventId, grade = null) {
+  let url = `${baseUrl}/api/v1/events/${eventId}/seats`;
+  if (grade) {
+    url += `?grade=${grade}`;
+  }
 
   const params = {
     headers: {
@@ -41,7 +45,7 @@ export function getSeats(baseUrl, jwt, testId, eventId) {
     "status 200": (r) => r.status === 200,
     "data exists": () => data !== null,
     "data is array": () => Array.isArray(data),
-    "seats length ≥ 0": () => data.length >= 0,
+    "seats length ≥ 0": () => Array.isArray(data) && data.length >= 0,
   });
 
   // 좌석이 있을 경우 첫 번째 좌석 구조 검증

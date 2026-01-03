@@ -2,14 +2,14 @@ package com.back.api.seat.service;
 
 import java.util.List;
 
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.queue.service.QueueEntryReadService;
 import com.back.api.seat.dto.response.SeatStatusMessage;
-import com.back.domain.event.repository.EventRepository;
 import com.back.domain.seat.entity.Seat;
+import com.back.domain.seat.entity.SeatGrade;
+import com.back.domain.seat.entity.SeatStatus;
 import com.back.domain.seat.repository.SeatRepository;
 import com.back.global.error.code.SeatErrorCode;
 import com.back.global.error.exception.ErrorException;
@@ -25,65 +25,114 @@ import lombok.RequiredArgsConstructor;
 public class SeatService {
 
 	private final SeatRepository seatRepository;
-	private final EventRepository eventRepository;
 	private final QueueEntryReadService queueEntryReadService;
 	private final EventPublisher eventPublisher;
 
-	/**
-	 * 이벤트의 좌석 목록 조회
-	 */
+	// 이벤트의 좌석 목록 조회
 	@Transactional(readOnly = true)
-	public List<Seat> getSeatsByEvent(Long eventId, Long userId) {
-		// 이벤트 존재 여부 확인
-		if (!eventRepository.existsById(eventId)) {
-			throw new ErrorException(SeatErrorCode.NOT_FOUND_EVENT);
-		}
-		// TODO: Q ENTERED 상태인지 확인
+	public List<Seat> getSeatsByEvent(Long eventId, Long userId, SeatGrade grade) {
+		// Q ENTERED 상태인지 확인
 		if (!queueEntryReadService.isUserEntered(eventId, userId)) {
 			throw new ErrorException(SeatErrorCode.NOT_IN_QUEUE);
 		}
 
-		return seatRepository.findSortedSeatListByEventId(eventId);
+		// grade가 null이면 전체 조회, 아니면 grade별 조회
+		return grade == null
+			? seatRepository.findAllSeatsByEventId(eventId)
+			: seatRepository.findSeatsByEventIdAndGrade(eventId, grade);
 	}
 
-	/**
-	 * 좌석 예약 (AVAILABLE -> RESERVED)
-	 */
+	// 좌석 예약 (AVAILABLE -> RESERVED)
 	@Transactional
 	public Seat reserveSeat(Long eventId, Long seatId, Long userId) {
-		Seat seat = seatRepository.findByEventIdAndId(eventId, seatId)
-			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+		// 1) AVAILABLE -> RESERVED를 원자적으로 시도
+		int updated = seatRepository.updateSeatStatusIfMatch(
+			eventId, seatId,
+			SeatStatus.AVAILABLE, SeatStatus.RESERVED
+		);
 
-		try {
-			seat.markAsReserved();
+		if (updated == 0) {
+			// 2) 실패 원인 구분
+			Seat current = seatRepository.findByEventIdAndId(eventId, seatId)
+				.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
 
-			Seat saved = seatRepository.save(seat);
-
-			eventPublisher.publishEvent(SeatStatusMessage.from(saved));
-
-			return saved;
-		} catch (ObjectOptimisticLockingFailureException ex) {
+			if (current.getSeatStatus() == SeatStatus.SOLD) {
+				throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
+			}
+			if (current.getSeatStatus() == SeatStatus.RESERVED) {
+				throw new ErrorException(SeatErrorCode.SEAT_ALREADY_RESERVED);
+			}
+			// 그 외 상태면 경합/선점
 			throw new ErrorException(SeatErrorCode.SEAT_CONCURRENCY_FAILURE);
 		}
+
+		// 3) 성공했으면 최신 상태의 Seat 반환 (이벤트 발행용)
+		Seat reserved = seatRepository.findByEventIdAndId(eventId, seatId)
+			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+
+		eventPublisher.publishEvent(SeatStatusMessage.from(reserved));
+		return reserved;
 	}
 
-	/**
-	 * 좌석을 SOLD 상태로 변경 (결제 완료 시)
-	 */
+	// 좌석을 SOLD 상태로 변경 (결제 완료 시)
+	// RESERVED -> SOLD 원자적 업데이트
 	@Transactional
-	public void markSeatAsSold(Seat seat) {
-		seat.markAsSold();
-		seatRepository.save(seat);
-		eventPublisher.publishEvent(SeatStatusMessage.from(seat));
+	public void markSeatAsSold(Long eventId, Long seatId) {
+		// 1) RESERVED -> SOLD를 원자적으로 시도
+		int updated = seatRepository.updateSeatStatusIfMatch(
+			eventId, seatId,
+			SeatStatus.RESERVED, SeatStatus.SOLD
+		);
+
+		if (updated == 0) {
+			// 2) 실패 원인 구분
+			Seat current = seatRepository.findByEventIdAndId(eventId, seatId)
+				.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+
+			if (current.getSeatStatus() == SeatStatus.SOLD) {
+				throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
+			}
+			// AVAILABLE 또는 다른 상태면 상태 전이 오류
+			throw new ErrorException(SeatErrorCode.SEAT_STATUS_TRANSITION);
+		}
+
+		// 3) 성공했으면 최신 상태의 Seat 반환 (이벤트 발행용)
+		Seat sold = seatRepository.findByEventIdAndId(eventId, seatId)
+			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+
+		eventPublisher.publishEvent(SeatStatusMessage.from(sold));
 	}
 
-	/**
-	 * 예약 취소 또는 결제 실패 시
-	 */
+	// 예약 취소 또는 결제 실패 시
+	// RESERVED -> AVAILABLE 원자적 업데이트
 	@Transactional
-	public void markSeatAsAvailable(Seat seat) {
-		seat.markAsAvailable();
-		seatRepository.save(seat);
-		eventPublisher.publishEvent(SeatStatusMessage.from(seat));
+	public void markSeatAsAvailable(Long eventId, Long seatId) {
+		// 1) RESERVED -> AVAILABLE를 원자적으로 시도
+		int updated = seatRepository.updateSeatStatusIfMatch(
+			eventId, seatId,
+			SeatStatus.RESERVED, SeatStatus.AVAILABLE
+		);
+
+		if (updated == 0) {
+			// 2) 실패 원인 구분
+			Seat current = seatRepository.findByEventIdAndId(eventId, seatId)
+				.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+
+			if (current.getSeatStatus() == SeatStatus.SOLD) {
+				throw new ErrorException(SeatErrorCode.SEAT_ALREADY_SOLD);
+			}
+			if (current.getSeatStatus() == SeatStatus.AVAILABLE) {
+				// 이미 AVAILABLE이면 무시 (멱등성)
+				return;
+			}
+			// 다른 상태면 상태 전이 오류
+			throw new ErrorException(SeatErrorCode.SEAT_STATUS_TRANSITION);
+		}
+
+		// 3) 성공했으면 최신 상태의 Seat 반환 (이벤트 발행용)
+		Seat available = seatRepository.findByEventIdAndId(eventId, seatId)
+			.orElseThrow(() -> new ErrorException(SeatErrorCode.NOT_FOUND_SEAT));
+
+		eventPublisher.publishEvent(SeatStatusMessage.from(available));
 	}
 }
