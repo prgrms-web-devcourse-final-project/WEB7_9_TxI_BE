@@ -189,14 +189,10 @@ LOKI_PUSH_URL=your_loki_url
 ![WebSocket](https://img.shields.io/badge/WebSocket%20(STOMP)-010101?style=for-the-badge&logo=socket.io&logoColor=white)
 ![reCAPTCHA](https://img.shields.io/badge/reCAPTCHA-4285F4?style=for-the-badge&logo=google&logoColor=white)
 
----
-
 ### Database
 
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![H2 Database](https://img.shields.io/badge/H2%20Database-003B57?style=for-the-badge&logo=h2&logoColor=white)
-
----
 
 ### Infra
 
@@ -206,16 +202,12 @@ LOKI_PUSH_URL=your_loki_url
 ![S3](https://img.shields.io/badge/Amazon%20S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
----
-
 ### Observability & Performance
 
 ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
 ![k6](https://img.shields.io/badge/k6-7D64FF?style=for-the-badge&logo=k6&logoColor=white)
 ![Doppler](https://img.shields.io/badge/Doppler-000000?style=for-the-badge&logo=doppler&logoColor=white)
-
----
 
 ### External Services
 
@@ -284,7 +276,7 @@ LOKI_PUSH_URL=your_loki_url
 
 ---
 
-## 🔤 코드 컨벤션
+## ✅ 코드 컨벤션
 
 ### **네이버 Java 스타일 가이드 기반**
 
