@@ -40,10 +40,17 @@ import lombok.extern.slf4j.Slf4j;
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private static final String BEARER_PREFIX = "Bearer ";
 
-	private static final Set<String> AUTH_WHITELIST = Set.of(
+	private static final Set<String> AUTH_EXACT_WHITELIST = Set.of(
 		"/api/v1/auth/login",
 		"/api/v1/auth/signup",
-		"/api/v1/tickets/entry/verify"
+		"/api/v1/tickets/entry/verify",
+		"/api/v1/auth/oauth/exchange"
+	);
+
+	private static final Set<String> AUTH_PREFIX_WHITELIST = Set.of(
+		"/api/v1/auth/",
+		"/oauth2/",
+		"/login/oauth2/"
 	);
 
 	private static final Set<String> PATH_PREFIX_WHITELIST = Set.of(
@@ -91,7 +98,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		// bypass
 		if ("OPTIONS".equalsIgnoreCase(request.getMethod())
 			|| !requestUrl.startsWith("/api/")
-			|| AUTH_WHITELIST.contains(requestUrl)
+			|| isAuthPrefixWhitelisted(requestUrl)
+			|| AUTH_EXACT_WHITELIST.contains(requestUrl)
 			|| isWhitelistedPath(requestUrl)
 		) {
 			filterChain.doFilter(request, response);
@@ -154,6 +162,14 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		} finally {
 			MdcContext.removeUserId(); // 다음 스레드 재사용을 위해 반드시 제거
 		}
+	}
+
+	private boolean isAuthPrefixWhitelisted(String requestUrl) {
+		for (String prefix : AUTH_PREFIX_WHITELIST) {
+			if (requestUrl.startsWith(prefix))
+				return true;
+		}
+		return false;
 	}
 
 	private boolean isWhitelistedPath(String requestUrl) {

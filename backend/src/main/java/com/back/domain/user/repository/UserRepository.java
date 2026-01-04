@@ -19,4 +19,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@Query(value = "SELECT * FROM users WHERE id = :id", nativeQuery = true)
 	Optional<User> findIncludingDeletedById(@Param("id") Long id);
+
+	Optional<User> findByProviderId(String providerId);
 }

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 
+import com.back.domain.auth.entity.ProviderType;
 import com.back.domain.store.entity.Store;
 import com.back.global.entity.BaseEntity;
 
@@ -46,7 +47,7 @@ public class User extends BaseEntity {
 	)
 	private Long id;
 
-	@Column(nullable = false, length = 100, unique = true)
+	@Column(length = 100)
 	private String email;
 
 	@Column(nullable = false, name = "full_name", length = 30)
@@ -72,13 +73,21 @@ public class User extends BaseEntity {
 	@Column(name = "deleted_at")
 	private LocalDateTime deleteDate;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "provider_type")
+	private ProviderType providerType;
+
+	@Column(name = "provider_id")
+	private String providerId;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "store_id", foreignKey = @ForeignKey(name = "fk_user_store"))
 	private Store store;
 
 	@Builder
 	public User(String email, String fullName, String nickname, String password,
-		LocalDate birthDate, UserRole role, UserActiveStatus activeStatus, Store store) {
+		LocalDate birthDate, UserRole role, UserActiveStatus activeStatus, Store store,
+		String providerId, ProviderType providerType) {
 		this.email = email;
 		this.fullName = fullName;
 		this.nickname = nickname;
@@ -87,6 +96,8 @@ public class User extends BaseEntity {
 		this.role = role;
 		this.activeStatus = activeStatus;
 		this.store = store;
+		this.providerId = providerId;
+		this.providerType = providerType;
 	}
 
 	public void update(String fullName, String nickname, LocalDate birthDate) {

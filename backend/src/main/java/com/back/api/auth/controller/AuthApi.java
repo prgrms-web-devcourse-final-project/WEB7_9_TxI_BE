@@ -3,6 +3,7 @@ package com.back.api.auth.controller;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.back.api.auth.dto.request.LoginRequest;
+import com.back.api.auth.dto.request.OAuthExchangeRequest;
 import com.back.api.auth.dto.request.SignupRequest;
 import com.back.api.auth.dto.request.VerifyPasswordRequest;
 import com.back.api.auth.dto.response.AuthResponse;
@@ -43,4 +44,7 @@ public interface AuthApi {
 		"PASSWORD_MISMATCH"
 	})
 	ApiResponse<Void> verifyPassword(@Valid @RequestBody VerifyPasswordRequest request);
+
+	@Operation(summary = "토큰 조회", description = "SNS 로그인 후 토큰 조회")
+	ApiResponse<AuthResponse> exchange(@Valid @RequestBody OAuthExchangeRequest request);
 }
