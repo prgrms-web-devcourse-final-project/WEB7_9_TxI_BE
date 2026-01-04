@@ -15,6 +15,7 @@ import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRepository;
 import com.back.global.observability.MdcContext;
+import com.back.global.observability.metrics.SchedulerMetrics;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +26,11 @@ import lombok.extern.slf4j.Slf4j;
 @Profile({"perf"})
 public class QueueExpireScheduler {
 
+	private static final String JOB_NAME = "QueueExpire";
+
 	private final QueueEntryRepository queueEntryRepository;
 	private final QueueEntryProcessService queueEntryProcessService;
+	private final SchedulerMetrics schedulerMetrics;
 
 	@Scheduled(cron = "${queue.scheduler.expire.cron}", zone = "Asia/Seoul")
 	@SchedulerLock(
@@ -87,9 +91,9 @@ public class QueueExpireScheduler {
 				ex
 			);
 		} finally {
+			schedulerMetrics.recordDuration(JOB_NAME, System.currentTimeMillis() - startAt);
 			MdcContext.removeRunId();
 		}
-
 	}
 
 }

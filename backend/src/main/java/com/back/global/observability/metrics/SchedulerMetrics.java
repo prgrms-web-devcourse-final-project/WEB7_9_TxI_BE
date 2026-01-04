@@ -1,5 +1,7 @@
 package com.back.global.observability.metrics;
 
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.stereotype.Component;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -16,5 +18,9 @@ public class SchedulerMetrics {
 		return Timer.builder("scheduler.execution.duration")
 			.tag("jobName", jobName)
 			.register(meterRegistry);
+	}
+
+	public void recordDuration(String jobName, long durationMs) {
+		schedulerTimer(jobName).record(durationMs, TimeUnit.MILLISECONDS);
 	}
 }
