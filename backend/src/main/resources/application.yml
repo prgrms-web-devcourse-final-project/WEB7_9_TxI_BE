@@ -222,3 +222,28 @@ resilience4j:
           - org.springframework.data.redis.RedisConnectionFailureException
           - io.lettuce.core.RedisConnectionException
           - io.lettuce.core.RedisCommandTimeoutException
+      tossPayment:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        recordExceptions:
+          - java.io.IOException
+          - java.net.SocketTimeoutException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.RestClientException
+  timelimiter:
+    instances:
+      tossPayment:
+        timeoutDuration: 5s
+        cancelRunningFuture: true
+  retry:
+    instances:
+      tossPayment:
+        maxAttempts: 2
+        waitDuration: 500ms
+        retryExceptions:
+          - java.io.IOException
+          - org.springframework.web.client.ResourceAccessException
