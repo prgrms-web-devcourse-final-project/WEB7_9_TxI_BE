@@ -12,6 +12,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
 import io.github.bucket4j.redis.lettuce.cas.LettuceBasedProxyManager;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
@@ -44,26 +45,19 @@ public class Bucket4jConfig {
 		LettuceConnectionFactory lettuceFactory = (LettuceConnectionFactory)redisConnectionFactory;
 		RedisStandaloneConfiguration standaloneConfig = lettuceFactory.getStandaloneConfiguration();
 
-		// Redis URI 생성 (비밀번호 포함)
-		String redisUri;
+		RedisURI.Builder builder = RedisURI.builder()
+			.withHost(standaloneConfig.getHostName())
+			.withPort(standaloneConfig.getPort());
+
 		RedisPassword password = standaloneConfig.getPassword();
+
+		// Redis URI 생성 (비밀번호 포함)\
 		if (password.isPresent()) {
-			// redis://:{password}@{host}:{port} 형식
-			redisUri = String.format("redis://:%s@%s:%d",
-				new String(password.get()),
-				standaloneConfig.getHostName(),
-				standaloneConfig.getPort()
-			);
-		} else {
-			// redis://{host}:{port} 형식
-			redisUri = String.format("redis://%s:%d",
-				standaloneConfig.getHostName(),
-				standaloneConfig.getPort()
-			);
+			builder.withPassword(password.get());
 		}
 
 		// Redis Client 생성
-		redisClient = RedisClient.create(redisUri);
+		redisClient = RedisClient.create(builder.build());
 
 		// Redis Connection 생성
 		connection = redisClient.connect(
