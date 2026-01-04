@@ -25,6 +25,7 @@ public record V2_PaymentConfirmResponse(
 	 * V2_Order로부터 응답 객체 생성
 	 * - 변수 추출로 중복 접근 방지 (getTicket() 1번만 호출)
 	 * - N+1 쿼리 방지를 위해 order는 fetch join 필수
+	 * - 멱등성 응답에서 Payment가 null일 수 있음 (이미 결제된 주문 조회 시)
 	 */
 	public static V2_PaymentConfirmResponse from(V2_Order order, boolean success) {
 		var ticket = order.getTicket();
@@ -37,7 +38,7 @@ public record V2_PaymentConfirmResponse(
 			success,
 			order.getAmount(),
 			ticket.getCreateAt(),
-			payment.getMethod(),
+			payment != null ? payment.getMethod() : null,
 			ticket.getId(),
 			event.getTitle(),
 			event.getPlace(),

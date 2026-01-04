@@ -31,6 +31,7 @@ public class OrderService {
 	private final OrderRepository orderRepository;
 	private final TicketService ticketService;
 	private final V2_OrderRepository v2_orderRepository;
+
 	/**
 	 * 주문 생성
 	 * draft 티켓 확인 -> 주문 생성 -> 티켓 상태 PAID로 변경
@@ -129,6 +130,19 @@ public class OrderService {
 		// 티켓이 DRAFT 상태인지 확인
 		Ticket draft = ticketService.getDraftTicket(orderRequestDto.eventId(), orderRequestDto.seatId(), userId);
 
+		// 이미 PENDING 상태의 Order가 있는지 확인
+		// 다중 요청 방어 로직
+		Optional<V2_Order> existingOrder = v2_orderRepository.findByTicket_IdAndStatus(
+			draft.getId(),
+			OrderStatus.PENDING
+		);
+
+		if (existingOrder.isPresent()) {
+			// 기존 Order 재사용 (새로 만들지 않음)
+			log.info("Duplicate order request, reusing existing orderId={}", existingOrder.get().getOrderId());
+			return V2_OrderResponseDto.from(existingOrder.get());
+		}
+
 		// 금액 일치 여부 확인
 		Integer actualAmount = draft.getSeat().getPrice();
 		if (!orderRequestDto.amount().equals(actualAmount.longValue())) {
@@ -168,5 +182,25 @@ public class OrderService {
 		}
 
 		return order;
+	}
+
+	/**
+	 * Order 검증 후 ticketId만 반환 (PG 호출 전 검증용)
+	 */
+	@Transactional(readOnly = true)
+	public Long v2_validateAndGetTicketId(String orderId, Long userId, Long clientAmount) {
+		V2_Order order = v2_getOrderForPayment(orderId, userId, clientAmount);
+		return order.getTicket().getId();
+	}
+
+	/**
+	 * 이미 결제 완료된 Order 조회 (멱등성 보장용)
+	 * - PAID 상태 + 소유자 확인
+	 */
+	@Transactional(readOnly = true)
+	public Optional<V2_Order> v2_findPaidOrder(String orderId, Long userId) {
+		return v2_orderRepository.findById(orderId)
+			.filter(order -> order.getStatus() == OrderStatus.PAID)
+			.filter(order -> order.getTicket().getOwner().getId().equals(userId));
 	}
 }
