@@ -234,4 +234,3 @@ resilience4j:
           - java.net.SocketTimeoutException
           - org.springframework.web.client.ResourceAccessException
           - org.springframework.web.client.RestClientException
-  # tossPayment retry 미적용: 결제 API 중복 호출 시 이중 결제 위험

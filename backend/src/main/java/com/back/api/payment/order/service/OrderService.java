@@ -183,4 +183,13 @@ public class OrderService {
 
 		return order;
 	}
+
+	/**
+	 * Order 검증 후 ticketId만 반환 (PG 호출 전 검증용)
+	 */
+	@Transactional(readOnly = true)
+	public Long v2_validateAndGetTicketId(String orderId, Long userId, Long clientAmount) {
+		V2_Order order = v2_getOrderForPayment(orderId, userId, clientAmount);
+		return order.getTicket().getId();
+	}
 }
