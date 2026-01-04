@@ -1,11 +1,14 @@
 package com.back.api.payment.payment.service;
 
+import java.util.Optional;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.payment.order.service.OrderService;
 import com.back.api.payment.payment.client.PaymentClient;
+import com.back.domain.payment.order.entity.V2_Order;
 import com.back.api.payment.payment.dto.request.PaymentConfirmCommand;
 import com.back.api.payment.payment.dto.request.V2_PaymentConfirmRequest;
 import com.back.api.payment.payment.dto.response.PaymentConfirmResult;
@@ -130,6 +133,7 @@ public class PaymentService {
 	 * - 외부 API 타임아웃 시 트랜잭션 롤백 문제 방지
 	 *
 	 * 처리 흐름:
+	 * 0. 멱등성 확인 (이미 결제 완료된 주문이면 기존 결과 반환)
 	 * 1. Order 검증 (읽기 트랜잭션)
 	 * 2. PG API 호출 (트랜잭션 밖)
 	 * 3. 성공/실패 DB 처리 (각각 단일 쓰기 트랜잭션 - PaymentTransactionService)
@@ -140,6 +144,14 @@ public class PaymentService {
 		Long clientAmount,
 		Long userId
 	) {
+		// 0. 멱등성 확인: 이미 결제 완료된 주문이면 기존 결과 반환
+		Optional<V2_Order> paidOrder = orderService.v2_findPaidOrder(orderId, userId);
+		if (paidOrder.isPresent()) {
+			log.info("[Payment] 이미 결제 완료된 주문 - orderId: {}", orderId);
+			// 간단한 응답 반환 (전체 데이터 조회 불필요)
+			return new V2_PaymentConfirmResponse(orderId, true);
+		}
+
 		// 1. Order 검증 (읽기 트랜잭션)
 		Long ticketId = orderService.v2_validateAndGetTicketId(orderId, userId, clientAmount);
 

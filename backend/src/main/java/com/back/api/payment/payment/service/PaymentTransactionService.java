@@ -9,6 +9,7 @@ import com.back.api.payment.payment.dto.response.V2_PaymentConfirmResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.notification.systemMessage.OrderSuccessV2Message;
+import com.back.domain.payment.order.entity.OrderStatus;
 import com.back.domain.payment.order.entity.V2_Order;
 import com.back.domain.payment.order.repository.V2_OrderRepository;
 import com.back.domain.payment.payment.entity.Payment;
@@ -47,7 +48,7 @@ public class PaymentTransactionService {
 	 */
 	@Transactional
 	public void handleFailure(String orderId, Long ticketId) {
-		log.debug("[Payment] 결제 실패 처리 - orderId: {}, ticketId: {}", orderId, ticketId);
+		log.info("[Payment] 결제 실패 처리 - orderId: {}, ticketId: {}", orderId, ticketId);
 
 		V2_Order order = orderRepository.findById(orderId)
 			.orElseThrow(() -> new ErrorException(OrderErrorCode.ORDER_NOT_FOUND));
@@ -59,6 +60,8 @@ public class PaymentTransactionService {
 	/**
 	 * 결제 성공 처리 - 단일 트랜잭션
 	 * Payment 저장 + Order PAID + Ticket CONFIRM + Queue 완료 + 알림 발행
+	 *
+	 * 멱등성 보장: 이미 PAID 상태인 주문은 기존 결과 반환
 	 */
 	@Transactional
 	public V2_PaymentConfirmResponse handleSuccess(
@@ -69,6 +72,12 @@ public class PaymentTransactionService {
 		// Order 조회
 		V2_Order order = orderRepository.findById(orderId)
 			.orElseThrow(() -> new ErrorException(OrderErrorCode.ORDER_NOT_FOUND));
+
+		// 멱등성: 이미 결제 완료된 주문이면 기존 결과 반환
+		if (order.getStatus() == OrderStatus.PAID) {
+			log.info("[Payment] 이미 결제 완료된 주문 - orderId: {}", orderId);
+			return V2_PaymentConfirmResponse.from(order, true);
+		}
 
 		// Payment 저장
 		Payment payment = paymentRepository.save(

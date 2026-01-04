@@ -192,4 +192,15 @@ public class OrderService {
 		V2_Order order = v2_getOrderForPayment(orderId, userId, clientAmount);
 		return order.getTicket().getId();
 	}
+
+	/**
+	 * 이미 결제 완료된 Order 조회 (멱등성 보장용)
+	 * - PAID 상태 + 소유자 확인
+	 */
+	@Transactional(readOnly = true)
+	public Optional<V2_Order> v2_findPaidOrder(String orderId, Long userId) {
+		return v2_orderRepository.findById(orderId)
+			.filter(order -> order.getStatus() == OrderStatus.PAID)
+			.filter(order -> order.getTicket().getOwner().getId().equals(userId));
+	}
 }
