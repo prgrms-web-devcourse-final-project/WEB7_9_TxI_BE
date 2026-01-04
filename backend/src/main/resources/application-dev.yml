@@ -28,10 +28,11 @@ security:
     fingerprint:
       enabled: true
       min-attempts: 5        # 최소 5번 시도
+      max-attempts: 10
       failure-rate-threshold: 0.8  # 실패율 80% 이상
       ttl-seconds: 86400    # 24시간
     # 화이트리스트: 로컬 IP는 제외 (헬스체크 테스트용)
-    whitelist-ips: []
+    whitelist-ips: [ ]
 
 cookie:
   secure: false
