@@ -15,15 +15,20 @@ import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.code.CommonErrorCode;
 import com.back.global.error.code.ErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.global.observability.metrics.ErrorMetrics;
 import com.back.global.response.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
 @Slf4j
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+	private final ErrorMetrics errorMetrics;
 
 	// 커스텀 예외 처리
 	@ExceptionHandler(ErrorException.class)
@@ -36,6 +41,9 @@ public class GlobalExceptionHandler {
 			: code.getClass().getSimpleName();
 
 		log.error("ErrorException: {} - {}", codeName, ex.getMessage(), ex);
+
+		// 에러 메트릭 기록
+		errorMetrics.applicationError(codeName, code.getHttpStatus().value());
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
@@ -58,6 +66,9 @@ public class GlobalExceptionHandler {
 		}
 
 		log.error("MethodArgumentNotValidException {}", ex.getMessage());
+
+		// 에러 메트릭 기록
+		errorMetrics.applicationError("INVALID_INPUT_VALUE", code.getHttpStatus().value());
 
 		return ResponseEntity
 			.status(code.getHttpStatus())
@@ -164,6 +175,12 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiResponse<?>> handleAllException(final Exception ex) {
 		ErrorCode code = CommonErrorCode.INTERNAL_SERVER_ERROR;
 		log.error("Unexpected exception: {}", ex.getMessage(), ex);
+
+		// 에러 메트릭 기록 (500 에러 - 가장 중요!)
+		errorMetrics.applicationError(
+			ex.getClass().getSimpleName(),
+			code.getHttpStatus().value()
+		);
 
 		return ResponseEntity
 			.status(code.getHttpStatus())

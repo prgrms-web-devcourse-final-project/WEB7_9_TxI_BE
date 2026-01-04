@@ -1,4 +1,4 @@
-package com.back.global.logging;
+package com.back.global.observability;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

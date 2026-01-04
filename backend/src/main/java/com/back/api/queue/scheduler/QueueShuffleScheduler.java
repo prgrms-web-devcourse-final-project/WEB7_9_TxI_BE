@@ -16,7 +16,8 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
 import com.back.domain.queue.repository.QueueEntryRepository;
-import com.back.global.logging.MdcContext;
+import com.back.global.observability.MdcContext;
+import com.back.global.observability.metrics.SchedulerMetrics;
 import com.back.global.properties.QueueSchedulerProperties;
 
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class QueueShuffleScheduler {
 	private final EventService eventService;
 	private final PreRegisterRepository preRegisterRepository;
 	private final QueueSchedulerProperties properties;
+	private final SchedulerMetrics schedulerMetrics;
 
 	@Scheduled(cron = "${queue.scheduler.shuffle.cron}", zone = "Asia/Seoul")
 	@SchedulerLock(
@@ -127,6 +129,7 @@ public class QueueShuffleScheduler {
 				ex
 			);
 		} finally {
+			schedulerMetrics.recordDuration(JOB_NAME, System.currentTimeMillis() - startAt);
 			MdcContext.removeRunId();
 		}
 	}

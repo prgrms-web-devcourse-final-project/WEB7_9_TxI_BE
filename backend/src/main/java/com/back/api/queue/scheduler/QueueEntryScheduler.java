@@ -13,7 +13,8 @@ import com.back.api.event.service.EventService;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
-import com.back.global.logging.MdcContext;
+import com.back.global.observability.MdcContext;
+import com.back.global.observability.metrics.SchedulerMetrics;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,8 +30,11 @@ import lombok.extern.slf4j.Slf4j;
 @Profile({"perf"})
 public class QueueEntryScheduler {
 
+	private static final String JOB_NAME = "QueueEntry";
+
 	private final QueueEntryProcessService queueEntryProcessService;
 	private final EventService eventService;
+	private final SchedulerMetrics schedulerMetrics;
 
 	//대기열 자동 입장 처리
 	@Scheduled(cron = "${queue.scheduler.entry.cron}", zone = "Asia/Seoul") //10초마다 실행
@@ -88,6 +92,7 @@ public class QueueEntryScheduler {
 				ex
 			);
 		} finally {
+			schedulerMetrics.recordDuration(JOB_NAME, System.currentTimeMillis() - startAt);
 			MdcContext.removeRunId();
 		}
 	}

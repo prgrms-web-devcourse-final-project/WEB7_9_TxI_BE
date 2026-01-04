@@ -21,6 +21,7 @@ import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.store.entity.Store;
+import com.back.global.observability.metrics.SchedulerMetrics;
 import com.back.support.helper.StoreHelper;
 
 @SpringBootTest
@@ -38,6 +39,9 @@ class EventOpenSchedulerTest {
 	@SpyBean
 	private EventRepository spyEventRepository;
 
+	@Autowired
+	private SchedulerMetrics schedulerMetrics;
+
 	private EventOpenScheduler scheduler;
 
 	private Store store;
@@ -47,7 +51,7 @@ class EventOpenSchedulerTest {
 		store = storeHelper.createStore();
 		eventRepository.deleteAll();
 		// 스케줄러를 직접 생성 (Profile 제한 우회)
-		scheduler = new EventOpenScheduler(eventRepository);
+		scheduler = new EventOpenScheduler(eventRepository, schedulerMetrics);
 	}
 
 	@Test
@@ -452,7 +456,7 @@ class EventOpenSchedulerTest {
 		eventRepository.saveAll(List.of(event1, event2));
 
 		// SpyBean을 사용하는 스케줄러 생성
-		EventOpenScheduler spyScheduler = new EventOpenScheduler(spyEventRepository);
+		EventOpenScheduler spyScheduler = new EventOpenScheduler(spyEventRepository, schedulerMetrics);
 
 		// 첫 번째 이벤트 save 시 예외 발생
 		List<Event> saved = eventRepository.findAll();
@@ -472,7 +476,7 @@ class EventOpenSchedulerTest {
 	@DisplayName("findByStatus 호출 중 예외 발생 시 스케줄러가 정상 종료된다")
 	void scheduler_findByStatusException_handlesGracefully() {
 		// given: SpyBean을 사용하는 스케줄러
-		EventOpenScheduler spyScheduler = new EventOpenScheduler(spyEventRepository);
+		EventOpenScheduler spyScheduler = new EventOpenScheduler(spyEventRepository, schedulerMetrics);
 
 		// findByStatus 호출 시 예외 발생
 		when(spyEventRepository.findByStatus(any(EventStatus.class)))

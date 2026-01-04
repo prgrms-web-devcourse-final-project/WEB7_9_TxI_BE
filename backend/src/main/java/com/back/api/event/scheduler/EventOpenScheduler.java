@@ -13,7 +13,8 @@ import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
-import com.back.global.logging.MdcContext;
+import com.back.global.observability.MdcContext;
+import com.back.global.observability.metrics.SchedulerMetrics;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class EventOpenScheduler {
 
 	private final EventRepository eventRepository;
+	private final SchedulerMetrics schedulerMetrics;
 
 	/**
 	 * READY → PRE_OPEN (사전등록 시작)
@@ -172,6 +174,7 @@ public class EventOpenScheduler {
 				jobName, System.currentTimeMillis() - startAt, ex.toString(), ex
 			);
 		} finally {
+			schedulerMetrics.recordDuration(jobName, System.currentTimeMillis() - startAt);
 			MdcContext.removeRunId();
 		}
 	}

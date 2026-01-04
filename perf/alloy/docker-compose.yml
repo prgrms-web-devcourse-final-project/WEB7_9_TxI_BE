@@ -11,6 +11,10 @@ services:
       - LOKI_PUSH_URL=${LOKI_PUSH_URL}
       - GRAFANA_USER_ID=${GRAFANA_USER_ID}
       - GRAFANA_API_TOKEN=${GRAFANA_API_TOKEN}
+      - PROMETHEUS_REMOTE_WRITE_URL=${PROMETHEUS_REMOTE_WRITE_URL}
+      - SPRING_BOOT_HOST=${SPRING_BOOT_HOST}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command:
       - run
       - /etc/alloy/config.alloy

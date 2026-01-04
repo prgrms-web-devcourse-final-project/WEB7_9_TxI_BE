@@ -16,7 +16,8 @@ import com.back.api.ticket.service.TicketService;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 import com.back.domain.ticket.repository.TicketRepository;
-import com.back.global.logging.MdcContext;
+import com.back.global.observability.MdcContext;
+import com.back.global.observability.metrics.SchedulerMetrics;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,11 +28,13 @@ import lombok.extern.slf4j.Slf4j;
 @Profile({"perf"})
 public class DraftTicketExpirationScheduler {
 
+	private static final String JOB_NAME = "DraftTicketExpiration";
 	private static final int PAGE_SIZE = 500;
 	private static final int MAX_PER_RUN = 2000;
 
 	private final TicketRepository ticketRepository;
 	private final TicketService ticketService;
+	private final SchedulerMetrics schedulerMetrics;
 
 	@Scheduled(fixedRate = 60_000)
 	@SchedulerLock(
@@ -120,6 +123,7 @@ public class DraftTicketExpirationScheduler {
 				durationMs, ex.toString(), ex
 			);
 		} finally {
+			schedulerMetrics.recordDuration(JOB_NAME, System.currentTimeMillis() - startAt);
 			MdcContext.removeRunId();
 		}
 	}

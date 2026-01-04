@@ -59,6 +59,9 @@ class SeatServiceUnitTest {
 	@Mock
 	private EventPublisher eventPublisher;
 
+	@Mock
+	private com.back.global.observability.metrics.BusinessMetrics businessMetrics;
+
 	private Event testEvent;
 	private Seat testSeat;
 	private Long eventId;

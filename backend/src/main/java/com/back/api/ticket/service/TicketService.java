@@ -20,6 +20,7 @@ import com.back.global.error.code.CommonErrorCode;
 import com.back.global.error.code.EventErrorCode;
 import com.back.global.error.code.TicketErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.global.observability.metrics.BusinessMetrics;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class TicketService {
 	private final UserRepository userRepository;
 	private final EventRepository eventRepository;
 	private final SeatService seatService;
+	private final BusinessMetrics businessMetrics;
 
 	/**
 	 * Draft Ticket 조회 또는 생성 (유저+이벤트당 1개 유지)
@@ -168,6 +170,9 @@ public class TicketService {
 
 		// 핵심 책임: 상태 변경은 무조건
 		ticket.fail();
+
+		// Draft 티켓 만료 메트릭
+		businessMetrics.draftTicketExpired(ticket.getEvent().getId());
 
 		// 부가 책임: 좌석이 있으면 해제 (원자적 업데이트)
 		if (ticket.getSeat() != null) {
