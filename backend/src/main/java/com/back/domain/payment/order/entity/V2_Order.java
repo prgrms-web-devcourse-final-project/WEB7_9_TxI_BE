@@ -7,6 +7,8 @@ import java.util.UUID;
 import com.back.domain.payment.payment.entity.Payment;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.entity.BaseEntity;
+import com.back.global.error.code.OrderErrorCode;
+import com.back.global.error.exception.ErrorException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -62,12 +64,24 @@ public class V2_Order extends BaseEntity {
 		}
 	}
 
+	/**
+	 * 결제 성공 처리 (PENDING → PAID)
+	 */
 	public void markPaid(String paymentKey) {
+		if (this.status != PENDING) {
+			throw new ErrorException(OrderErrorCode.INVALID_ORDER_STATUS);
+		}
 		this.status = OrderStatus.PAID;
 		this.paymentKey = paymentKey;
 	}
 
+	/**
+	 * 결제 실패 처리 (PENDING → FAILED)
+	 */
 	public void markFailed() {
+		if (this.status != PENDING) {
+			throw new ErrorException(OrderErrorCode.INVALID_ORDER_STATUS);
+		}
 		this.status = OrderStatus.FAILED;
 	}
 }
