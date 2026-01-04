@@ -2,6 +2,7 @@ package com.back.global.config;
 
 import java.io.IOException;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -24,21 +25,59 @@ import com.back.global.observability.RequestIdFilter;
 import com.back.global.properties.CorsProperties;
 import com.back.global.response.ApiResponse;
 import com.back.global.security.CustomAuthenticationFilter;
+import com.back.global.security.filter.FingerprintFilter;
+import com.back.global.security.filter.IdcBlockFilter;
+import com.back.global.security.filter.RateLimitFilter;
+import com.back.global.security.filter.WhitelistFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity  // @PreAuthorize 사용을 위해 추가
 @Profile("!perf & !dev")
-@RequiredArgsConstructor
 public class SecurityConfig {
 
 	private final CorsProperties corsProperties;
 	private final CustomAuthenticationFilter authenticationFilter;
 	private final ObjectMapper objectMapper;
+
+	// 보안 필터들 (Optional - 조건부 빈)
+	private WhitelistFilter whitelistFilter;
+	private IdcBlockFilter idcBlockFilter;
+	private RateLimitFilter rateLimitFilter;
+	private FingerprintFilter fingerprintFilter;
+
+	public SecurityConfig(
+		CorsProperties corsProperties,
+		CustomAuthenticationFilter authenticationFilter,
+		ObjectMapper objectMapper) {
+		this.corsProperties = corsProperties;
+		this.authenticationFilter = authenticationFilter;
+		this.objectMapper = objectMapper;
+	}
+
+	@Autowired(required = false)
+	public void setWhitelistFilter(WhitelistFilter whitelistFilter) {
+		this.whitelistFilter = whitelistFilter;
+	}
+
+	@Autowired(required = false)
+	public void setIdcBlockFilter(IdcBlockFilter idcBlockFilter) {
+		this.idcBlockFilter = idcBlockFilter;
+	}
+
+	@Autowired(required = false)
+	public void setRateLimitFilter(RateLimitFilter rateLimitFilter) {
+		this.rateLimitFilter = rateLimitFilter;
+	}
+
+	@Autowired(required = false)
+	public void setFingerprintFilter(FingerprintFilter fingerprintFilter) {
+		this.fingerprintFilter = fingerprintFilter;
+	}
 
 	@Bean
 	public RequestIdFilter requestIdFilter() {
@@ -103,10 +142,39 @@ public class SecurityConfig {
 				.frameOptions(frameOptions -> frameOptions.sameOrigin())  // H2 콘솔 iframe 허용
 			);
 
-		// MDC RequestId로깅용 필터 클래스 순서보장
+		// 필터 체인 등록 (개선된 방식)
+		// 목표 순서: RequestId -> Whitelist -> IdcBlock -> RateLimit -> Fingerprint -> Authentication
+		
+		// 1. RequestId 로깅 필터 (기준점)
 		http.addFilterBefore(requestIdFilter, UsernamePasswordAuthenticationFilter.class);
-		// MDC에서 requestId식별 후에 authenticationFilter적용
-		http.addFilterAfter(authenticationFilter, RequestIdFilter.class);
+		Class<? extends Filter> lastFilter = RequestIdFilter.class;
+
+		// 2. WhitelistFilter (있으면 추가)
+		if (whitelistFilter != null) {
+			http.addFilterAfter(whitelistFilter, lastFilter);
+			lastFilter = WhitelistFilter.class;
+		}
+
+		// 3. IdcBlockFilter (있으면 추가)
+		if (idcBlockFilter != null) {
+			http.addFilterAfter(idcBlockFilter, lastFilter);
+			lastFilter = IdcBlockFilter.class;
+		}
+
+		// 4. RateLimitFilter (있으면 추가)
+		if (rateLimitFilter != null) {
+			http.addFilterAfter(rateLimitFilter, lastFilter);
+			lastFilter = RateLimitFilter.class;
+		}
+
+		// 5. FingerprintFilter (있으면 추가)
+		if (fingerprintFilter != null) {
+			http.addFilterAfter(fingerprintFilter, lastFilter);
+			lastFilter = FingerprintFilter.class;
+		}
+
+		// 6. Authentication 필터 (마지막 보안 필터 다음)
+		http.addFilterAfter(authenticationFilter, lastFilter);
 
 		return http.build();
 	}

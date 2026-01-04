@@ -117,6 +117,30 @@ cloud:
       put-expire-minutes: 5
       get-expire-minutes: 10
 
+# 운영 환경용 보안 설정
+security:
+  password:
+    bcrypt-strength: 10  # 운영 환경: 강력한 해싱
+  bot-protection:
+    # Rate Limit 설정
+    rate-limit:
+      enabled: true
+      global-per-second: 50  # 전체 API: 1초당 50회
+      sms-per-minute: 5      # SMS/사전등록: 1분당 5회
+    # IDC IP 차단 설정
+    idc-block:
+      enabled: true
+      refresh-cron: "0 0 3 * * MON"  # 매주 월요일 새벽 3시
+      ip-list-urls:
+        - "https://ip-ranges.amazonaws.com/ip-ranges.json"
+        - "https://www.gstatic.com/ipranges/cloud.json"
+    # Device Fingerprint 설정
+    fingerprint:
+      enabled: true
+      min-attempts: 5          # 최소 시도 횟수
+      failure-rate-threshold: 0.8  # 실패율 임계값 (80%)
+      ttl-seconds: 86400       # TTL: 24시간
+
 # reCAPTCHA
 google:
   captcha:

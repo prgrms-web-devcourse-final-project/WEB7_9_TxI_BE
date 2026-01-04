@@ -1,6 +1,7 @@
 package com.back.global.services.sms.controller;
 
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
@@ -10,6 +11,7 @@ import com.back.global.services.sms.dto.SmsVerifyRequest;
 import com.back.global.services.sms.dto.SmsVerifyResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -22,9 +24,14 @@ public interface SmsApi {
 	@ApiErrorCode({
 		"INVALID_PHONE_NUMBER",
 		"SMS_SEND_FAILED",
-		"SMS_SEND_LIMIT_EXCEEDED"
+		"SMS_SEND_LIMIT_EXCEEDED",
+		"SUSPICIOUS_ACTIVITY"
 	})
-	ApiResponse<SmsSendResponse> sendVerificationCode(@Valid @RequestBody SmsSendRequest request);
+	ApiResponse<SmsSendResponse> sendVerificationCode(
+		@Valid @RequestBody SmsSendRequest request,
+		@Parameter(description = "디바이스 Fingerprint ID (보안용)", required = false)
+		@RequestHeader(value = "X-Device-Id", required = false) String visitorId
+	);
 
 	@Operation(
 		summary = "SMS 인증번호 검증",
@@ -35,7 +42,12 @@ public interface SmsApi {
 		"VERIFICATION_CODE_MISMATCH",
 		"VERIFICATION_CODE_EXPIRED",
 		"SMS_VERIFICATION_NOT_COMPLETED",
-		"SMS_VERIFICATION_ALREADY_COMPLETED"
+		"SMS_VERIFICATION_ALREADY_COMPLETED",
+		"SUSPICIOUS_ACTIVITY"
 	})
-	ApiResponse<SmsVerifyResponse> verifyCode(@Valid @RequestBody SmsVerifyRequest request);
+	ApiResponse<SmsVerifyResponse> verifyCode(
+		@Valid @RequestBody SmsVerifyRequest request,
+		@Parameter(description = "디바이스 Fingerprint ID (보안용)", required = false)
+		@RequestHeader(value = "X-Device-Id", required = false) String visitorId
+	);
 }

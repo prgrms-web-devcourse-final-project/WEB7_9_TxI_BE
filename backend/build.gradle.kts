@@ -93,6 +93,13 @@ dependencies {
 
     // resilience4j
     implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
+
+    // Bucket4j (Rate Limiting)
+    implementation("com.bucket4j:bucket4j-core:8.10.1")
+    implementation("com.bucket4j:bucket4j-redis:8.10.1")
+
+    // Apache Commons Net (IP 대역 매칭)
+    implementation("commons-net:commons-net:3.11.1")
 }
 
 tasks.withType<Test> {

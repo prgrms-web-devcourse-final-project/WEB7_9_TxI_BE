@@ -20,31 +20,11 @@ import jakarta.validation.Valid;
 @Tag(name = "PreRegister API", description = "사전등록 API")
 public interface PreRegisterApi {
 
-	// 인증 있는 사전 등록 -> v2에서 사용 예정
-	// @Operation(
-	// 	summary = "사전등록",
-	// 	description = "이벤트에 사전등록합니다. 휴대폰 번호, 생년월일을 통한 본인 인증이 필요하며, 약관 동의가 필수입니다. 이름은 JWT 토큰으로 인증된 사용자 정보에서 자동으로 가져옵니다.",
-	// 	security = @SecurityRequirement(name = "bearerAuth")
-	// )
-	// @ApiErrorCode({
-	// 	"NOT_FOUND_EVENT",
-	// 	"NOT_FOUND_USER",
-	// 	"ALREADY_PRE_REGISTERED",
-	// 	"INVALID_PRE_REGISTRATION_PERIOD",
-	// 	"INVALID_USER_INFO",
-	// 	"TERMS_NOT_AGREED",
-	// 	"PRIVACY_NOT_AGREED",
-	// 	"UNAUTHORIZED"
-	// })
-	// ApiResponse<PreRegisterResponse> register(
-	// 	@Parameter(description = "이벤트 ID", example = "1")
-	// 	@PathVariable Long eventId,
-	// 	@Valid @RequestBody PreRegisterCreateRequest request
-	// );
-
 	@Operation(
 		summary = "사전등록",
-		description = "이벤트에 사전등록합니다. (인증 제외). reCAPTCHA v3 토큰을 헤더(X-Recaptcha-Token)로 전달해야 합니다.",
+		description = "이벤트 사전등록 API입니다. 휴대폰 번호와 생년월일을 통한 본인 인증 및 "
+			+ "약관 동의가 필요합니다. reCAPTCHA v3 토큰은 "
+			+ "헤더(X-Recaptcha-Token)로 전달해야 합니다.",
 		security = @SecurityRequirement(name = "bearerAuth")
 	)
 	@ApiErrorCode({
@@ -65,7 +45,10 @@ public interface PreRegisterApi {
 		@PathVariable Long eventId,
 		@Parameter(description = "reCAPTCHA v3 토큰", example = "03AGdBq24...")
 		@RequestHeader(value = "X-Recaptcha-Token", required = false) String recaptchaToken,
-		@Valid @RequestBody PreRegisterCreateRequest request
+		@Parameter(description = "디바이스 ID (Fingerprint)", example = "abcdef1234567890")
+		@RequestHeader(value = "X-Device-Id", required = false) String deviceId,
+		@Valid @RequestBody PreRegisterCreateRequest request,
+		jakarta.servlet.http.HttpServletRequest httpRequest
 	);
 
 	@Operation(
