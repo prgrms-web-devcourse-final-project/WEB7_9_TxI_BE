@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
+import com.back.global.observability.metrics.SchedulerMetrics;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EventOpenScheduler 단위 테스트 - 예외 시나리오")
@@ -23,6 +24,9 @@ class EventOpenSchedulerUnitTest {
 
 	@Mock
 	private EventRepository eventRepository;
+
+	@Mock
+	private SchedulerMetrics schedulerMetrics;
 
 	@InjectMocks
 	private EventOpenScheduler scheduler;
