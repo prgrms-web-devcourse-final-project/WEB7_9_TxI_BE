@@ -65,7 +65,6 @@ public class ClientIpResolver {
 		// 모든 헤더에서 IP를 찾지 못한 경우 RemoteAddr 사용
 		if (isInvalidIp(ip)) {
 			ip = request.getRemoteAddr();
-			log.debug("IP 추출: RemoteAddr 사용 - IP: {}", ip);
 		}
 
 		return ip;

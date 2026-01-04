@@ -74,7 +74,6 @@ public class IdcBlockFilter extends OncePerRequestFilter {
 
 		// AWS ALB 헬스체크는 무조건 통과 (서버 무한 재부팅 방지)
 		if (isHealthCheckRequest(request, requestUri)) {
-			log.debug("[IdcBlockFilter] 헬스체크 요청 통과 - IP: {}, URI: {}", clientIp, requestUri);
 			filterChain.doFilter(request, response);
 			return;
 		}
