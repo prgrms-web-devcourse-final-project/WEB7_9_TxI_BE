@@ -13,7 +13,9 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
+import com.back.domain.ticket.entity.TicketTransferHistory;
 import com.back.domain.ticket.repository.TicketRepository;
+import com.back.domain.ticket.repository.TicketTransferHistoryRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.CommonErrorCode;
@@ -34,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TicketService {
 
 	private final TicketRepository ticketRepository;
+	private final TicketTransferHistoryRepository transferHistoryRepository;
 	private final UserRepository userRepository;
 	private final EventRepository eventRepository;
 	private final SeatService seatService;
@@ -220,6 +223,15 @@ public class TicketService {
 		User target = userRepository.findByNickname(targetNickname)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TRANSFER_TARGET_NOT_FOUND));
 
+		Long fromUserId = ticket.getOwner().getId();
+
+		// 양도 처리
 		ticket.transferTo(target);
+
+		// 양도 이력 저장
+		TicketTransferHistory history = TicketTransferHistory.record(ticketId, fromUserId, target.getId());
+		transferHistoryRepository.save(history);
+
+		log.info("[Ticket Transfer] ticketId={}, from={}, to={}", ticketId, fromUserId, target.getId());
 	}
 }
