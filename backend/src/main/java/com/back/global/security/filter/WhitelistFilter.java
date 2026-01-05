@@ -58,7 +58,6 @@ public class WhitelistFilter extends OncePerRequestFilter {
 
 		// 화이트리스트 확인
 		if (isWhitelisted(clientIp)) {
-			log.info("[WhitelistFilter] 화이트리스트 IP 감지 - IP: {} - 모든 보안 필터 우회", clientIp);
 			request.setAttribute(WHITELISTED_IP_ATTRIBUTE, true);
 		}
 

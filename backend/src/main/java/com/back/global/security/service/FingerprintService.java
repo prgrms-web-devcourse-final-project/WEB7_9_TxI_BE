@@ -67,7 +67,6 @@ public class FingerprintService {
 
 		// visitorId가 없으면 허용 (1차)
 		if (visitorId == null || visitorId.isEmpty()) {
-			log.debug("[FingerprintService] visitorId 없음 - 1차 허용");
 			return true;
 		}
 
@@ -164,9 +163,6 @@ public class FingerprintService {
 			// TTL 설정 (첫 시도 또는 갱신)
 			long ttl = securityProperties.getFingerprint().getTtlSeconds();
 			redisTemplate.expire(key, Duration.ofSeconds(ttl));
-
-			log.debug("[FingerprintService] 시도 기록 - visitorId: {}, 성공: {}, 총시도: {}",
-				visitorId, success, totalAttempts);
 		} catch (Exception e) {
 			log.error("[FingerprintService] 시도 기록 실패 - visitorId: {}, 오류: {}", visitorId, e.getMessage());
 		}

@@ -67,13 +67,6 @@ public class ReCaptchaService {
 				ReCaptchaResponse.class
 			);
 
-			log.debug("reCAPTCHA 검증 응답: success={}, score={}, action={}, errorCodes={}",
-				response != null ? response.isSuccess() : null,
-				response != null ? response.getScore() : null,
-				response != null ? response.getAction() : null,
-				response != null ? response.getErrorCodes() : null
-			);
-
 			return response;
 
 		} catch (RestClientException e) {
@@ -100,7 +93,5 @@ public class ReCaptchaService {
 			log.warn("reCAPTCHA 점수가 너무 낮습니다: {} (최소: {})", response.getScore(), MINIMUM_SCORE);
 			throw new ErrorException(CommonErrorCode.RECAPTCHA_SCORE_TOO_LOW);
 		}
-
-		log.info("reCAPTCHA 검증 성공: score={}, action={}", response.getScore(), response.getAction());
 	}
 }

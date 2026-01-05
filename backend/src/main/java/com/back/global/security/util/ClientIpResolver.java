@@ -95,7 +95,6 @@ public class ClientIpResolver {
 		if (ip != null && !ip.isEmpty() && !UNKNOWN.equalsIgnoreCase(ip)) {
 			// trustedProxyCount = 0이면 X-Forwarded-For를 신뢰하지 않음
 			if (trustedProxyCount == 0) {
-				log.debug("IP 추출: trustedProxyCount=0이므로 {} 헤더 무시", headerName);
 				return null;
 			}
 
@@ -107,11 +106,6 @@ public class ClientIpResolver {
 				// trustedProxyCount=2, ips=["fake", "real", "cf", "alb"] -> index=2 (마지막에서 2번째)
 				int clientIpIndex = Math.max(0, ips.length - trustedProxyCount - 1);
 				ip = ips[clientIpIndex].trim();
-
-				log.debug("IP 추출: {} 헤더에서 index {} IP 사용 (trustedProxyCount={}) - IP: {}",
-					headerName, clientIpIndex, trustedProxyCount, ip);
-			} else {
-				log.debug("IP 추출: {} 헤더 사용 (단일 IP) - IP: {}", headerName, ip);
 			}
 			return ip;
 		}

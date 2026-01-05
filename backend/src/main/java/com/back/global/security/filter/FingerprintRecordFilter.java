@@ -85,7 +85,6 @@ public class FingerprintRecordFilter extends OncePerRequestFilter {
 
 			// 429 Too Many Requests는 RateLimitFilter에서 이미 기록했으므로 건너뜀 (중복 방지)
 			if (status == 429) {
-				log.debug("[FingerprintRecordFilter] 429 응답은 RateLimitFilter에서 이미 기록됨 - 건너뜀");
 				return;
 			}
 
@@ -93,9 +92,6 @@ public class FingerprintRecordFilter extends OncePerRequestFilter {
 
 			// Fingerprint 기록
 			fingerprintService.recordAttempt(visitorId, success);
-
-			log.debug("[FingerprintRecordFilter] Fingerprint 기록 - visitorId: {}, status: {}, success: {}",
-				visitorId, status, success);
 		}
 	}
 
