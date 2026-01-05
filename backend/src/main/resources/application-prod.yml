@@ -24,8 +24,12 @@ spring:
     show-sql: false
     properties:
       hibernate:
+        jdbc:
+          batch_size: 100
         format_sql: false
         use_sql_comments: false
+        order_inserts: true
+        order_updates: true
       show-sql: false
 
   data:

@@ -15,7 +15,6 @@ import com.back.api.event.dto.request.EventUpdateRequest;
 import com.back.api.event.dto.response.EventListResponse;
 import com.back.api.event.dto.response.EventResponse;
 import com.back.api.event.event.EventScheduleEvent;
-import com.back.api.event.scheduler.EventScheduler;
 import com.back.api.s3.service.S3MoveService;
 import com.back.api.s3.service.S3PresignedService;
 import com.back.api.store.service.StoreService;
@@ -39,7 +38,6 @@ public class EventService {
 	private final S3MoveService s3MoveService;
 	private final S3PresignedService s3PresignedService;
 	private final StoreService storeService;
-	private final EventScheduler eventScheduler;
 	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
@@ -79,7 +77,6 @@ public class EventService {
 			);
 		}
 
-		eventScheduler.scheduleEventLifecycle(savedEvent.getId());
 		eventPublisher.publishEvent(new EventScheduleEvent(
 			savedEvent.getId(),
 			EventScheduleEvent.EventScheduleType.CREATED
@@ -137,7 +134,6 @@ public class EventService {
 		);
 		event.changeStatus(request.status());
 
-		eventScheduler.rescheduleEventLifecycle(eventId);
 		eventPublisher.publishEvent(new EventScheduleEvent(
 			eventId,
 			EventScheduleEvent.EventScheduleType.UPDATED
@@ -153,7 +149,6 @@ public class EventService {
 			throw new ErrorException(AuthErrorCode.FORBIDDEN);
 		}
 
-		eventScheduler.cancelEventSchedules(eventId);
 		eventPublisher.publishEvent(new EventScheduleEvent(
 			eventId,
 			EventScheduleEvent.EventScheduleType.DELETED

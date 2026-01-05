@@ -16,6 +16,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.event.event.EventScheduleEvent;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
@@ -44,8 +45,18 @@ public class EventScheduler {
 	private final ConcurrentHashMap<String, ScheduledFuture<?>> scheduledTasks
 		= new ConcurrentHashMap<>();
 
+	@EventListener
 	@Transactional(readOnly = true)
-	public void scheduleEventLifecycle(Long eventId) {
+	public void handleEventScheduleEvent(EventScheduleEvent event) {
+		switch (event.getType()) {
+			case CREATED -> scheduleEventLifecycle(event.getEventId());
+			case UPDATED -> rescheduleEventLifecycle(event.getEventId());
+			case DELETED -> cancelEventSchedules(event.getEventId());
+		}
+	}
+
+
+	private void scheduleEventLifecycle(Long eventId) {
 		Event event = eventRepository.findById(eventId)
 			.orElseThrow(() -> new ErrorException(EventErrorCode.NOT_FOUND_EVENT));
 
@@ -101,13 +112,13 @@ public class EventScheduler {
 	}
 
 	// 이벤트 수정 시 스케줄러 취소 후 재등록
-	public void rescheduleEventLifecycle(Long eventId) {
+	private void rescheduleEventLifecycle(Long eventId) {
 		cancelEventSchedules(eventId);
 		scheduleEventLifecycle(eventId);
 	}
 
 	// 이벤트 삭제 시 스케줄러 취소
-	public void cancelEventSchedules(Long eventId) {
+	private void cancelEventSchedules(Long eventId) {
 		String prefix = eventId + "-";
 
 		var iterator = scheduledTasks.entrySet().iterator();
@@ -156,7 +167,6 @@ public class EventScheduler {
 		ScheduledFuture<?> existing = scheduledTasks.get(taskKey);
 		if (existing != null && !existing.isDone()) {
 			existing.cancel(false);
-			log.debug("Canceled existing task: {}", taskKey);
 		}
 
 		// 서울 시간대로 변환
@@ -206,7 +216,6 @@ public class EventScheduler {
 
 			try {
 				MdcContext.putRunId(runId);
-				log.info("SCHED_DYNAMIC_START task={}", taskKey);
 
 				// 실제 작업 실행
 				task.run();

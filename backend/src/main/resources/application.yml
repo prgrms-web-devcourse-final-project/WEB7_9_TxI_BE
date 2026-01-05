@@ -18,6 +18,9 @@ spring:
         default_batch_fetch_size: 100
         jdbc:
           time_zone: Asia/Seoul
+          batch_size: 100
+        order_inserts: true
+        order_updates: true
     hibernate:
       ddl-auto: update
     show-sql: true

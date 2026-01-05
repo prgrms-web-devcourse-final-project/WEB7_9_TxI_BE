@@ -10,8 +10,8 @@ public class EventScheduleEvent {
 	private final EventScheduleType type;
 
 	public enum EventScheduleType {
-		CREATED,    // 이벤트 생성
-		UPDATED,    // 이벤트 수정
-		DELETED     // 이벤트 삭제
+		CREATED,
+		UPDATED,
+		DELETED
 	}
 }
