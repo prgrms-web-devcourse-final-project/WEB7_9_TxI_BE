@@ -128,7 +128,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
 				String visitorId = request.getHeader(HEADER_DEVICE_ID);
 				if (fingerprintService != null && visitorId != null) {
 					fingerprintService.recordAttempt(visitorId, false);
-					log.debug("[RateLimitFilter] Fingerprint 실패 기록 - visitorId: {}", visitorId);
 				}
 
 				sendTooManyRequestsResponse(response, SecurityErrorCode.TOO_MANY_SMS_REQUESTS);
@@ -148,7 +147,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
 				String visitorId = request.getHeader(HEADER_DEVICE_ID);
 				if (fingerprintService != null && visitorId != null) {
 					fingerprintService.recordAttempt(visitorId, false);
-					log.debug("[RateLimitFilter] Fingerprint 실패 기록 (Global) - visitorId: {}", visitorId);
 				}
 
 				sendTooManyRequestsResponse(response, SecurityErrorCode.TOO_MANY_REQUESTS);
@@ -220,7 +218,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
 			}
 		} catch (Exception e) {
 			// JSON 파싱 실패 시 무시 (null 반환)
-			log.debug("[RateLimitFilter] JSON Body 파싱 실패 - IP만으로 Rate Limit 적용: {}", e.getMessage());
 		}
 
 		// 전화번호를 찾지 못한 경우 null 반환 (IP만으로 제한)

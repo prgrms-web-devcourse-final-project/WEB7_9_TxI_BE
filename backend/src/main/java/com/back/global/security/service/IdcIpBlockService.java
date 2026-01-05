@@ -105,10 +105,8 @@ public class IdcIpBlockService {
 		// 설정된 URL들에서 IP 리스트 다운로드
 		for (String ipListUrl : securityProperties.getIdcBlock().getIpListUrls()) {
 			try {
-				log.info("[IdcIpBlockService] IP 리스트 다운로드 시작 - URL: {}", ipListUrl);
 				Set<String> cidrs = downloadIpList(ipListUrl);
 				newCidrSet.addAll(cidrs);
-				log.info("[IdcIpBlockService] IP 리스트 다운로드 완료 - URL: {}, 항목 수: {}", ipListUrl, cidrs.size());
 			} catch (Exception e) {
 				log.error("[IdcIpBlockService] IP 리스트 다운로드 실패 - URL: {}, 오류: {}", ipListUrl, e.getMessage());
 				// 다운로드 실패해도 다른 소스는 계속 시도
@@ -126,7 +124,6 @@ public class IdcIpBlockService {
 			redisTemplate.opsForSet().add(REDIS_KEY_IDC_IP_LIST, newCidrSet.toArray(new String[0]));
 			// TTL 설정 (1주일)
 			redisTemplate.expire(REDIS_KEY_IDC_IP_LIST, 7, TimeUnit.DAYS);
-			log.info("[IdcIpBlockService] Redis 저장 완료 - 총 {} 개 CIDR 대역", newCidrSet.size());
 		} catch (Exception e) {
 			log.error("[IdcIpBlockService] Redis 저장 실패 - 오류: {}", e.getMessage());
 		}
@@ -224,8 +221,6 @@ public class IdcIpBlockService {
 					}
 				}
 			}
-
-			log.info("[IdcIpBlockService] AWS IP 범위 JSON 파싱 완료 - IPv4 개수: {}", cidrSet.size());
 		}
 
 		return cidrSet;
@@ -251,7 +246,6 @@ public class IdcIpBlockService {
 		synchronized (cidrCache) {
 			for (String cidr : cidrCache) {
 				if (isIpInCidr(ip, cidr)) {
-					log.info("[IdcIpBlockService] IDC IP 감지 - IP: {}, CIDR: {}", ip, cidr);
 					return true;
 				}
 			}
@@ -271,7 +265,6 @@ public class IdcIpBlockService {
 					cidrCache.clear();
 					cidrCache.addAll(cidrsFromRedis);
 				}
-				log.info("[IdcIpBlockService] Redis에서 캐시 로드 완료 - {} 개 대역", cidrsFromRedis.size());
 			} else {
 				log.warn("[IdcIpBlockService] Redis에 저장된 IDC IP 리스트가 없음 - 리스트 갱신 필요");
 			}

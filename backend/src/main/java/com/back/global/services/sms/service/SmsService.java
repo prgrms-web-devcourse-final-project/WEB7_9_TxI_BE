@@ -65,7 +65,6 @@ public class SmsService {
 		try {
 			String redisKey = REDIS_KEY_PREFIX + phoneNum;
 			redisTemplate.opsForValue().set(redisKey, verificationCodeStr, Duration.ofSeconds(VERIFICATION_CODE_TTL));
-			log.info("인증번호 발송 및 Redis 저장 완료 - 전화번호: {}", maskPhoneNumber(phoneNum));
 		} catch (Exception e) {
 			log.error("Redis 저장 실패 - 전화번호: {}, 오류: {}", maskPhoneNumber(phoneNum), e.getMessage());
 			throw new ErrorException(SmsErrorCode.SMS_SEND_FAILED);
@@ -98,8 +97,6 @@ public class SmsService {
 			// 인증 완료 플래그 저장 (사전등록 시 검증용, TTL: 10분)
 			String verifiedKey = SMS_VERIFIED_PREFIX + phoneNum;
 			redisTemplate.opsForValue().set(verifiedKey, "true", Duration.ofSeconds(VERIFIED_FLAG_TTL));
-
-			log.info("SMS 인증 성공 및 완료 플래그 저장 - 전화번호: {}", maskPhoneNumber(phoneNum));
 		} else {
 			log.warn("SMS 인증 실패 - 전화번호: {}, 입력값: {}", maskPhoneNumber(phoneNum), verificationCode);
 			throw new ErrorException(SmsErrorCode.VERIFICATION_CODE_MISMATCH);

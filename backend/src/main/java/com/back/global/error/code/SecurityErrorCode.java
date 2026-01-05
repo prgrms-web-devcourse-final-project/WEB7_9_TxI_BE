@@ -22,7 +22,7 @@ public enum SecurityErrorCode implements ErrorCode {
 	IDC_IP_BLOCKED(HttpStatus.FORBIDDEN, "VPN 또는 프록시를 사용 중입니다. 해제 후 다시 시도해주세요."),
 
 	// Device Fingerprint
-	SUSPICIOUS_ACTIVITY(HttpStatus.BAD_REQUEST, "비정상적인 요청이 감지되었습니다. 잠시 후 다시 시도해주세요."),
+	SUSPICIOUS_ACTIVITY(HttpStatus.BAD_REQUEST, "비정상적인 요청이 감지되었습니다. 24시간 후 다시 시도하거나 고객센터에 문의해주세요."),
 	FINGERPRINT_BLOCKED(HttpStatus.FORBIDDEN, "비정상적인 활동이 감지되어 차단되었습니다. 고객센터에 문의해주세요.");
 
 	private final HttpStatus httpStatus;
