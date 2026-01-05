@@ -10,11 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.api.auth.dto.JwtDto;
 import com.back.api.auth.dto.cache.ActiveSessionDto;
 import com.back.api.auth.dto.request.LoginRequest;
+import com.back.api.auth.dto.request.OAuthExchangeRequest;
 import com.back.api.auth.dto.request.SignupRequest;
 import com.back.api.auth.dto.response.AuthResponse;
 import com.back.api.auth.dto.response.TokenResponse;
 import com.back.api.auth.dto.response.UserResponse;
 import com.back.api.auth.store.AuthStore;
+import com.back.api.auth.store.OAuthExchangeCodeStore;
 import com.back.api.store.service.StoreService;
 import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.auth.entity.RefreshToken;
@@ -25,6 +27,7 @@ import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.AuthErrorCode;
+import com.back.global.error.code.UserErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.global.http.HttpRequestContext;
 import com.back.global.utils.TokenHash;
@@ -46,6 +49,7 @@ public class AuthService {
 	private final ActiveSessionRepository activeSessionRepository;
 	private final AuthStore authStore;
 	private final StoreService storeService;
+	private final OAuthExchangeCodeStore codeStore;
 
 	@Transactional
 	public AuthResponse signup(SignupRequest request) {
@@ -106,22 +110,23 @@ public class AuthService {
 	public void logout() {
 		String refreshTokenStr = requestContext.getCookieValue("refreshToken", null);
 		if (StringUtils.isBlank(refreshTokenStr)) {
-			throw new ErrorException(AuthErrorCode.REFRESH_TOKEN_REQUIRED);
+			requestContext.deleteAuthCookies();
+			return;
 		}
-
-		long userId = requestContext.getUserId();
 
 		String refreshHash = TokenHash.sha256(refreshTokenStr);
 
 		RefreshToken refreshToken = refreshTokenRepository
-			.findByTokenAndUserIdAndRevokedFalse(refreshHash, requestContext.getUserId())
-			.orElseThrow(() -> new ErrorException(AuthErrorCode.ACCESS_OTHER_DEVICE));
+			.findByTokenAndRevokedFalse(refreshHash)
+			.orElse(null);
 
-		refreshToken.revoke();
-		authStore.deleteRefreshCache(userId);
+		if (refreshToken != null) {
+			long userId = refreshToken.getUser().getId();
 
-		// ActiveSession 캐시 무효화
-		activeSessionCache.evict(userId);
+			refreshToken.revoke();
+			authStore.deleteRefreshCache(userId);
+			activeSessionCache.evict(userId);
+		}
 
 		requestContext.deleteAuthCookies();
 	}
@@ -135,7 +140,7 @@ public class AuthService {
 		}
 	}
 
-	private JwtDto loginAsSingleDevice(User user) {
+	public JwtDto loginAsSingleDevice(User user) {
 		ActiveSession session = getOrCreateActiveSession(user);
 
 		session.rotate();
@@ -155,6 +160,19 @@ public class AuthService {
 		requestContext.setRefreshTokenCookie(tokens.refreshToken());
 
 		return tokens;
+	}
+
+	@Transactional
+	public AuthResponse exchange(OAuthExchangeRequest request) {
+		Long userId = codeStore.consume(request.code())
+			.orElseThrow(() -> new ErrorException(AuthErrorCode.SOCIAL_LOGIN_FAILED));
+
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new ErrorException(UserErrorCode.NOT_FOUND));
+
+		JwtDto tokens = loginAsSingleDevice(user);
+
+		return buildAuthResponse(user, tokens);
 	}
 
 	/**

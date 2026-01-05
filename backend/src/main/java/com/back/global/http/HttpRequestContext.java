@@ -1,5 +1,6 @@
 package com.back.global.http;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -138,5 +139,9 @@ public class HttpRequestContext {
 
 	public void deleteAuthCookies() {
 		cookieManager.deleteAuthCookies(request, response);
+	}
+
+	public void sendRedirect(String url) throws IOException {
+		response.sendRedirect(url);
 	}
 }

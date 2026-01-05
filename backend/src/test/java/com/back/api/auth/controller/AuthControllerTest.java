@@ -1,12 +1,14 @@
 package com.back.api.auth.controller;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,10 +24,13 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.back.api.auth.dto.request.OAuthExchangeRequest;
+import com.back.api.auth.store.OAuthExchangeCodeStore;
 import com.back.domain.auth.repository.RefreshTokenRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
@@ -34,7 +39,6 @@ import com.back.global.error.code.AuthErrorCode;
 import com.back.global.security.SecurityUser;
 import com.back.support.data.TestUser;
 import com.back.support.factory.UserFactory;
-import com.back.support.helper.StoreHelper;
 import com.back.support.helper.UserHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -59,10 +63,10 @@ public class AuthControllerTest {
 	private UserHelper userHelper;
 
 	@Autowired
-	private StoreHelper storeHelper;
-
-	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@MockitoBean
+	private OAuthExchangeCodeStore codeStore;
 
 	@Value("${custom.jwt.secret}")
 	private String secret;
@@ -437,85 +441,6 @@ public class AuthControllerTest {
 			long activeTokens = tokenRepository.countByUserIdAndRevokedFalse(savedUser.getId());
 			assertThat(activeTokens).isZero();
 		}
-
-		@Test
-		@DisplayName("로그아웃 실패 - refreshToken 쿠키 없음 (UNAUTHORIZED)")
-		void logout_failed_refresh_token_required() throws Exception {
-			// given: 유저 생성
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
-			User savedUser = existedUser.user();
-
-			// when: refreshToken 쿠키 없이, 인증된 유저로 로그아웃 요청
-			ResultActions actions = mvc.perform(
-				post(logoutApi)
-					.with(user(toSecurityUser(savedUser)))
-					.contentType(MediaType.APPLICATION_JSON)
-			).andDo(print());
-
-			// then
-			AuthErrorCode error = AuthErrorCode.UNAUTHORIZED;
-
-			actions
-				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.message").value(error.getMessage()));
-
-			// refresh token은 애초에 없으므로 DB에도 아무 변화 없음
-			long activeTokens = tokenRepository.countByUserId(savedUser.getId());
-			assertThat(activeTokens).isZero();
-		}
-
-		@Test
-		@DisplayName("로그아웃 실패 - refreshToken DB에 없음 (ACCESS_OTHER_DEVICE)")
-		void logout_failed_refresh_token_not_found() throws Exception {
-			// given: 유저 생성 + 로그인해서 '정상 accessToken 쿠키' 확보
-			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
-			User savedUser = existedUser.user();
-			String rawPassword = existedUser.rawPassword();
-
-			String loginJson = mapper.writeValueAsString(Map.of(
-				"email", savedUser.getEmail(),
-				"password", rawPassword
-			));
-
-			MockHttpServletResponse loginRes = mvc.perform(
-					post("/api/v1/auth/login")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(loginJson)
-				)
-				.andReturn()
-				.getResponse();
-
-			// 로그인 응답 쿠키에서 accessToken만 추출
-			Cookie accessCookie = null;
-			for (Cookie c : loginRes.getCookies()) {
-				if ("accessToken".equals(c.getName())) {
-					accessCookie = c;
-					break;
-				}
-			}
-			assertThat(accessCookie).isNotNull();
-
-			// refreshToken은 "DB에 없는 값"으로 교체 (JWT 형태가 아니면 필터에서 INVALID_TOKEN로 잘릴 수 있으니 주의!)
-			// => 가능하면 "형식은 JWT인데 DB/Redis에 없는 refresh"를 만들어야 함.
-			// 일단 간단히는 loginRes의 refreshToken을 빼고, DB에 저장되지 않은 '진짜 JWT refresh'를 별도 발급하거나,
-			// AuthTokenService/JwtProvider로 refresh를 만들어서 DB 저장 없이 넣는 방식이 가장 안정적.
-			String fakeRefreshJwt
-				= "eyJhbGciOiJIUzUxMiJ9.eyJ0b2tlblR5cGUiOiJyZWZyZXNoIiwiaWQiOjEwMCwic2lkIjoiZmFrZSIsInRva2VuVmVyc2lvbiI6MSwiaWF0IjoxLCJleHAiOjk5OTk5OTk5OX0.xxx";
-			Cookie refreshCookie = new Cookie("refreshToken", fakeRefreshJwt);
-
-			// when
-			ResultActions actions = mvc.perform(
-					post("/api/v1/auth/logout")
-						.cookie(accessCookie, refreshCookie)  // ★ access는 정상, refresh만 fake
-						.contentType(MediaType.APPLICATION_JSON)
-				)
-				.andDo(print());
-
-			// then
-			actions
-				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.message").value(AuthErrorCode.ACCESS_OTHER_DEVICE.getMessage()));
-		}
 	}
 
 	@Nested
@@ -649,6 +574,66 @@ public class AuthControllerTest {
 			actions
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.message").value(error.getMessage()));
+		}
+	}
+
+	@Nested
+	@DisplayName("소셜 로그인 토큰 반환 API")
+	class TokenExchangeTest {
+		@Test
+		@DisplayName("exchange 성공: 200 OK + AuthResponse 반환")
+		void exchange_success() throws Exception {
+			// given: 유저를 DB에 만들어 둔다
+			TestUser existedUser = userHelper.createUser(UserRole.NORMAL, null);
+			Long userId = existedUser.user().getId();
+
+			// codeStore가 code를 소비하면 userId를 반환하도록
+			when(codeStore.consume("valid_code")).thenReturn(Optional.of(userId));
+
+			OAuthExchangeRequest request = new OAuthExchangeRequest("valid_code");
+
+			// when & then
+			mvc.perform(post("/api/v1/auth/oauth/exchange")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(mapper.writeValueAsString(request)))
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.user.userId").value(userId))
+				.andExpect(jsonPath("$.data.user.email").value(existedUser.user().getEmail()))
+				.andExpect(jsonPath("$.data.tokens.tokenType").value("Bearer"))
+				.andExpect(jsonPath("$.data.tokens.accessToken").isNotEmpty())
+				.andExpect(jsonPath("$.data.tokens.refreshToken").isNotEmpty())
+				.andExpect(jsonPath("$.data.tokens.accessTokenExpiresAt").isNumber())
+				.andExpect(jsonPath("$.data.tokens.refreshTokenExpiresAt").isNumber());
+		}
+
+		@Test
+		@DisplayName("exchange 실패: code 소비 실패(SOCIAL_LOGIN_FAILED) -> 400")
+		void exchange_fail_socialLoginFailed() throws Exception {
+			// given
+			when(codeStore.consume("invalid_or_expired_code")).thenReturn(Optional.empty());
+
+			OAuthExchangeRequest request = new OAuthExchangeRequest("invalid_or_expired_code");
+
+			mvc.perform(post("/api/v1/auth/oauth/exchange")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(mapper.writeValueAsString(request)))
+				.andDo(print())
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value("BAD_REQUEST"))
+				.andExpect(jsonPath("$.message").value(AuthErrorCode.SOCIAL_LOGIN_FAILED.getMessage()));
+		}
+
+		@Test
+		@DisplayName("exchange 실패: validation - code가 blank면 400")
+		void exchange_fail_validation_blankCode() throws Exception {
+			// given
+			OAuthExchangeRequest request = new OAuthExchangeRequest(" ");
+
+			mvc.perform(post("/api/v1/auth/oauth/exchange")
+					.contentType("application/json")
+					.content(mapper.writeValueAsString(request)))
+				.andExpect(status().isBadRequest());
 		}
 	}
 }

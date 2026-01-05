@@ -1,17 +1,19 @@
 package com.back.global.security;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import com.back.domain.user.entity.UserRole;
 
 import lombok.Getter;
 
 @Getter
-public class SecurityUser extends User {
+public class SecurityUser extends User implements OAuth2User {
 
 	private Long id;
 	private String nickname;
@@ -31,5 +33,15 @@ public class SecurityUser extends User {
 		this.nickname = nickname;
 		this.role = role;
 		this.storeId = storeId;
+	}
+
+	@Override
+	public Map<String, Object> getAttributes() {
+		return Map.of();
+	}
+
+	@Override
+	public String getName() {
+		return nickname;
 	}
 }

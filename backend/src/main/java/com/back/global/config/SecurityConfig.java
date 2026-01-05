@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -23,26 +24,36 @@ import com.back.global.error.code.AuthErrorCode;
 import com.back.global.error.code.ErrorCode;
 import com.back.global.observability.RequestIdFilter;
 import com.back.global.properties.CorsProperties;
+import com.back.global.properties.SiteProperties;
 import com.back.global.response.ApiResponse;
 import com.back.global.security.CustomAuthenticationFilter;
 import com.back.global.security.filter.FingerprintFilter;
 import com.back.global.security.filter.IdcBlockFilter;
 import com.back.global.security.filter.RateLimitFilter;
 import com.back.global.security.filter.WhitelistFilter;
+import com.back.global.security.oauth.CustomOAuth2AuthorizationRequestResolver;
+import com.back.global.security.oauth.CustomOAuth2LoginSuccessHandler;
+import com.back.global.security.oauth.CustomOAuth2UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity  // @PreAuthorize 사용을 위해 추가
 @Profile("!perf & !dev")
+@Slf4j
 public class SecurityConfig {
 
 	private final CorsProperties corsProperties;
+	private final SiteProperties siteProperties;
 	private final CustomAuthenticationFilter authenticationFilter;
 	private final ObjectMapper objectMapper;
+	private final CustomOAuth2LoginSuccessHandler customOAuth2LoginSuccessHandler;
+	private final CustomOAuth2AuthorizationRequestResolver customOAuth2AuthorizationRequestResolver;
+	private final CustomOAuth2UserService customOAuth2UserService;
 
 	// 보안 필터들 (Optional - 조건부 빈)
 	private WhitelistFilter whitelistFilter;
@@ -52,11 +63,20 @@ public class SecurityConfig {
 
 	public SecurityConfig(
 		CorsProperties corsProperties,
+		SiteProperties siteProperties,
 		CustomAuthenticationFilter authenticationFilter,
-		ObjectMapper objectMapper) {
+		ObjectMapper objectMapper,
+		CustomOAuth2LoginSuccessHandler customOAuth2LoginSuccessHandler,
+		CustomOAuth2AuthorizationRequestResolver customOAuth2AuthorizationRequestResolver,
+		CustomOAuth2UserService customOAuth2UserService
+	) {
 		this.corsProperties = corsProperties;
+		this.siteProperties = siteProperties;
 		this.authenticationFilter = authenticationFilter;
 		this.objectMapper = objectMapper;
+		this.customOAuth2LoginSuccessHandler = customOAuth2LoginSuccessHandler;
+		this.customOAuth2AuthorizationRequestResolver = customOAuth2AuthorizationRequestResolver;
+		this.customOAuth2UserService = customOAuth2UserService;
 	}
 
 	@Autowired(required = false)
@@ -122,11 +142,14 @@ public class SecurityConfig {
 				.requestMatchers("/.well-known/**").permitAll()
 				.requestMatchers("/api/v1/auth/signup").permitAll()
 				.requestMatchers("/api/v1/auth/login").permitAll()
+				.requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
 				.requestMatchers("/api/v1/events/**").permitAll()
 				.requestMatchers("/ws/**").permitAll()  // WebSocket 핸드셰이크 허용
 				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 				.requestMatchers("/actuator/**").permitAll()    // 모니터링/Actuator 관련
 				.requestMatchers("/api/v1/tickets/entry/verify").permitAll() // QR 코드 검증
+				.requestMatchers("/api/v1/auth/oauth/exchange").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").permitAll()
 				.requestMatchers("/api/v1/**").authenticated()
 				.requestMatchers("/api/v2/**").authenticated()
 				.anyRequest().authenticated()
@@ -175,6 +198,26 @@ public class SecurityConfig {
 
 		// 6. Authentication 필터 (마지막 보안 필터 다음)
 		http.addFilterAfter(authenticationFilter, lastFilter);
+
+		http
+			.sessionManagement(sessionManagement ->
+				sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.oauth2Login(oauth2 -> {
+				oauth2
+					.successHandler(customOAuth2LoginSuccessHandler)
+					.authorizationEndpoint(authorizationEndPoint ->
+						authorizationEndPoint.authorizationRequestResolver(customOAuth2AuthorizationRequestResolver))
+					.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userService(customOAuth2UserService))
+					.failureHandler((req, res, ex) -> {
+						log.error("OAuth2 login failed", ex);
+						writeError(res, AuthErrorCode.SOCIAL_LOGIN_FAILED);
+						res.sendRedirect(siteProperties.getFrontUrl());
+					});
+			});
+
+		http
+			.formLogin(form -> form.disable())
+			.httpBasic(basic -> basic.disable());
 
 		return http.build();
 	}

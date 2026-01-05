@@ -39,4 +39,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 	int revokeAllActiveByUserId(@Param("userId") long userId);
 
 	Optional<RefreshToken> findByUserIdAndRevokedFalse(Long userId);
+
+	Optional<RefreshToken> findByTokenAndRevokedFalse(String refreshHash);
 }

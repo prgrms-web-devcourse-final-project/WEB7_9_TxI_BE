@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.back.api.auth.dto.request.LoginRequest;
+import com.back.api.auth.dto.request.OAuthExchangeRequest;
 import com.back.api.auth.dto.request.SignupRequest;
 import com.back.api.auth.dto.request.VerifyPasswordRequest;
 import com.back.api.auth.dto.response.AuthResponse;
@@ -54,5 +55,12 @@ public class AuthController implements AuthApi {
 	public ApiResponse<Void> verifyPassword(@Valid @RequestBody VerifyPasswordRequest request) {
 		authService.verifyPassword(request.password());
 		return ApiResponse.noContent("비밀번호 인증 완료");
+	}
+
+	@Override
+	@PostMapping("/oauth/exchange")
+	public ApiResponse<AuthResponse> exchange(@Valid @RequestBody OAuthExchangeRequest request) {
+		AuthResponse result = authService.exchange(request);
+		return ApiResponse.ok(result);
 	}
 }
