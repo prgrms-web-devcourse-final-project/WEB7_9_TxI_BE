@@ -101,6 +101,11 @@ RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
 
 # TossPayments
 TOSS_SECRET_KEY=your_payment_secret_key
+
+# KAKAO
+KAKAO_CLIENT_ID=your_kakao_client_id
+KAKAO_CLIENT_SECRET=your_kakao_client_secret
+
 ```
 
 **배포 환경 Doppler**
@@ -151,6 +156,9 @@ GRAFANA_API_TOKEN=your_grafana_token
 GRAFANA_USER_ID=your_grafana_name
 LOKI_PUSH_URL=your_loki_url
 
+# KAKAO
+KAKAO_CLIENT_ID=your_kakao_client_id
+KAKAO_CLIENT_SECRET=your_kakao_client_secret
 ```
 
 ---
