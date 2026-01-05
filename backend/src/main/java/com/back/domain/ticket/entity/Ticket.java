@@ -64,6 +64,7 @@ public class Ticket extends BaseEntity {
 	@Column(name = "used_at")
 	private LocalDateTime usedAt;
 
+	@Builder.Default
 	@Column(name = "transferred", nullable = false)
 	private boolean transferred = false;
 

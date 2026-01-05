@@ -4,15 +4,19 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.back.api.ticket.dto.request.TransferRequest;
 import com.back.api.ticket.dto.response.TicketResponse;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -46,5 +50,18 @@ public class TicketController implements TicketApi {
 			"사용자의 티켓 상세 조회 성공",
 			TicketResponse.from(ticket)
 		);
+	}
+
+	@Override
+	@PostMapping("/{ticketId}/transfer")
+	public ApiResponse<Void> transferTicket(
+		@PathVariable Long ticketId,
+		@RequestBody @Valid TransferRequest request
+	) {
+		Long userId = httpRequestContext.getUserId();
+
+		ticketService.transferTicket(ticketId, userId, request.targetNickname());
+
+		return ApiResponse.noContent("티켓 양도 완료");
 	}
 }

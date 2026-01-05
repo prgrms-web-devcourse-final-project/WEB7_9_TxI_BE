@@ -22,7 +22,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, TicketRep
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("SELECT t FROM Ticket t JOIN FETCH t.owner WHERE t.id = :ticketId")
-	Optional<Ticket> findByIdForUpdate(@Param("ticketID") Long ticketId);
+	Optional<Ticket> findByIdForUpdate(@Param("ticketId") Long ticketId);
 
 	@Query(
 		value = """
