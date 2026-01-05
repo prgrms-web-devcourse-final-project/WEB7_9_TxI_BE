@@ -7,22 +7,23 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
 
+import jakarta.persistence.LockModeType;
+
 public interface TicketRepository extends JpaRepository<Ticket, Long>, TicketRepositoryCustom {
 
 	List<Ticket> findByOwnerId(Long userId);
 
-	boolean existsBySeatIdAndTicketStatus(Long seatId, TicketStatus status);
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("SELECT t FROM Ticket t JOIN FETCH t.owner WHERE t.id = :ticketId")
+	Optional<Ticket> findByIdForUpdate(@Param("ticketId") Long ticketId);
 
-	boolean existsBySeatIdAndTicketStatusIn(Long seatId, List<TicketStatus> paid);
-
-	boolean existsByEventIdAndOwnerIdAndTicketStatusIn(Long eventId, Long userId, List<TicketStatus> statuses);
-	
 	@Query(
 		value = """
 				SELECT t
@@ -52,5 +53,5 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, TicketRep
 		+ "LEFT JOIN FETCH t.event e "
 		+ "LEFT JOIN FETCH t.seat s "
 		+ "WHERE t.id = :ticketId")
-	Optional <Ticket> findByIdWithDetails(@Param("ticketId") Long ticketId);
+	Optional<Ticket> findByIdWithDetails(@Param("ticketId") Long ticketId);
 }

@@ -206,4 +206,20 @@ public class TicketService {
 			);
 		}
 	}
+
+	@Transactional
+	public void transferTicket(Long ticketId, Long userId, String targetNickname) {
+		// 비관락으로 조회
+		Ticket ticket = ticketRepository.findByIdForUpdate(ticketId)
+			.orElseThrow(() -> new ErrorException(TicketErrorCode.TICKET_NOT_FOUND));
+
+		if (!ticket.getOwner().getId().equals(userId)) {
+			throw new ErrorException(TicketErrorCode.UNAUTHORIZED_TICKET_ACCESS);
+		}
+
+		User target = userRepository.findByNickname(targetNickname)
+			.orElseThrow(() -> new ErrorException(TicketErrorCode.TRANSFER_TARGET_NOT_FOUND));
+
+		ticket.transferTo(target);
+	}
 }

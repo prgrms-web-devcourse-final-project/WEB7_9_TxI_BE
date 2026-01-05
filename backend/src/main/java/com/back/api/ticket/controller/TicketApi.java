@@ -3,7 +3,11 @@ package com.back.api.ticket.controller;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import com.back.api.ticket.dto.request.TransferRequest;
+
+import jakarta.validation.Valid;
 import com.back.api.ticket.dto.response.TicketResponse;
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
@@ -32,5 +36,23 @@ public interface TicketApi {
 	ApiResponse<TicketResponse> getMyTicketDetails(
 		@Parameter(description = "조회할 티켓 ID", example = "1")
 		@PathVariable Long ticketId
+	);
+
+	@Operation(
+		summary = "티켓 양도",
+		description = "ISSUED 상태의 티켓을 다른 사용자에게 양도합니다. 티켓당 1회만 양도 가능합니다."
+	)
+	@ApiErrorCode({
+		"TICKET_NOT_FOUND",
+		"UNAUTHORIZED_TICKET_ACCESS",
+		"TICKET_NOT_TRANSFERABLE",
+		"TICKET_ALREADY_TRANSFERRED",
+		"CANNOT_TRANSFER_TO_SELF",
+		"TRANSFER_TARGET_NOT_FOUND"
+	})
+	ApiResponse<Void> transferTicket(
+		@Parameter(description = "양도할 티켓 ID", example = "1")
+		@PathVariable Long ticketId,
+		@Valid @RequestBody TransferRequest request
 	);
 }

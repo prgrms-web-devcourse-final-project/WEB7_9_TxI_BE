@@ -64,14 +64,26 @@ public class Ticket extends BaseEntity {
 	@Column(name = "used_at")
 	private LocalDateTime usedAt;
 
-	public static Ticket issue(User owner, Seat seat, Event event, String verificationHash) {
-		Ticket ticket = new Ticket();
-		ticket.owner = owner;
-		ticket.seat = seat;
-		ticket.event = event;
-		ticket.ticketStatus = TicketStatus.ISSUED;
-		ticket.issuedAt = LocalDateTime.now();
-		return ticket;
+	@Builder.Default
+	@Column(name = "transferred", nullable = false)
+	private boolean transferred = false;
+
+	public void transferTo(User newOwner) {
+		// 상태 검증
+		if (this.ticketStatus != TicketStatus.ISSUED) {
+			throw new ErrorException(TicketErrorCode.TICKET_NOT_TRANSFERABLE);
+		}
+		// 양도 1회 제한
+		if (this.transferred) {
+			throw new ErrorException(TicketErrorCode.TICKET_ALREADY_TRANSFERRED);
+		}
+		// 자기 자신 방지
+		if (this.owner.getId().equals(newOwner.getId())) {
+			throw new ErrorException(TicketErrorCode.CANNOT_TRANSFER_TO_SELF);
+		}
+
+		this.owner = newOwner;
+		this.transferred = true;
 	}
 
 	/**

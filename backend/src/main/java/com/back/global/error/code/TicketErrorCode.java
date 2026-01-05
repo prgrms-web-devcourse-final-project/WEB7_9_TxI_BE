@@ -20,7 +20,11 @@ public enum TicketErrorCode implements ErrorCode {
 	INVALID_TICKET_QR_TOKEN(HttpStatus.BAD_REQUEST, "유효하지 않은 티켓 QR 토큰입니다."),
 	TICKET_ALREADY_USED(HttpStatus.BAD_REQUEST, "이미 사용된 티켓입니다."),
 	EVENT_NOT_STARTED(HttpStatus.BAD_REQUEST, "이벤트 시작 전에는 QR이 발급되지 않습니다."),
-	TICKET_ALREADY_ENTERED(HttpStatus.BAD_REQUEST, "이미 입장처 티켓입니다.");
+	TICKET_ALREADY_ENTERED(HttpStatus.BAD_REQUEST, "이미 입장처 티켓입니다."),
+	TICKET_NOT_TRANSFERABLE(HttpStatus.BAD_REQUEST, "아직 발급되지 않은 티켓입니다. 양도가 불가합니다."),
+	TICKET_ALREADY_TRANSFERRED(HttpStatus.BAD_REQUEST, "양도는 티켓당 1회만 가능합니다. 이미 양도가 발생한 티켓입니다."),
+	CANNOT_TRANSFER_TO_SELF(HttpStatus.BAD_REQUEST, "자기자신에게 양도는 불가합니다."),
+	TRANSFER_TARGET_NOT_FOUND(HttpStatus.BAD_REQUEST, "양도 대상 유저를 찾을 수 없습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;
