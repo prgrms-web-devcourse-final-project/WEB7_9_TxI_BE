@@ -23,7 +23,9 @@ import com.back.domain.seat.repository.SeatRepository;
 import com.back.domain.store.entity.Store;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
+import com.back.domain.ticket.entity.TicketTransferHistory;
 import com.back.domain.ticket.repository.TicketRepository;
+import com.back.domain.ticket.repository.TicketTransferHistoryRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserRole;
 import com.back.global.error.exception.ErrorException;
@@ -56,6 +58,8 @@ class TicketServiceIntegrationTest {
 	private StoreHelper storeHelper;
 	@Autowired
 	private SeatRepository seatRepository;
+	@Autowired
+	private TicketTransferHistoryRepository transferHistoryRepository;
 
 	private User user;
 	private Event event;
@@ -384,5 +388,144 @@ class TicketServiceIntegrationTest {
 		)
 			.isInstanceOf(ErrorException.class)
 			.hasMessageContaining("티켓 상태가 유효하지 않습니다");
+	}
+
+	// ===== 티켓 양도 테스트 =====
+
+	@Test
+	@DisplayName("티켓 양도 - 성공 (ISSUED 티켓 → 새 소유자로 변경)")
+	void transferTicket_success() {
+
+		// given: ISSUED 티켓 생성, 양도 대상 유저 생성
+		Ticket ticket = ticketHelper.createIssuedTicket(user, seat, event);
+		User targetUser = userHelper.createUser(UserRole.NORMAL, null).user();
+
+		// when: 양도 실행
+		ticketService.transferTicket(ticket.getId(), user.getId(), targetUser.getNickname());
+
+		// then: 소유자 변경, transferred 플래그 설정, 이력 저장 확인
+		Ticket transferredTicket = ticketRepository.findById(ticket.getId()).get();
+		assertThat(transferredTicket.getOwner().getId()).isEqualTo(targetUser.getId());
+		assertThat(transferredTicket.isTransferred()).isTrue();
+
+		// 양도 이력 확인
+		List<TicketTransferHistory> histories =
+			transferHistoryRepository.findByTicketIdOrderByTransferredAtDesc(ticket.getId());
+		assertThat(histories).hasSize(1);
+		assertThat(histories.get(0).getFromUserId()).isEqualTo(user.getId());
+		assertThat(histories.get(0).getToUserId()).isEqualTo(targetUser.getId());
+	}
+
+	@Test
+	@DisplayName("티켓 양도 - 실패 (이미 양도된 티켓 재양도 불가)")
+	void transferTicket_alreadyTransferred_fail() {
+
+		// given: ISSUED 티켓 생성 후 1회 양도
+		Ticket ticket = ticketHelper.createIssuedTicket(user, seat, event);
+		User firstTarget = userHelper.createUser(UserRole.NORMAL, null).user();
+		User secondTarget = userHelper.createUser(UserRole.NORMAL, null).user();
+
+		ticketService.transferTicket(ticket.getId(), user.getId(), firstTarget.getNickname());
+
+		// when & then: 재양도 시도 시 실패
+		assertThatThrownBy(() ->
+			ticketService.transferTicket(ticket.getId(), firstTarget.getId(), secondTarget.getNickname())
+		)
+			.isInstanceOf(ErrorException.class)
+			.hasMessageContaining("양도는 티켓당 1회만 가능합니다");
+	}
+
+	@Test
+	@DisplayName("티켓 양도 - 실패 (자기 자신에게 양도 불가)")
+	void transferTicket_toSelf_fail() {
+
+		// given: ISSUED 티켓 생성
+		Ticket ticket = ticketHelper.createIssuedTicket(user, seat, event);
+
+		// when & then: 자기 자신에게 양도 시도 시 실패
+		assertThatThrownBy(() ->
+			ticketService.transferTicket(ticket.getId(), user.getId(), user.getNickname())
+		)
+			.isInstanceOf(ErrorException.class)
+			.hasMessageContaining("자기자신에게 양도는 불가합니다");
+	}
+
+	@Test
+	@DisplayName("티켓 양도 - 실패 (DRAFT 상태 티켓은 양도 불가)")
+	void transferTicket_draftStatus_fail() {
+
+		// given: DRAFT 티켓 생성
+		Ticket draftTicket = ticketHelper.createDraftTicket(user, seat, event);
+		User targetUser = userHelper.createUser(UserRole.NORMAL, null).user();
+
+		// when & then: DRAFT 티켓 양도 시도 시 실패
+		assertThatThrownBy(() ->
+			ticketService.transferTicket(draftTicket.getId(), user.getId(), targetUser.getNickname())
+		)
+			.isInstanceOf(ErrorException.class)
+			.hasMessageContaining("아직 발급되지 않은 티켓입니다");
+	}
+
+	@Test
+	@DisplayName("티켓 양도 - 실패 (PAID 상태 티켓은 양도 불가)")
+	void transferTicket_paidStatus_fail() {
+
+		// given: PAID 티켓 생성
+		Ticket paidTicket = ticketHelper.createPaidTicket(user, seat, event);
+		User targetUser = userHelper.createUser(UserRole.NORMAL, null).user();
+
+		// when & then: PAID 티켓 양도 시도 시 실패
+		assertThatThrownBy(() ->
+			ticketService.transferTicket(paidTicket.getId(), user.getId(), targetUser.getNickname())
+		)
+			.isInstanceOf(ErrorException.class)
+			.hasMessageContaining("아직 발급되지 않은 티켓입니다");
+	}
+
+	@Test
+	@DisplayName("티켓 양도 - 실패 (존재하지 않는 대상 유저)")
+	void transferTicket_targetNotFound_fail() {
+
+		// given: ISSUED 티켓 생성
+		Ticket ticket = ticketHelper.createIssuedTicket(user, seat, event);
+
+		// when & then: 존재하지 않는 닉네임으로 양도 시도 시 실패
+		assertThatThrownBy(() ->
+			ticketService.transferTicket(ticket.getId(), user.getId(), "nonExistentNickname")
+		)
+			.isInstanceOf(ErrorException.class)
+			.hasMessageContaining("양도 대상 유저를 찾을 수 없습니다");
+	}
+
+	@Test
+	@DisplayName("티켓 양도 - 실패 (다른 사용자의 티켓 양도 시도)")
+	void transferTicket_unauthorized_fail() {
+
+		// given: ISSUED 티켓 생성, 다른 유저 생성
+		Ticket ticket = ticketHelper.createIssuedTicket(user, seat, event);
+		User otherUser = userHelper.createUser(UserRole.NORMAL, null).user();
+		User targetUser = userHelper.createUser(UserRole.NORMAL, null).user();
+
+		// when & then: 다른 유저가 양도 시도 시 실패
+		assertThatThrownBy(() ->
+			ticketService.transferTicket(ticket.getId(), otherUser.getId(), targetUser.getNickname())
+		)
+			.isInstanceOf(ErrorException.class)
+			.hasMessageContaining("티켓에 대한 접근 권한이 없습니다");
+	}
+
+	@Test
+	@DisplayName("티켓 양도 - 실패 (존재하지 않는 티켓)")
+	void transferTicket_ticketNotFound_fail() {
+
+		// given: 양도 대상 유저 생성
+		User targetUser = userHelper.createUser(UserRole.NORMAL, null).user();
+
+		// when & then: 존재하지 않는 티켓 양도 시도 시 실패
+		assertThatThrownBy(() ->
+			ticketService.transferTicket(999999L, user.getId(), targetUser.getNickname())
+		)
+			.isInstanceOf(ErrorException.class)
+			.hasMessageContaining("티켓을 찾을 수 없습니다");
 	}
 }
