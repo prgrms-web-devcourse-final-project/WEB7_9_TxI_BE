@@ -3,6 +3,7 @@ package com.back.api.auth.service;
 import java.time.LocalDate;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.auth.entity.RefreshToken;
 import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.auth.repository.RefreshTokenRepository;
+import com.back.domain.notification.systemMessage.v2.V2_NotificationMessage;
 import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
@@ -49,6 +51,7 @@ public class AuthService {
 	private final ActiveSessionRepository activeSessionRepository;
 	private final AuthStore authStore;
 	private final StoreService storeService;
+	private final ApplicationEventPublisher eventPublisher;
 	private final OAuthExchangeCodeStore codeStore;
 
 	@Transactional
@@ -88,6 +91,14 @@ public class AuthService {
 		User savedUser = userRepository.save(user);
 
 		JwtDto tokens = loginAsSingleDevice(savedUser);
+
+		// 알림 메시지 발행
+		eventPublisher.publishEvent(
+			V2_NotificationMessage.signUp(
+				savedUser.getId(),
+				savedUser.getNickname()
+			)
+		);
 
 		return buildAuthResponse(savedUser, tokens);
 	}

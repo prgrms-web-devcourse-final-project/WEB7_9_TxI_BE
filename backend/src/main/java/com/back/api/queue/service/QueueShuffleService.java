@@ -136,9 +136,10 @@ public class QueueShuffleService {
 	private void publishQueueWaitingNotifications(Event event, List<Long> shuffledUserIds) {
 		for (int i = 0; i < shuffledUserIds.size(); i++) {
 			Long userId = shuffledUserIds.get(i);
+			Long rank = (long)(i + 1);
 
 			eventPublisher.publishEvent(
-				V2_NotificationMessage.queueWaiting(userId, event.getTitle())
+				V2_NotificationMessage.queueWaiting(userId, event.getTitle(), rank)
 			);
 		}
 	}

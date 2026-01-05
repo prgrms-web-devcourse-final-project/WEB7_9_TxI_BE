@@ -17,6 +17,21 @@ public class V2_NotificationMessage {
 	private final V2_NotificationVar notificationVar;
 	private final V2_NotificationContext context;
 
+	public static V2_NotificationMessage signUp(
+		Long userId, String userName) {
+
+		V2_NotificationContext context = V2_NotificationContext.builder()
+			.userName(userName)
+			.build();
+
+		return new V2_NotificationMessage(
+			userId,
+			DomainName.USERS,
+			V2_NotificationVar.SIGN_UP,
+			context
+		);
+	}
+
 	public static V2_NotificationMessage preRegisterDone(
 		Long userId, String eventTitle) {
 
@@ -63,10 +78,11 @@ public class V2_NotificationMessage {
 	}
 
 	public static V2_NotificationMessage queueWaiting(
-		Long userId, String eventTitle) {
+		Long userId, String eventTitle, Long waitingNum) {
 
 		V2_NotificationContext context = V2_NotificationContext.builder()
 			.eventTitle(eventTitle)
+			.waitingNum(waitingNum)
 			.build();
 
 		return new V2_NotificationMessage(
