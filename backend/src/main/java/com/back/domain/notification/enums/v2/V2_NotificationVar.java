@@ -58,6 +58,7 @@ public enum V2_NotificationVar {
 			return String.format("[%s]\n아쉽게도 티켓팅 가능 시간이 초과되었습니다.\n다음 기회를 노려주세요..", context.eventTitle());
 		}
 	},
+	// 대기열 뒤로 보내기
 	//티켓 결제 완료 - 사용 데이터 : 이벤트 제목, 결제 금액
 	PAYMENT_SUCCESS(
 		"티켓 구매 완료",

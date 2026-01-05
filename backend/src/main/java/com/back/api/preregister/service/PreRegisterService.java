@@ -15,7 +15,6 @@ import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.api.s3.service.S3PresignedService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.notification.systemMessage.v1.PreRegisterDoneMessage;
 import com.back.domain.notification.systemMessage.v2.V2_NotificationMessage;
 import com.back.domain.preregister.entity.PreRegister;
 import com.back.domain.preregister.entity.PreRegisterStatus;
@@ -120,14 +119,6 @@ public class PreRegisterService {
 
 			// 모든 검증 통과 후 SMS 인증 플래그 삭제
 			deleteSmsVerificationFlag(request.phoneNumber());
-
-			eventPublisher.publishEvent(
-				new PreRegisterDoneMessage(
-					userId,
-					savedPreRegister.getId(),
-					event.getTitle()
-				)
-			);
 
 			eventPublisher.publishEvent(
 				V2_NotificationMessage.preRegisterDone(

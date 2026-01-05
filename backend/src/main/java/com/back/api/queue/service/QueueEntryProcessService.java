@@ -20,8 +20,6 @@ import com.back.api.queue.dto.response.WaitingQueueResponse;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.notification.systemMessage.v1.QueueEntriesMessage;
-import com.back.domain.notification.systemMessage.v1.QueueExpiredMessage;
 import com.back.domain.notification.systemMessage.v2.V2_NotificationMessage;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
@@ -71,14 +69,6 @@ public class QueueEntryProcessService {
 		updateRedis(eventId, userId);
 
 		publishEnteredEvent(queueEntry); // 입장 처리 웹소켓 이벤트 발행
-
-		eventPublisher.publishEvent(
-			new QueueEntriesMessage(
-				userId,
-				enqueue.getId(),
-				eventRepository.findById(eventId).get().getTitle()
-			)
-		);
 
 		eventPublisher.publishEvent(
 			V2_NotificationMessage.queueEntered(
@@ -336,14 +326,6 @@ public class QueueEntryProcessService {
 		}
 
 		publishExpiredEvent(queueEntry);  // 만료 처리 웹소켓 이벤트 발행
-
-		eventPublisher.publishEvent(
-			new QueueExpiredMessage(
-				userId,
-				expired.getId(),
-				eventRepository.findById(eventId).get().getTitle()
-			)
-		);
 
 		eventPublisher.publishEvent(
 			V2_NotificationMessage.queueExpired(
