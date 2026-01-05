@@ -41,6 +41,7 @@ public class SchedulerConfig {
 		return scheduler;
 	}
 
+	// 고정 스케줄러용
 	@Bean
 	public LockProvider lockProvider(RedisConnectionFactory connectionFactory) {
 		return new RedisLockProvider(connectionFactory, "waitfair");

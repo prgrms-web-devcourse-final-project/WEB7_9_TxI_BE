@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,8 @@ import com.back.api.event.dto.request.EventCreateRequest;
 import com.back.api.event.dto.request.EventUpdateRequest;
 import com.back.api.event.dto.response.EventListResponse;
 import com.back.api.event.dto.response.EventResponse;
+import com.back.api.event.event.EventScheduleEvent;
+import com.back.api.event.scheduler.EventScheduler;
 import com.back.api.s3.service.S3MoveService;
 import com.back.api.s3.service.S3PresignedService;
 import com.back.api.store.service.StoreService;
@@ -36,6 +39,8 @@ public class EventService {
 	private final S3MoveService s3MoveService;
 	private final S3PresignedService s3PresignedService;
 	private final StoreService storeService;
+	private final EventScheduler eventScheduler;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
 	public EventResponse createEvent(EventCreateRequest request, long storeId) {
@@ -74,6 +79,11 @@ public class EventService {
 			);
 		}
 
+		eventScheduler.scheduleEventLifecycle(savedEvent.getId());
+		eventPublisher.publishEvent(new EventScheduleEvent(
+			savedEvent.getId(),
+			EventScheduleEvent.EventScheduleType.CREATED
+		));
 		return EventResponse.from(savedEvent);
 	}
 
@@ -127,6 +137,11 @@ public class EventService {
 		);
 		event.changeStatus(request.status());
 
+		eventScheduler.rescheduleEventLifecycle(eventId);
+		eventPublisher.publishEvent(new EventScheduleEvent(
+			eventId,
+			EventScheduleEvent.EventScheduleType.UPDATED
+		));
 		return EventResponse.from(event);
 	}
 
@@ -137,6 +152,12 @@ public class EventService {
 		if (!event.getStore().getId().equals(storeId)) {
 			throw new ErrorException(AuthErrorCode.FORBIDDEN);
 		}
+
+		eventScheduler.cancelEventSchedules(eventId);
+		eventPublisher.publishEvent(new EventScheduleEvent(
+			eventId,
+			EventScheduleEvent.EventScheduleType.DELETED
+		));
 
 		event.delete();
 	}
@@ -213,6 +234,10 @@ public class EventService {
 		EventStatus status
 	) {
 		return eventRepository.findByTicketOpenAtBetweenAndStatus(start, end, status);
+	}
+
+	public List<Event> findUpcomingEvents(LocalDateTime now) {
+		return eventRepository.findUpcomingEvents(now);
 	}
 
 }
