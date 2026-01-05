@@ -15,12 +15,12 @@ import com.back.domain.event.repository.EventRepository;
 import com.back.domain.notification.entity.Notification;
 import com.back.domain.notification.enums.DomainName;
 import com.back.domain.notification.repository.NotificationRepository;
-import com.back.domain.notification.systemMessage.NotificationMessage;
-import com.back.domain.notification.systemMessage.OrderFailedMessage;
-import com.back.domain.notification.systemMessage.OrderSuccessMessage;
-import com.back.domain.notification.systemMessage.PreRegisterDoneMessage;
-import com.back.domain.notification.systemMessage.QueueEntriesMessage;
-import com.back.domain.notification.systemMessage.TicketGetMessage;
+import com.back.domain.notification.systemMessage.v1.NotificationMessage;
+import com.back.domain.notification.systemMessage.v1.OrderFailedMessage;
+import com.back.domain.notification.systemMessage.v1.OrderSuccessMessage;
+import com.back.domain.notification.systemMessage.v1.PreRegisterDoneMessage;
+import com.back.domain.notification.systemMessage.v1.QueueEntriesMessage;
+import com.back.domain.notification.systemMessage.v1.TicketGetMessage;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 

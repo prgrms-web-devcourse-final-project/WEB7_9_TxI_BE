@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.api.event.service.EventService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
+import com.back.domain.notification.systemMessage.v2.V2_NotificationMessage;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
@@ -20,6 +21,7 @@ import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.QueueEntryErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.global.event.EventPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
  * 자동으로 섞기 + 관리자 전용 수동 섞기
  * 공정한 대기열 생성 로직 논의 필요 -> 현재는 SecureRandom 이용한 랜덤 섞기 로직으로 구현
  */
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -39,6 +42,7 @@ public class QueueShuffleService {
 	private final QueueEntryRedisRepository queueEntryRedisRepository;
 	private final UserRepository userRepository;
 	private final EventService eventService;
+	private final EventPublisher eventPublisher;
 
 	@Transactional
 	public void shuffleQueue(Long eventId, List<Long> preRegisteredUserIds) {
@@ -56,6 +60,8 @@ public class QueueShuffleService {
 
 		saveToRedis(eventId, shuffledUserIds);
 		saveToDatabase(event, users, shuffledUserIds);
+
+		publishQueueWaitingNotifications(event, shuffledUserIds);
 
 		event.changeStatus(EventStatus.QUEUE_READY);
 
@@ -126,4 +132,16 @@ public class QueueShuffleService {
 		}
 		queueEntryRepository.saveAll(entries);
 	}
+
+	private void publishQueueWaitingNotifications(Event event, List<Long> shuffledUserIds) {
+		for (int i = 0; i < shuffledUserIds.size(); i++) {
+			Long userId = shuffledUserIds.get(i);
+
+			eventPublisher.publishEvent(
+				V2_NotificationMessage.queueWaiting(userId, event.getTitle())
+			);
+		}
+	}
+
 }
+

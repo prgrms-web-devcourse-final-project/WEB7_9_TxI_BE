@@ -17,11 +17,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.back.api.notification.dto.NotificationResponseDto;
+import com.back.api.notification.dto.v1.NotificationResponseDto;
 import com.back.domain.notification.entity.Notification;
 import com.back.domain.notification.enums.DomainName;
-import com.back.domain.notification.enums.NotificationTypeDetails;
 import com.back.domain.notification.enums.NotificationTypes;
+import com.back.domain.notification.enums.v1.NotificationTypeDetails;
 import com.back.domain.notification.repository.NotificationRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;

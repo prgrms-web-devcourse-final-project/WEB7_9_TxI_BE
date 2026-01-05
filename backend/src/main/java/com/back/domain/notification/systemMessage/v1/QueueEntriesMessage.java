@@ -1,10 +1,10 @@
-package com.back.domain.notification.systemMessage;
+package com.back.domain.notification.systemMessage.v1;
 
 import static java.lang.String.*;
 
 import com.back.domain.notification.enums.DomainName;
-import com.back.domain.notification.enums.NotificationTypeDetails;
 import com.back.domain.notification.enums.NotificationTypes;
+import com.back.domain.notification.enums.v1.NotificationTypeDetails;
 
 public class QueueEntriesMessage extends NotificationMessage {
 	private final String eventName;

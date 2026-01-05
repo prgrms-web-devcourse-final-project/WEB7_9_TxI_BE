@@ -4,9 +4,9 @@ import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.reset;
-import static org.mockito.BDDMockito.*;
 
 import java.util.List;
 
@@ -21,20 +21,20 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.back.api.notification.dto.NotificationResponseDto;
+import com.back.api.notification.dto.v1.NotificationResponseDto;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventCategory;
 import com.back.domain.event.entity.EventStatus;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.notification.entity.Notification;
 import com.back.domain.notification.enums.DomainName;
-import com.back.domain.notification.enums.NotificationTypeDetails;
 import com.back.domain.notification.enums.NotificationTypes;
+import com.back.domain.notification.enums.v1.NotificationTypeDetails;
 import com.back.domain.notification.repository.NotificationRepository;
-import com.back.domain.notification.systemMessage.OrderFailedMessage;
-import com.back.domain.notification.systemMessage.OrderSuccessMessage;
-import com.back.domain.notification.systemMessage.PreRegisterDoneMessage;
-import com.back.domain.notification.systemMessage.QueueEntriesMessage;
+import com.back.domain.notification.systemMessage.v1.OrderFailedMessage;
+import com.back.domain.notification.systemMessage.v1.OrderSuccessMessage;
+import com.back.domain.notification.systemMessage.v1.PreRegisterDoneMessage;
+import com.back.domain.notification.systemMessage.v1.QueueEntriesMessage;
 import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;

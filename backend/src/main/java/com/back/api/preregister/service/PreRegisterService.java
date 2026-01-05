@@ -15,7 +15,8 @@ import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.api.s3.service.S3PresignedService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.notification.systemMessage.PreRegisterDoneMessage;
+import com.back.domain.notification.systemMessage.v1.PreRegisterDoneMessage;
+import com.back.domain.notification.systemMessage.v2.V2_NotificationMessage;
 import com.back.domain.preregister.entity.PreRegister;
 import com.back.domain.preregister.entity.PreRegisterStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
@@ -128,6 +129,13 @@ public class PreRegisterService {
 				)
 			);
 
+			eventPublisher.publishEvent(
+				V2_NotificationMessage.preRegisterDone(
+					userId,
+					event.getTitle()
+				)
+			);
+
 			// Fingerprint 성공 기록
 			if (fingerprintService != null && visitorId != null) {
 				fingerprintService.recordAttempt(visitorId, true);
@@ -172,7 +180,7 @@ public class PreRegisterService {
 			.map(preRegister -> {
 				Event event = preRegister.getEvent();
 				String imageUrl = null;
-				if(event.getImageUrl() != null && !event.getImageUrl().isBlank()) {
+				if (event.getImageUrl() != null && !event.getImageUrl().isBlank()) {
 					imageUrl = s3PresignedService.issueDownloadUrl(event.getImageUrl());
 				}
 

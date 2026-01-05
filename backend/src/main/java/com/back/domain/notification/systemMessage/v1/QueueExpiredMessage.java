@@ -1,10 +1,10 @@
-package com.back.domain.notification.systemMessage;
+package com.back.domain.notification.systemMessage.v1;
 
 import static java.lang.String.*;
 
 import com.back.domain.notification.enums.DomainName;
-import com.back.domain.notification.enums.NotificationTypeDetails;
 import com.back.domain.notification.enums.NotificationTypes;
+import com.back.domain.notification.enums.v1.NotificationTypeDetails;
 
 public class QueueExpiredMessage extends NotificationMessage {
 	private final String eventName;
@@ -31,6 +31,6 @@ public class QueueExpiredMessage extends NotificationMessage {
 
 	@Override
 	public String getMessage() {
-		return format("[%s]\n아쉽게도 티켓팅 가능 시간이 초과되었습니다.\n다음 기회를 노려주세요..",this.eventName);
+		return format("[%s]\n아쉽게도 티켓팅 가능 시간이 초과되었습니다.\n다음 기회를 노려주세요..", this.eventName);
 	}
 }

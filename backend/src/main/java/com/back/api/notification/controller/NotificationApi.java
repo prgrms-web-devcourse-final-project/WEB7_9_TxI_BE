@@ -4,8 +4,9 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.PathVariable;
 
-import com.back.api.notification.dto.NotificationResponseDto;
 import com.back.api.notification.dto.UnreadCountResponseDto;
+import com.back.api.notification.dto.v1.NotificationResponseDto;
+import com.back.api.notification.dto.v2.V2_NotificationResponseDto;
 import com.back.global.config.swagger.ApiErrorCode;
 import com.back.global.response.ApiResponse;
 
@@ -46,5 +47,8 @@ public interface NotificationApi {
 		"NOTIFICATION_PROCESS_FAILED"
 	})
 	ApiResponse<Void> markAllAsRead(
+	);
+
+	ApiResponse<List<V2_NotificationResponseDto>> v2_getNotifications(
 	);
 }

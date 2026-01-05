@@ -1,4 +1,4 @@
-package com.back.api.notification.dto;
+package com.back.api.notification.dto.v1;
 
 import java.time.LocalDateTime;
 
