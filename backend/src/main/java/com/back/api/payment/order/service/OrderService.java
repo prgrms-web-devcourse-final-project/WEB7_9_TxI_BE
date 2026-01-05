@@ -177,7 +177,6 @@ public class OrderService {
 		}
 
 		if (!order.getAmount().equals(clientAmount)) {
-			//TODO 금액 불일치 로직 : paymentService.amountNotEqual()
 			throw new ErrorException(PaymentErrorCode.AMOUNT_VERIFICATION_FAILED);
 		}
 

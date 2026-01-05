@@ -47,7 +47,7 @@ public class TossPaymentService {
 	 */
 	@CircuitBreaker(name = CIRCUIT_BREAKER_NAME, fallbackMethod = "handleFailure")
 	public TossPaymentResponse confirmPayment(V2_PaymentConfirmRequest request) {
-		log.info("[Toss] 결제 승인 요청 - orderId: {}, amount: {}", request.orderId(), request.amount());
+		// log.info("[Toss] 결제 승인 요청 - orderId: {}, amount: {}", request.orderId(), request.amount());
 
 		TossPaymentResponse response = tossRestClient.post()
 			.uri("/v1/payments/confirm")
@@ -59,7 +59,7 @@ public class TossPaymentService {
 			.retrieve()
 			.body(TossPaymentResponse.class);
 
-		log.info("[Toss] 결제 승인 완료 - orderId: {}, status: {}", request.orderId(), response.status());
+		// log.info("[Toss] 결제 승인 완료 - orderId: {}, status: {}", request.orderId(), response.status());
 
 		return response;
 	}
