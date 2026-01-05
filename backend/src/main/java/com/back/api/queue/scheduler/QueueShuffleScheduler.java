@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"perf", "dev"})
+@Profile({"perf"})
 public class QueueShuffleScheduler {
 
 	@Qualifier("dynamicScheduler")
@@ -116,11 +116,10 @@ public class QueueShuffleScheduler {
 		}
 	}
 
-	// 서버 재시작 시 미래 셔플 복구
+	// 서버 재시작 시 스케줄 복구
 	@EventListener(ApplicationReadyEvent.class)
 	@Transactional(readOnly = true)
 	public void recoverSchedulesOnStartup() {
-		log.info("SHUFFLE_RECOVERY_START");
 
 		LocalDateTime now = LocalDateTime.now();
 		List<Event> upcomingEvents = eventRepository.findUpcomingEvents(now);
@@ -142,8 +141,7 @@ public class QueueShuffleScheduler {
 			}
 		}
 
-		log.info("SHUFFLE_RECOVERY_COMPLETE count={} total={}",
-			successCount, scheduledTasks.size());
+		log.info("SHUFFLE_RECOVERY_COMPLETE count={} total={}", successCount, scheduledTasks.size());
 	}
 
 

@@ -63,6 +63,7 @@ logging:
     org.hibernate.orm.jdbc.bind: OFF
     org.hibernate.orm.jdbc.extract: OFF
     org.springframework.transaction.interceptor: INFO
+    org.hibernate.engine.jdbc.batch.internal: DEBUG
 
 
 springdoc:

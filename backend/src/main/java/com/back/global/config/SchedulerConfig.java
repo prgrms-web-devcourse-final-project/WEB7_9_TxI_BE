@@ -16,7 +16,7 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 @EnableSchedulerLock(defaultLockAtMostFor = "10m")
 public class SchedulerConfig {
 
-	// 고정 스케줄러 : QueueExpireScheduler, DraftTicketExpirationScheduler
+	// 고정 스케줄러 : QueueExpireScheduler, DraftTicketExpirationScheduler, QueueEntryScheduler
 	@Bean(name = "fixedScheduler")
 	@Primary // 기본 스케줄러로 지정
 	public ThreadPoolTaskScheduler fixedScheduler() {
@@ -29,7 +29,7 @@ public class SchedulerConfig {
 		return scheduler;
 	}
 
-	// 동적 스케줄러 : EventLifecycleScheduler, QueueShuffleScheduler, QueueEntryDynamicScheduler
+	// 동적 스케줄러 : EventScheduler, QueueShuffleScheduler
 	@Bean(name = "dynamicScheduler")
 	public ThreadPoolTaskScheduler dynamicScheduler() {
 

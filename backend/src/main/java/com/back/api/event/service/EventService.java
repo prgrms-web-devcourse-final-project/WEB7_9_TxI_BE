@@ -231,8 +231,4 @@ public class EventService {
 		return eventRepository.findByTicketOpenAtBetweenAndStatus(start, end, status);
 	}
 
-	public List<Event> findUpcomingEvents(LocalDateTime now) {
-		return eventRepository.findUpcomingEvents(now);
-	}
-
 }
