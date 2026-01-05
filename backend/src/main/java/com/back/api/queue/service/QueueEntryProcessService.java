@@ -73,7 +73,9 @@ public class QueueEntryProcessService {
 		eventPublisher.publishEvent(
 			NotificationMessage.queueEntered(
 				userId,
-				eventRepository.findById(eventId).get().getTitle()
+				eventRepository.findById(eventId)
+					.map(Event::getTitle)
+					.orElse("제목 없음")
 			)
 		);
 	}
@@ -330,7 +332,9 @@ public class QueueEntryProcessService {
 		eventPublisher.publishEvent(
 			NotificationMessage.queueExpired(
 				userId,
-				eventRepository.findById(eventId).get().getTitle()
+				eventRepository.findById(eventId)
+					.map(Event::getTitle)
+					.orElse("제목 없음")
 			)
 		);
 	}
