@@ -23,6 +23,7 @@ import com.back.global.error.code.EventErrorCode;
 import com.back.global.error.code.TicketErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.global.observability.metrics.BusinessMetrics;
+import com.back.global.utils.MerkleUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -232,6 +233,33 @@ public class TicketService {
 		TicketTransferHistory history = TicketTransferHistory.record(ticketId, fromUserId, target.getId());
 		transferHistoryRepository.save(history);
 
-		log.info("[Ticket Transfer] ticketId={}, from={}, to={}", ticketId, fromUserId, target.getId());
+		// Merkle Root 앵커링 (Loki로 전송됨)
+		anchorTransferHistory(ticketId, history);
+
+		log.debug("[Ticket Transfer] ticketId={}, from={}, to={}", ticketId, fromUserId, target.getId());
+	}
+
+	/**
+	 * 양도 이력 Merkle Root 앵커링
+	 * 블록체인의 핵심 원리(위변조 감지)를 차용하여
+	 * 외부 로그 시스템(Loki)에 앵커링
+	 */
+	private void anchorTransferHistory(Long ticketId, TicketTransferHistory latestHistory) {
+		List<TicketTransferHistory> histories =
+			transferHistoryRepository.findByTicketIdOrderByTransferredAtDesc(ticketId);
+
+		List<String> hashes = histories.stream()
+			.map(TicketTransferHistory::computeHash)
+			.toList();
+
+		String merkleRoot = MerkleUtil.buildRoot(hashes);
+
+		// 구조화된 로그 - Loki에서 파싱 가능 (외부 앵커)
+		log.info("[MERKLE_ANCHOR] ticketId={}, root={}, count={}, latestHash={}",
+			ticketId,
+			merkleRoot,
+			histories.size(),
+			latestHistory.computeHash()
+		);
 	}
 }

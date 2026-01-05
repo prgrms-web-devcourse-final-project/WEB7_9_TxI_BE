@@ -1,6 +1,10 @@
 package com.back.domain.ticket.entity;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import com.back.global.entity.BaseEntity;
 
@@ -51,14 +55,41 @@ public class TicketTransferHistory extends BaseEntity {
 		this.transferredAt = LocalDateTime.now();
 	}
 
-	/**
-	 * 양도 이력 생성
-	 */
+	// 양도 이력 기록
 	public static TicketTransferHistory record(Long ticketId, Long fromUserId, Long toUserId) {
 		return TicketTransferHistory.builder()
 			.ticketId(ticketId)
 			.fromUserId(fromUserId)
 			.toUserId(toUserId)
 			.build();
+	}
+
+	/**
+	 * Merkle Tree용 SHA-256 해시 생성
+	 * 데이터 무결성 검증을 위한 해시값 계산
+	 */
+	public String computeHash() {
+		String data = String.join(":",
+			String.valueOf(ticketId),
+			String.valueOf(fromUserId),
+			String.valueOf(toUserId),
+			transferredAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+		);
+
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] hashBytes = digest.digest(data.getBytes(StandardCharsets.UTF_8));
+			return bytesToHex(hashBytes);
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("SHA-256 algorithm not available", e);
+		}
+	}
+
+	private String bytesToHex(byte[] bytes) {
+		StringBuilder sb = new StringBuilder();
+		for (byte b : bytes) {
+			sb.append(String.format("%02x", b));
+		}
+		return sb.toString();
 	}
 }

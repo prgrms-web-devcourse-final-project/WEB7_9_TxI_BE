@@ -26,7 +26,11 @@ public enum CommonErrorCode implements ErrorCode {
 	RECAPTCHA_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "reCAPTCHA 토큰이 누락되었습니다."),
 
 	// ===== 서버 내부 오류 =====
-	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
+	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
+
+	// ===== Merkle Tree 관련 =====
+	MERKLE_TOO_MANY_LEAVES(HttpStatus.BAD_REQUEST, "처리할 데이터가 너무 많습니다."),
+	MERKLE_BUILD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Merkle Tree 생성에 실패했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;
