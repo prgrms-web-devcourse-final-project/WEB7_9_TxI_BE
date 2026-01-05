@@ -117,12 +117,13 @@ resource "aws_security_group" "sg_1" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # //삭제 고려
+  # ingress {
+  #   from_port   = 8080
+  #   to_port     = 8080
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
 
   # Prometheus
   ingress {
@@ -278,7 +279,7 @@ systemctl enable docker
 systemctl start docker
 
 # 도커 네트워크 생성
-docker network create common
+docker network create common || true
 
 # nginx 설치
 docker run -d \
@@ -293,6 +294,45 @@ docker run -d \
   -v /dockerProjects/npm_1/volumes/etc/letsencrypt:/etc/letsencrypt \
   jc21/nginx-proxy-manager:latest
 
+# haproxy 설치
+mkdir -p /dockerProjects/haproxy
+cat > /dockerProjects/haproxy/haproxy.cfg <<'HAPROXY'
+global
+    maxconn 4096
+    log stdout format raw local0
+
+defaults
+    mode http
+    log global
+    option httplog
+    option dontlognull
+    option forwardfor
+    timeout connect 5s
+    timeout client 60s
+    timeout server 60s
+    timeout check 2s
+    retries 3
+
+frontend http_front
+    bind *:80
+    default_backend app_backend
+
+backend app_backend
+    balance roundrobin
+    option httpchk GET /actuator/health
+    http-check expect status 200
+    server app1 app1:8080 check inter 2s rise 2 fall 3 weight 100
+    server app2 app2:8080 check inter 2s rise 2 fall 3 weight 0
+HAPROXY
+
+# HAProxy 실행
+docker run -d \
+  --name haproxy \
+  --restart unless-stopped \
+  --network common \
+  -e TZ=Asia/Seoul \
+  -v /dockerProjects/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro \
+  haproxy:2.9-alpine
 
 # redis 설치
 docker run -d \

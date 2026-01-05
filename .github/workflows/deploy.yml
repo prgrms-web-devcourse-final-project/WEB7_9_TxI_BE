@@ -116,10 +116,53 @@ jobs:
           working-directory: /
           comment: Deploy
           command: |
-            docker pull ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
-            docker stop app1 2>/dev/null || true && \
-            docker rm app1 2>/dev/null || true && \
-             docker run -d --name app1 --network common -p 8080:8080 \
+            set -e
+            IMAGE="ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/waitfair:latest"
+            
+            # 현재 활성 서버 확인 (설정 파일에서)
+            if grep -q "server app1 app1:8080 check.*weight 100" /dockerProjects/haproxy/haproxy.cfg; then
+              ACTIVE=app1
+              STANDBY=app2
+            else
+              ACTIVE=app2
+              STANDBY=app1
+            fi
+            
+            docker pull $IMAGE
+            docker stop $STANDBY 2>/dev/null || true
+            docker rm $STANDBY 2>/dev/null || true
+            
+            docker run -d \
+              --name $STANDBY \
+              --network common \
               -e DOPPLER_TOKEN=${{ secrets.DOPPLER_TOKEN }} \
-              ghcr.io/${{ needs.buildImageAndPush.outputs.owner_lc }}/${{ needs.buildImageAndPush.outputs.image_name }}:latest && \
-            docker image prune -f          
+              $IMAGE
+            
+            # Health Check
+            for i in {1..30}; do
+              if docker exec $STANDBY curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
+                break
+              fi
+              if [ $i -eq 30 ]; then
+                docker logs $STANDBY --tail 50
+                docker stop $STANDBY
+                docker rm $STANDBY
+                exit 1
+              fi
+              sleep 2
+            done
+            
+            # HAProxy 설정 변경 (weight 전환)
+            if [ "$STANDBY" = "app1" ]; then
+              sed -i 's/server app1 app1:8080 check.*weight 0/server app1 app1:8080 check inter 2s rise 2 fall 3 weight 100/' /dockerProjects/haproxy/haproxy.cfg
+              sed -i 's/server app2 app2:8080 check.*weight 100/server app2 app2:8080 check inter 2s rise 2 fall 3 weight 0/' /dockerProjects/haproxy/haproxy.cfg
+            else
+              sed -i 's/server app2 app2:8080 check.*weight 0/server app2 app2:8080 check inter 2s rise 2 fall 3 weight 100/' /dockerProjects/haproxy/haproxy.cfg
+              sed -i 's/server app1 app1:8080 check.*weight 100/server app1 app1:8080 check inter 2s rise 2 fall 3 weight 0/' /dockerProjects/haproxy/haproxy.cfg
+            fi
+            
+            # HAProxy graceful reload
+            docker kill -s HUP haproxy
+            
+            sleep 10
+            docker image prune -f
