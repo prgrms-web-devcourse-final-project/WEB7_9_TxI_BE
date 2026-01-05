@@ -22,7 +22,7 @@ public class SchedulerConfig {
 	public ThreadPoolTaskScheduler fixedScheduler() {
 
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-		scheduler.setPoolSize(5); // 고정 작업 2개 + 여유분 3개
+		scheduler.setPoolSize(5); // 고정 작업 3개 + 여유분 2개
 
 		scheduler.setThreadNamePrefix("fixed-sched-");
 		scheduler.initialize();
