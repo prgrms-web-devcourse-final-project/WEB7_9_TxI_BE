@@ -20,7 +20,7 @@ import com.back.api.queue.dto.response.WaitingQueueResponse;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.notification.systemMessage.v2.V2_NotificationMessage;
+import com.back.domain.notification.systemMessage.NotificationMessage;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
@@ -71,7 +71,7 @@ public class QueueEntryProcessService {
 		publishEnteredEvent(queueEntry); // 입장 처리 웹소켓 이벤트 발행
 
 		eventPublisher.publishEvent(
-			V2_NotificationMessage.queueEntered(
+			NotificationMessage.queueEntered(
 				userId,
 				eventRepository.findById(eventId).get().getTitle()
 			)
@@ -328,7 +328,7 @@ public class QueueEntryProcessService {
 		publishExpiredEvent(queueEntry);  // 만료 처리 웹소켓 이벤트 발행
 
 		eventPublisher.publishEvent(
-			V2_NotificationMessage.queueExpired(
+			NotificationMessage.queueExpired(
 				userId,
 				eventRepository.findById(eventId).get().getTitle()
 			)

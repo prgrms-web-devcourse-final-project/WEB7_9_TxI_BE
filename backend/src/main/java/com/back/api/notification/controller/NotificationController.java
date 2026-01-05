@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.back.api.notification.dto.NotificationResponseDto;
 import com.back.api.notification.dto.UnreadCountResponseDto;
-import com.back.api.notification.dto.v2.V2_NotificationResponseDto;
 import com.back.api.notification.service.NotificationService;
 import com.back.global.http.HttpRequestContext;
 import com.back.global.response.ApiResponse;
@@ -26,12 +26,12 @@ public class NotificationController implements NotificationApi {
 
 	@Override
 	@GetMapping("/v2/notifications")
-	public ApiResponse<List<V2_NotificationResponseDto>> v2_getNotifications(
+	public ApiResponse<List<NotificationResponseDto>> getNotifications(
 	) {
 		Long userId = httpRequestContext.getUserId();
 
-		List<V2_NotificationResponseDto> notifications =
-			notificationService.v2_getNotifications(userId);
+		List<NotificationResponseDto> notifications =
+			notificationService.getNotifications(userId);
 
 		return ApiResponse.ok("알림 목록을 불러왔습니다", notifications);
 	}
@@ -40,10 +40,10 @@ public class NotificationController implements NotificationApi {
 	 * 읽지 않은 알림 개수 조회
 	 */
 	@GetMapping("/v2/notifications/unread-count")
-	public ApiResponse<UnreadCountResponseDto> v2_getUnreadCount(
+	public ApiResponse<UnreadCountResponseDto> getUnreadCount(
 	) {
 		Long userId = httpRequestContext.getUserId();
-		long count = notificationService.v2_getUnreadCount(userId);
+		long count = notificationService.getUnreadCount(userId);
 		return ApiResponse.ok("읽지 않은 알림수", new UnreadCountResponseDto(count));
 	}
 
@@ -51,11 +51,11 @@ public class NotificationController implements NotificationApi {
 	 * 개별 알림 읽음 처리
 	 */
 	@PatchMapping("/v2/notifications/{notificationId}/read")
-	public ApiResponse<Void> v2_markAsRead(
+	public ApiResponse<Void> markAsRead(
 		@PathVariable Long notificationId
 	) {
 		Long userId = httpRequestContext.getUserId();
-		notificationService.v2_markAsRead(notificationId, userId);
+		notificationService.markAsRead(notificationId, userId);
 
 		return ApiResponse.ok("개별 알림을 읽음 처리 하였습니다.", null);
 	}
@@ -64,9 +64,9 @@ public class NotificationController implements NotificationApi {
 	 * 전체 알림 읽음 처리
 	 */
 	@PatchMapping("/v2/notifications/read-all")
-	public ApiResponse<Void> v2_markAllAsRead() {
+	public ApiResponse<Void> markAllAsRead() {
 		Long userId = httpRequestContext.getUserId();
-		notificationService.v2_markAllAsRead(userId);
+		notificationService.markAllAsRead(userId);
 		return ApiResponse.ok("모든 알림을 읽음 처리 하였습니다.", null);
 	}
 }

@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.notification.entity.V2_Notification;
+import com.back.domain.notification.entity.Notification;
 import com.back.domain.notification.enums.DomainName;
-import com.back.domain.notification.enums.v2.V2_NotificationVar;
-import com.back.domain.notification.repository.V2_NotificationRepository;
+import com.back.domain.notification.enums.NotificationVar;
+import com.back.domain.notification.repository.NotificationRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 
@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Profile("perf")
 public class PerfNotificationDataInitializer {
 
-	private final V2_NotificationRepository notificationRepository;
+	private final NotificationRepository notificationRepository;
 	private final UserRepository userRepository;
 	private final EventRepository eventRepository;
 	private final Random random = new Random(42); // 재현 가능한 랜덤
@@ -56,7 +56,7 @@ public class PerfNotificationDataInitializer {
 
 		log.info("Notification 초기 데이터 생성 중: {}명의 사용자 × {}개의 이벤트", users.size(), events.size());
 
-		List<V2_Notification> notifications = new ArrayList<>();
+		List<Notification> notifications = new ArrayList<>();
 
 		// 각 유저별로 1~4번 이벤트에 대한 알림 생성
 		for (User user : users) {
@@ -65,7 +65,7 @@ public class PerfNotificationDataInitializer {
 				int notificationCount = random.nextInt(3) + 1; // 1~3개
 
 				for (int i = 0; i < notificationCount; i++) {
-					V2_Notification notification = createRandomNotification(user, event);
+					Notification notification = createRandomNotification(user, event);
 					notifications.add(notification);
 				}
 			}
@@ -83,7 +83,7 @@ public class PerfNotificationDataInitializer {
 	/**
 	 * 랜덤한 타입의 알림 생성
 	 */
-	private V2_Notification createRandomNotification(User user, Event event) {
+	private Notification createRandomNotification(User user, Event event) {
 		// 알림 타입 랜덤 선택
 		NotificationType[] types = NotificationType.values();
 		NotificationType selectedType = types[random.nextInt(types.length)];
@@ -92,7 +92,7 @@ public class PerfNotificationDataInitializer {
 		boolean isRead = random.nextDouble() < 0.7;
 		LocalDateTime readAt = isRead ? LocalDateTime.now().minusDays(random.nextInt(30)) : null;
 
-		V2_Notification notification = V2_Notification.builder()
+		Notification notification = Notification.builder()
 			.user(user)
 			.type(selectedType.notificationVar)
 			.domainName(selectedType.domainName)
@@ -110,7 +110,7 @@ public class PerfNotificationDataInitializer {
 	 */
 	private enum NotificationType {
 		SIGN_UP(
-			V2_NotificationVar.SIGN_UP,
+			NotificationVar.SIGN_UP,
 			DomainName.USERS
 		) {
 			@Override
@@ -120,7 +120,7 @@ public class PerfNotificationDataInitializer {
 		},
 
 		PRE_REGISTER_DONE(
-			V2_NotificationVar.PRE_REGISTER_DONE,
+			NotificationVar.PRE_REGISTER_DONE,
 			DomainName.PRE_REGISTER
 		) {
 			@Override
@@ -130,7 +130,7 @@ public class PerfNotificationDataInitializer {
 		},
 
 		QUEUE_WAITING(
-			V2_NotificationVar.QUEUE_WAITING,
+			NotificationVar.QUEUE_WAITING,
 			DomainName.QUEUE_ENTRIES
 		) {
 			@Override
@@ -141,7 +141,7 @@ public class PerfNotificationDataInitializer {
 		},
 
 		QUEUE_ENTERED(
-			V2_NotificationVar.QUEUE_ENTERED,
+			NotificationVar.QUEUE_ENTERED,
 			DomainName.QUEUE_ENTRIES
 		) {
 			@Override
@@ -151,7 +151,7 @@ public class PerfNotificationDataInitializer {
 		},
 
 		QUEUE_EXPIRED(
-			V2_NotificationVar.QUEUE_EXPIRED,
+			NotificationVar.QUEUE_EXPIRED,
 			DomainName.QUEUE_ENTRIES
 		) {
 			@Override
@@ -161,7 +161,7 @@ public class PerfNotificationDataInitializer {
 		},
 
 		PAYMENT_SUCCESS(
-			V2_NotificationVar.PAYMENT_SUCCESS,
+			NotificationVar.PAYMENT_SUCCESS,
 			DomainName.ORDERS
 		) {
 			@Override
@@ -171,11 +171,11 @@ public class PerfNotificationDataInitializer {
 			}
 		};
 
-		final V2_NotificationVar notificationVar;
+		final NotificationVar notificationVar;
 		final DomainName domainName;
 
 		NotificationType(
-			V2_NotificationVar notificationVar,
+			NotificationVar notificationVar,
 			DomainName domainName
 		) {
 			this.notificationVar = notificationVar;

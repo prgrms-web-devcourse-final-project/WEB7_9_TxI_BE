@@ -15,7 +15,7 @@ import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.api.s3.service.S3PresignedService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.notification.systemMessage.v2.V2_NotificationMessage;
+import com.back.domain.notification.systemMessage.NotificationMessage;
 import com.back.domain.preregister.entity.PreRegister;
 import com.back.domain.preregister.entity.PreRegisterStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
@@ -121,7 +121,7 @@ public class PreRegisterService {
 			deleteSmsVerificationFlag(request.phoneNumber());
 
 			eventPublisher.publishEvent(
-				V2_NotificationMessage.preRegisterDone(
+				NotificationMessage.preRegisterDone(
 					userId,
 					event.getTitle()
 				)

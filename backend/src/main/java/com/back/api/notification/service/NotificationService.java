@@ -5,9 +5,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.back.api.notification.dto.v2.V2_NotificationResponseDto;
-import com.back.domain.notification.entity.V2_Notification;
-import com.back.domain.notification.repository.V2_NotificationRepository;
+import com.back.api.notification.dto.NotificationResponseDto;
+import com.back.domain.notification.entity.Notification;
+import com.back.domain.notification.repository.NotificationRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,24 +15,24 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NotificationService {
-	private final V2_NotificationRepository v2_notificationRepository;
+	private final NotificationRepository notificationRepository;
 
-	public List<V2_NotificationResponseDto> v2_getNotifications(Long userId) {
-		List<V2_Notification> notifications = v2_notificationRepository
+	public List<NotificationResponseDto> getNotifications(Long userId) {
+		List<Notification> notifications = notificationRepository
 			.findTop20ByUserIdOrderByCreateAtDesc(userId);
 
 		return notifications.stream()
-			.map(V2_NotificationResponseDto::from)
+			.map(NotificationResponseDto::from)
 			.toList();
 	}
 
-	public long v2_getUnreadCount(Long userId) {
-		return v2_notificationRepository.countByUserIdAndIsReadFalse(userId);
+	public long getUnreadCount(Long userId) {
+		return notificationRepository.countByUserIdAndIsReadFalse(userId);
 	}
 
 	@Transactional
-	public void v2_markAsRead(Long notificationId, Long userId) {
-		V2_Notification notification = v2_notificationRepository
+	public void markAsRead(Long notificationId, Long userId) {
+		Notification notification = notificationRepository
 			.findByIdAndUserId(notificationId, userId)
 			.orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다"));
 
@@ -40,10 +40,10 @@ public class NotificationService {
 	}
 
 	@Transactional
-	public void v2_markAllAsRead(Long userId) {
-		List<V2_Notification> notifications = v2_notificationRepository
+	public void markAllAsRead(Long userId) {
+		List<Notification> notifications = notificationRepository
 			.findByUserIdAndIsReadFalse(userId);
 
-		notifications.forEach(V2_Notification::markAsRead);
+		notifications.forEach(Notification::markAsRead);
 	}
 }

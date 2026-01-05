@@ -23,7 +23,7 @@ import com.back.domain.auth.entity.ActiveSession;
 import com.back.domain.auth.entity.RefreshToken;
 import com.back.domain.auth.repository.ActiveSessionRepository;
 import com.back.domain.auth.repository.RefreshTokenRepository;
-import com.back.domain.notification.systemMessage.v2.V2_NotificationMessage;
+import com.back.domain.notification.systemMessage.NotificationMessage;
 import com.back.domain.store.entity.Store;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
@@ -94,7 +94,7 @@ public class AuthService {
 
 		// 알림 메시지 발행
 		eventPublisher.publishEvent(
-			V2_NotificationMessage.signUp(
+			NotificationMessage.signUp(
 				savedUser.getId(),
 				savedUser.getNickname()
 			)

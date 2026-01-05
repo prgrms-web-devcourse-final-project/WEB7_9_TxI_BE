@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.api.event.service.EventService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.entity.EventStatus;
-import com.back.domain.notification.systemMessage.v2.V2_NotificationMessage;
+import com.back.domain.notification.systemMessage.NotificationMessage;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
@@ -139,7 +139,7 @@ public class QueueShuffleService {
 			Long rank = (long)(i + 1);
 
 			eventPublisher.publishEvent(
-				V2_NotificationMessage.queueWaiting(userId, event.getTitle(), rank)
+				NotificationMessage.queueWaiting(userId, event.getTitle(), rank)
 			);
 		}
 	}

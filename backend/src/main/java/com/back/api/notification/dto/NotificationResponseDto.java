@@ -1,10 +1,10 @@
-package com.back.api.notification.dto.v2;
+package com.back.api.notification.dto;
 
 import java.time.LocalDateTime;
 
-import com.back.domain.notification.entity.V2_Notification;
+import com.back.domain.notification.entity.Notification;
 
-public record V2_NotificationResponseDto(
+public record NotificationResponseDto(
 	Long id,
 	String type,
 	String title,
@@ -13,9 +13,9 @@ public record V2_NotificationResponseDto(
 	Boolean isRead,
 	LocalDateTime readAt
 ) {
-	public static V2_NotificationResponseDto from(V2_Notification notification) {
+	public static NotificationResponseDto from(Notification notification) {
 
-		return new V2_NotificationResponseDto(
+		return new NotificationResponseDto(
 			notification.getId(),
 			notification.getType().getFrontType().name(),
 			notification.getTitle(),

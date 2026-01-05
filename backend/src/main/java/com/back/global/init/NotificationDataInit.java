@@ -12,11 +12,10 @@ import org.springframework.stereotype.Component;
 
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.notification.entity.V2_Notification;
-import com.back.domain.notification.enums.DomainName;
-import com.back.domain.notification.enums.v2.V2_NotificationVar;
-import com.back.domain.notification.repository.V2_NotificationRepository;
-import com.back.domain.notification.systemMessage.v2.V2_NotificationMessage;
+import com.back.domain.notification.entity.Notification;
+import com.back.domain.notification.enums.NotificationVar;
+import com.back.domain.notification.repository.NotificationRepository;
+import com.back.domain.notification.systemMessage.NotificationMessage;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 
@@ -30,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Order(5)
 public class NotificationDataInit implements ApplicationRunner {
 
-	private final V2_NotificationRepository notificationRepository;
+	private final NotificationRepository notificationRepository;
 	private final UserRepository userRepository;
 	private final EventRepository eventRepository;
 
@@ -64,41 +63,41 @@ public class NotificationDataInit implements ApplicationRunner {
 		Event event = eventOpt.get();
 		String eventTitle = event.getTitle();
 
-		List<V2_Notification> notifications = new ArrayList<>();
+		List<Notification> notifications = new ArrayList<>();
 
 		// ===== 유저 1번 알림 =====
 		// 회원가입 알림
 		notifications.add(createNotification(
 			user1,
-			V2_NotificationMessage.signUp(user1.getId(), user1.getNickname()),
+			NotificationMessage.signUp(user1.getId(), user1.getNickname()),
 			false
 		));
 
 		// 사전등록 완료
 		notifications.add(createNotification(
 			user1,
-			V2_NotificationMessage.preRegisterDone(user1.getId(), eventTitle),
+			NotificationMessage.preRegisterDone(user1.getId(), eventTitle),
 			false
 		));
 
 		// 대기열 대기중
 		notifications.add(createNotification(
 			user1,
-			V2_NotificationMessage.queueWaiting(user1.getId(), eventTitle, 42L),
+			NotificationMessage.queueWaiting(user1.getId(), eventTitle, 42L),
 			false
 		));
 
 		// 대기열 입장
 		notifications.add(createNotification(
 			user1,
-			V2_NotificationMessage.queueEntered(user1.getId(), eventTitle),
+			NotificationMessage.queueEntered(user1.getId(), eventTitle),
 			true
 		));
 
 		// 결제 성공
 		notifications.add(createNotification(
 			user1,
-			V2_NotificationMessage.paymentSuccess(user1.getId(), eventTitle, 99000L),
+			NotificationMessage.paymentSuccess(user1.getId(), eventTitle, 99000L),
 			true
 		));
 
@@ -106,35 +105,35 @@ public class NotificationDataInit implements ApplicationRunner {
 		// 회원가입 알림
 		notifications.add(createNotification(
 			user2,
-			V2_NotificationMessage.signUp(user2.getId(), user2.getNickname()),
+			NotificationMessage.signUp(user2.getId(), user2.getNickname()),
 			false
 		));
 
 		// 사전등록 완료
 		notifications.add(createNotification(
 			user2,
-			V2_NotificationMessage.preRegisterDone(user2.getId(), eventTitle),
+			NotificationMessage.preRegisterDone(user2.getId(), eventTitle),
 			false
 		));
 
 		// 대기열 대기중
 		notifications.add(createNotification(
 			user2,
-			V2_NotificationMessage.queueWaiting(user2.getId(), eventTitle, 128L),
+			NotificationMessage.queueWaiting(user2.getId(), eventTitle, 128L),
 			false
 		));
 
 		// 대기열 만료
 		notifications.add(createNotification(
 			user2,
-			V2_NotificationMessage.queueExpired(user2.getId(), eventTitle),
+			NotificationMessage.queueExpired(user2.getId(), eventTitle),
 			false
 		));
 
 		// 결제 성공
 		notifications.add(createNotification(
 			user2,
-			V2_NotificationMessage.paymentSuccess(user2.getId(), eventTitle, 154000L),
+			NotificationMessage.paymentSuccess(user2.getId(), eventTitle, 154000L),
 			true
 		));
 
@@ -150,14 +149,14 @@ public class NotificationDataInit implements ApplicationRunner {
 	 * @param message 알림 메시지
 	 * @param isRead 읽음 여부
 	 */
-	private V2_Notification createNotification(
+	private Notification createNotification(
 		User user,
-		V2_NotificationMessage message,
+		NotificationMessage message,
 		boolean isRead
 	) {
-		V2_NotificationVar notificationVar = message.getNotificationVar();
+		NotificationVar notificationVar = message.getNotificationVar();
 
-		V2_Notification notification = V2_Notification.builder()
+		Notification notification = Notification.builder()
 			.user(user)
 			.type(notificationVar)
 			.title(notificationVar.getTitle())

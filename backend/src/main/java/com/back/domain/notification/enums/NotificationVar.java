@@ -1,19 +1,17 @@
-package com.back.domain.notification.enums.v2;
-
-import com.back.domain.notification.enums.NotificationTypes;
+package com.back.domain.notification.enums;
 
 import lombok.Getter;
 
 @Getter
 //Notification Variation이라는 의미 ( 공통적인 요소가 아닌 도메인별 개별적인 요소를 다룸 )
-public enum V2_NotificationVar {
+public enum NotificationVar {
 	//1. 회원가입 완료 - 사용 데이터 : 유저 이름
 	SIGN_UP(
 		"회원가입 완료",
 		NotificationTypes.SIGNUP
 	) {
 		@Override
-		public String formatMessage(V2_NotificationContext context) {
+		public String formatMessage(NotificationContext context) {
 			return String.format("%s님, 저희 waitFair에 오신것을 환영합니다.", context.userName());
 		}
 	},
@@ -23,7 +21,7 @@ public enum V2_NotificationVar {
 		NotificationTypes.PRE_REGISTER
 	) {
 		@Override
-		public String formatMessage(V2_NotificationContext context) {
+		public String formatMessage(NotificationContext context) {
 			return String.format("[%s]사전등록 완료하였습니다.\n티켓팅 시작일에 알림을 보내드리겠습니다.", context.eventTitle());
 		}
 	},
@@ -34,7 +32,7 @@ public enum V2_NotificationVar {
 		NotificationTypes.QUEUE_ENTRIES
 	) {
 		@Override
-		public String formatMessage(V2_NotificationContext context) {
+		public String formatMessage(NotificationContext context) {
 			return String.format("[%s]\n%d번째 순서에 배치되었습니다.", context.eventTitle(), context.waitingNum());
 		}
 	},
@@ -44,7 +42,7 @@ public enum V2_NotificationVar {
 		NotificationTypes.QUEUE_ENTRIES
 	) {
 		@Override
-		public String formatMessage(V2_NotificationContext context) {
+		public String formatMessage(NotificationContext context) {
 			return String.format("[%s]\n지금부터 15분간 티켓을 구매하실 수 있습니다.", context.eventTitle());
 		}
 	},
@@ -54,7 +52,7 @@ public enum V2_NotificationVar {
 		NotificationTypes.QUEUE_ENTRIES
 	) {
 		@Override
-		public String formatMessage(V2_NotificationContext context) {
+		public String formatMessage(NotificationContext context) {
 			return String.format("[%s]\n아쉽게도 티켓팅 가능 시간이 초과되었습니다.\n다음 기회를 노려주세요..", context.eventTitle());
 		}
 	},
@@ -65,7 +63,7 @@ public enum V2_NotificationVar {
 		NotificationTypes.PAYMENT
 	) {
 		@Override
-		public String formatMessage(V2_NotificationContext context) {
+		public String formatMessage(NotificationContext context) {
 			return String.format("[%s]\n티켓 1매가 결제되었습니다\n결제금액: %d원", context.eventTitle(), context.amount());
 		}
 	};
@@ -74,10 +72,10 @@ public enum V2_NotificationVar {
 	private final String title;
 	private final NotificationTypes frontType;
 
-	V2_NotificationVar(String title, NotificationTypes frontType) {
+	NotificationVar(String title, NotificationTypes frontType) {
 		this.title = title;
 		this.frontType = frontType;
 	}
 
-	public abstract String formatMessage(V2_NotificationContext context);
+	public abstract String formatMessage(NotificationContext context);
 }

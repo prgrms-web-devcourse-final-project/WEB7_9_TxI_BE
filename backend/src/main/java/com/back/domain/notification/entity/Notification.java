@@ -3,7 +3,7 @@ package com.back.domain.notification.entity;
 import java.time.LocalDateTime;
 
 import com.back.domain.notification.enums.DomainName;
-import com.back.domain.notification.enums.v2.V2_NotificationVar;
+import com.back.domain.notification.enums.NotificationVar;
 import com.back.domain.user.entity.User;
 import com.back.global.entity.BaseEntity;
 
@@ -29,15 +29,15 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PUBLIC)
-@Table(name = "v2_notifications")
-public class V2_Notification extends BaseEntity {
+@Table(name = "notifications")
+public class Notification extends BaseEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private V2_NotificationVar type;
+	private NotificationVar type;
 
 	@Column(nullable = false)
 	private String title;
