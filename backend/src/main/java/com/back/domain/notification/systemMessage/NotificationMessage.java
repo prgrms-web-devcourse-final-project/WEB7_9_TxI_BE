@@ -47,6 +47,21 @@ public class NotificationMessage {
 		);
 	}
 
+	public static NotificationMessage preRegisterCancel(
+			Long userId, String eventTitle) {
+
+		NotificationContext context = NotificationContext.builder()
+				.eventTitle(eventTitle)
+				.build();
+
+		return new NotificationMessage(
+				userId,
+				DomainName.PRE_REGISTER,
+				NotificationVar.PRE_REGISTER_CANCEL,
+				context
+		);
+	}
+
 	public static NotificationMessage queueEntered(
 		Long userId, String eventTitle) {
 

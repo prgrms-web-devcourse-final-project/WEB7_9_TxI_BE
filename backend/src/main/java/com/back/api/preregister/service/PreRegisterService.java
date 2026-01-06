@@ -157,6 +157,15 @@ public class PreRegisterService {
 		}
 
 		preRegister.cancel();
+
+		eventPublisher.publishEvent(
+				NotificationMessage.preRegisterCancel(
+						userId,
+						eventRepository.findById(eventId)
+								.map(Event::getTitle)
+								.orElse("제목 없음")
+				)
+		);
 	}
 
 	public boolean isRegistered(Long eventId, Long userId) {

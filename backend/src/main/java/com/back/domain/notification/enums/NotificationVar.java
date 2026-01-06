@@ -25,6 +25,16 @@ public enum NotificationVar {
 			return String.format("[%s]사전등록 완료하였습니다.\n티켓팅 시작일에 알림을 보내드리겠습니다.", context.eventTitle());
 		}
 	},
+	// 사전등록 취소
+	PRE_REGISTER_CANCEL(
+		"사전등록 취소",
+			NotificationTypes.PRE_REGISTER
+	){
+		@Override
+		public String formatMessage(NotificationContext context) {
+			return String.format("[%s]사전등록을 취소하였습니다.", context.eventTitle());
+		}
+	},
 	//티켓팅 당일 - 사용 데이터 : 이벤트 제목
 	//티켓팅 대기열_대기상태 (waiting) - 사용 데이터 : 이벤트 제목
 	QUEUE_WAITING(
