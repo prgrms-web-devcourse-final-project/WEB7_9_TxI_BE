@@ -95,4 +95,17 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 		@Param("ticketOpenAt") LocalDateTime ticketOpenAt);
 
 	Page<Event> findAllByStore_Id(Pageable pageable, long storeId);
+
+	@Query("""
+        SELECT e FROM Event e
+        WHERE e.ticketCloseAt > :now
+        AND (
+            e.preOpenAt > :now OR
+            e.preCloseAt > :now OR
+            e.ticketOpenAt > :now OR
+            e.ticketCloseAt > :now
+        )
+        ORDER BY e.preOpenAt ASC
+    """)
+	List<Event> findUpcomingEvents(@Param("now") LocalDateTime now);
 }
