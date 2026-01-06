@@ -8,7 +8,7 @@ import com.back.api.payment.payment.dto.response.TossPaymentResponse;
 import com.back.api.payment.payment.dto.response.V2_PaymentConfirmResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
-import com.back.domain.notification.systemMessage.OrderSuccessV2Message;
+import com.back.domain.notification.systemMessage.NotificationMessage;
 import com.back.domain.payment.order.entity.OrderStatus;
 import com.back.domain.payment.order.entity.V2_Order;
 import com.back.domain.payment.order.repository.V2_OrderRepository;
@@ -109,13 +109,12 @@ public class PaymentTransactionService {
 			userId
 		);
 
-		// 알림 발행
+		// 알림 메시지 발행
 		eventPublisher.publishEvent(
-			new OrderSuccessV2Message(
+			NotificationMessage.paymentSuccess(
 				userId,
-				orderId,
-				order.getAmount(),
-				ticket.getEvent().getTitle()
+				ticket.getEvent().getTitle(),
+				order.getAmount()
 			)
 		);
 

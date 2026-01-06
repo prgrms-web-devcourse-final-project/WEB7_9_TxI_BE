@@ -37,19 +37,17 @@ public class NotificationEventListener {
 						.orElseThrow(
 							() -> new NoSuchElementException("ID " + message.getUserId() + "에 해당하는 사용자가 존재하지 않습니다."))
 				)
-				.type(message.getNotificationType())
-				.typeDetail(message.getTypeDetail())
+				.type(message.getNotificationVar())
 				.domainName(message.getDomainName())
-				.domainId(message.getDomainId())
-				.title(message.getTitle())
-				.message(message.getMessage())
+				.title(message.getNotificationVar().getTitle())
+				.content(message.getNotificationVar().formatMessage(message.getContext()))
 				.isRead(false)
 				.build();
 
 			notificationRepository.save(notification);
 
 			// 웹소켓으로 실시간 알림 전송
-			sendNotificationViaWebSocket(message.getUserId(), notification);
+			v2_sendNotificationViaWebSocket(message.getUserId(), notification);
 
 		} catch (Exception e) {
 		}
@@ -61,7 +59,7 @@ public class NotificationEventListener {
 	 * @param userId 대상 사용자 ID
 	 * @param notification 전송할 알림 엔티티
 	 */
-	private void sendNotificationViaWebSocket(Long userId, Notification notification) {
+	private void v2_sendNotificationViaWebSocket(Long userId, Notification notification) {
 
 		boolean isOnline = sessionManager.isUserOnline(userId);
 

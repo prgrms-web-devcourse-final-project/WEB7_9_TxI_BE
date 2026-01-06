@@ -20,8 +20,7 @@ import com.back.api.queue.dto.response.WaitingQueueResponse;
 import com.back.api.ticket.service.TicketService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.notification.systemMessage.QueueEntriesMessage;
-import com.back.domain.notification.systemMessage.QueueExpiredMessage;
+import com.back.domain.notification.systemMessage.NotificationMessage;
 import com.back.domain.queue.entity.QueueEntry;
 import com.back.domain.queue.entity.QueueEntryStatus;
 import com.back.domain.queue.repository.QueueEntryRedisRepository;
@@ -72,9 +71,8 @@ public class QueueEntryProcessService {
 		publishEnteredEvent(queueEntry); // 입장 처리 웹소켓 이벤트 발행
 
 		eventPublisher.publishEvent(
-			new QueueEntriesMessage(
+			NotificationMessage.queueEntered(
 				userId,
-				enqueue.getId(),
 				eventRepository.findById(eventId)
 					.map(Event::getTitle)
 					.orElse("제목 없음")
@@ -320,7 +318,7 @@ public class QueueEntryProcessService {
 		}
 
 		queueEntry.expire();
-		QueueEntry deque = queueEntryRepository.save(queueEntry);
+		QueueEntry expired = queueEntryRepository.save(queueEntry);
 
 		try {
 			queueEntryRedisRepository.removeFromEnteredQueue(eventId, userId);
@@ -332,9 +330,8 @@ public class QueueEntryProcessService {
 		publishExpiredEvent(queueEntry);  // 만료 처리 웹소켓 이벤트 발행
 
 		eventPublisher.publishEvent(
-			new QueueExpiredMessage(
+			NotificationMessage.queueExpired(
 				userId,
-				deque.getId(),
 				eventRepository.findById(eventId)
 					.map(Event::getTitle)
 					.orElse("제목 없음")
@@ -364,15 +361,6 @@ public class QueueEntryProcessService {
 
 		publishExpiredEvent(queueEntry);  // 만료 처리 웹소켓 이벤트 발행
 
-		eventPublisher.publishEvent(
-			new QueueExpiredMessage(
-				userId,
-				deque.getId(),
-				eventRepository.findById(eventId)
-					.map(Event::getTitle)
-					.orElse("제목 없음")
-			)
-		);
 	}
 
 	@Transactional

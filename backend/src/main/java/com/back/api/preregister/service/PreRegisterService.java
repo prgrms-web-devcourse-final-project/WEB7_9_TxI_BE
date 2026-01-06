@@ -15,7 +15,7 @@ import com.back.api.preregister.dto.response.PreRegisterResponse;
 import com.back.api.s3.service.S3PresignedService;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
-import com.back.domain.notification.systemMessage.PreRegisterDoneMessage;
+import com.back.domain.notification.systemMessage.NotificationMessage;
 import com.back.domain.preregister.entity.PreRegister;
 import com.back.domain.preregister.entity.PreRegisterStatus;
 import com.back.domain.preregister.repository.PreRegisterRepository;
@@ -121,9 +121,8 @@ public class PreRegisterService {
 			deleteSmsVerificationFlag(request.phoneNumber());
 
 			eventPublisher.publishEvent(
-				new PreRegisterDoneMessage(
+				NotificationMessage.preRegisterDone(
 					userId,
-					savedPreRegister.getId(),
 					event.getTitle()
 				)
 			);
@@ -158,6 +157,15 @@ public class PreRegisterService {
 		}
 
 		preRegister.cancel();
+
+		eventPublisher.publishEvent(
+				NotificationMessage.preRegisterCancel(
+						userId,
+						eventRepository.findById(eventId)
+								.map(Event::getTitle)
+								.orElse("제목 없음")
+				)
+		);
 	}
 
 	public boolean isRegistered(Long eventId, Long userId) {
@@ -172,7 +180,7 @@ public class PreRegisterService {
 			.map(preRegister -> {
 				Event event = preRegister.getEvent();
 				String imageUrl = null;
-				if(event.getImageUrl() != null && !event.getImageUrl().isBlank()) {
+				if (event.getImageUrl() != null && !event.getImageUrl().isBlank()) {
 					imageUrl = s3PresignedService.issueDownloadUrl(event.getImageUrl());
 				}
 
