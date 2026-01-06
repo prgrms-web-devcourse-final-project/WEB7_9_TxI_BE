@@ -196,7 +196,7 @@ KAKAO_CLIENT_SECRET=your_kakao_client_secret
 ![Gradle](https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
 ![WebSocket](https://img.shields.io/badge/WebSocket%20(STOMP)-010101?style=for-the-badge&logo=socket.io&logoColor=white)
-![reCAPTCHA](https://img.shields.io/badge/reCAPTCHA-4285F4?style=for-the-badge&logo=google&logoColor=white)
+
 
 ### Database
 
@@ -210,6 +210,7 @@ KAKAO_CLIENT_SECRET=your_kakao_client_secret
 ![EC2](https://img.shields.io/badge/Amazon%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)
 ![S3](https://img.shields.io/badge/Amazon%20S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Flyway](https://img.shields.io/badge/Flyway-CC0200?style=for-the-badge&logo=flyway&logoColor=white)
 
 ### Observability & Performance
 
@@ -217,12 +218,14 @@ KAKAO_CLIENT_SECRET=your_kakao_client_secret
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
 ![k6](https://img.shields.io/badge/k6-7D64FF?style=for-the-badge&logo=k6&logoColor=white)
 ![Doppler](https://img.shields.io/badge/Doppler-000000?style=for-the-badge&logo=doppler&logoColor=white)
+![Grafana Alloy](https://img.shields.io/badge/Grafana%20Alloy-FF8C00?style=for-the-badge&logo=grafana&logoColor=white)
 
 ### External Services
 
 ![CoolSMS](https://img.shields.io/badge/CoolSMS-00C300?style=for-the-badge&logo=messagebird&logoColor=white)
 ![Toss Payments](https://img.shields.io/badge/Toss%20Payments-0064FF?style=for-the-badge&logo=toss&logoColor=white)
-
+![reCAPTCHA](https://img.shields.io/badge/reCAPTCHA-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![Kakao OAuth](https://img.shields.io/badge/Kakao%20OAuth-FFEB00?style=for-the-badge&logo=kakaotalk&logoColor=000000)
 ---
 
 ## 💬 개발 컨벤션
