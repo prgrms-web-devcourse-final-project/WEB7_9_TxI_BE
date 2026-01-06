@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"perf", "dev"})
+@Profile({"perf", "dev", "prod"})
 public class EventScheduler {
 
 	@Qualifier("dynamicScheduler")
@@ -54,7 +54,6 @@ public class EventScheduler {
 			case DELETED -> cancelEventSchedules(event.getEventId());
 		}
 	}
-
 
 	private void scheduleEventLifecycle(Long eventId) {
 		Event event = eventRepository.findById(eventId)
@@ -182,7 +181,6 @@ public class EventScheduler {
 
 		scheduledTasks.put(taskKey, future);
 	}
-
 
 	// 이벤트 상태 전환
 	private void transitionEventStatus(Long eventId, EventStatus toStatus) {
