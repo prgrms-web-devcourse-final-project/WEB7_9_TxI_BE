@@ -185,8 +185,7 @@ security:
     # Rate Limit 설정
     rate-limit:
       enabled: true
-      global-per-second: 50  # 전체 API: 1초당 50회
-      sms-per-minute: 7      # SMS/사전등록: 1분당 7회
+      sms-per-minute: 7      # SMS/사전등록: 1분당 7회 (IP + 전화번호 조합)
     # IDC IP 차단 설정
     idc-block:
       enabled: true

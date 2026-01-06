@@ -28,10 +28,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Rate Limiting 필터
+ * Rate Limiting 필터 (SMS 전용)
  *
  * 목적:
- * - IP별, Endpoint별 요청 횟수 제한
+ * - SMS API 비용 발생 방지
  * - 무한 요청 봇 차단
  *
  * 우선순위:
@@ -40,10 +40,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * 동작 방식:
  * 1. 화이트리스트 IP는 건너뜀
- * 2. 클라이언트 IP 추출
- * 3. 요청 URI에 따라 Rate Limit 정책 적용
- *    - 전체 API: 1초당 50회
- *    - SMS/사전등록 API: 1분당 5회 (IP + 전화번호 조합)
+ * 2. SMS 경로만 Rate Limit 적용 (사전등록은 제외)
+ * 3. IP + 전화번호 조합으로 1분당 7회 제한
  * 4. 초과 시 429 Too Many Requests 응답
  *
  * 예외 처리:
@@ -93,119 +91,85 @@ public class RateLimitFilter extends OncePerRequestFilter {
 			return;
 		}
 
-		String clientIp = clientIpResolver.getClientIp(request);
 		String requestUri = request.getRequestURI();
 
-		// AWS ALB 헬스체크는 무조건 통과 (서버 무한 재부팅 방지)
-		if (isHealthCheckRequest(request, requestUri)) {
+		// SMS 경로가 아니면 통과 (Rate Limit 미적용)
+		if (!isSmsOrPreRegisterPath(requestUri)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
-		// SMS/사전등록 경로인지 확인
-		if (isSmsOrPreRegisterPath(requestUri)) {
-			// CachedBodyHttpServletRequest로 wrapping하여 body 재사용 가능하게 함
-			CachedBodyHttpServletRequest wrappedRequest;
-			try {
-				wrappedRequest = new CachedBodyHttpServletRequest(request);
-			} catch (IOException e) {
-				// Request Body 크기 제한 초과 (DoS 공격 방지)
-				log.warn("[RateLimitFilter] Request Body 크기 제한 초과 - IP: {}, URI: {}, 오류: {}",
-					clientIp, requestUri, e.getMessage());
-				sendTooManyRequestsResponse(response, SecurityErrorCode.TOO_MANY_REQUESTS);
-				return;
-			}
+		String clientIp = clientIpResolver.getClientIp(request);
 
-			// SMS/사전등록 Rate Limit 체크
-			String phoneNumber = extractPhoneNumber(wrappedRequest);
-			boolean allowed = rateLimitService.allowSmsRequest(clientIp, phoneNumber);
-
-			if (!allowed) {
-				log.warn("[RateLimitFilter] SMS Rate Limit 초과 - IP: {}, Phone: {}, URI: {}",
-					clientIp, maskPhoneNumber(phoneNumber), requestUri);
-
-				// Fingerprint 실패 기록 (Rate Limit 차단도 실패로 간주) - 이벤트별, 액션별
-				String visitorId = request.getHeader(HEADER_DEVICE_ID);
-				if (fingerprintService != null && visitorId != null) {
-					Long eventId = extractEventId(requestUri);
-					String action = getActionTypeFromUri(requestUri);
-					fingerprintService.recordAttempt(visitorId, eventId, action, false);
-				}
-
-				sendTooManyRequestsResponse(response, SecurityErrorCode.TOO_MANY_SMS_REQUESTS);
-				return;
-			}
-
-			// wrappedRequest로 전달하여 Controller에서도 body 읽을 수 있게 함
-			filterChain.doFilter(wrappedRequest, response);
-		} else {
-			// 전체 API Rate Limit 체크
-			boolean allowed = rateLimitService.allowGlobalRequest(clientIp);
-
-			if (!allowed) {
-				log.warn("[RateLimitFilter] Global Rate Limit 초과 - IP: {}, URI: {}", clientIp, requestUri);
-
-				// Fingerprint 실패 기록은 SMS/사전등록 경로에만 적용
-				// (전체 API Rate Limit은 Fingerprint와 무관)
-
-				sendTooManyRequestsResponse(response, SecurityErrorCode.TOO_MANY_REQUESTS);
-				return;
-			}
-
-			filterChain.doFilter(request, response);
+		// CachedBodyHttpServletRequest로 wrapping하여 body 재사용 가능하게 함
+		CachedBodyHttpServletRequest wrappedRequest;
+		try {
+			wrappedRequest = new CachedBodyHttpServletRequest(request);
+		} catch (IOException e) {
+			// Request Body 크기 제한 초과 (DoS 공격 방지)
+			log.warn("[RateLimitFilter] Request Body 크기 제한 초과 - IP: {}, URI: {}, 오류: {}",
+				clientIp, requestUri, e.getMessage());
+			sendTooManyRequestsResponse(response, SecurityErrorCode.TOO_MANY_REQUESTS);
+			return;
 		}
+
+		// SMS/사전등록 Rate Limit 체크
+		String phoneNumber = extractPhoneNumber(wrappedRequest);
+		boolean allowed = rateLimitService.allowSmsRequest(clientIp, phoneNumber);
+
+		if (!allowed) {
+			log.warn("[RateLimitFilter] SMS Rate Limit 초과 - IP: {}, Phone: {}, URI: {}",
+				clientIp, maskPhoneNumber(phoneNumber), requestUri);
+
+			// Fingerprint 실패 기록 (Rate Limit 차단도 실패로 간주) - 이벤트별, 액션별
+			String visitorId = request.getHeader(HEADER_DEVICE_ID);
+			if (fingerprintService != null && visitorId != null) {
+				Long eventId = extractEventId(requestUri, wrappedRequest);
+				String action = getActionTypeFromUri(requestUri);
+				fingerprintService.recordAttempt(visitorId, eventId, action, false);
+			}
+
+			sendTooManyRequestsResponse(response, SecurityErrorCode.TOO_MANY_SMS_REQUESTS);
+			return;
+		}
+
+		// wrappedRequest로 전달하여 Controller에서도 body 읽을 수 있게 함
+		filterChain.doFilter(wrappedRequest, response);
 	}
 
 	/**
-	 * AWS ALB/ELB 헬스체크 요청인지 확인
-	 *
-	 * @param request HTTP 요청
-	 * @param requestUri 요청 URI
-	 * @return 헬스체크 여부
-	 */
-	private boolean isHealthCheckRequest(HttpServletRequest request, String requestUri) {
-		String userAgent = request.getHeader("User-Agent");
-		if (userAgent != null && userAgent.startsWith("ELB-HealthChecker")) {
-			return true;
-		}
-
-		return "/".equals(requestUri) ||
-			"/actuator/health".equals(requestUri) ||
-			"/health".equals(requestUri);
-	}
-
-	/**
-	 * SMS 또는 사전등록 경로인지 확인
+	 * SMS 경로인지 확인
 	 *
 	 * @param requestUri 요청 URI
-	 * @return SMS/사전등록 경로 여부
+	 * @return SMS 경로 여부
 	 */
 	private boolean isSmsOrPreRegisterPath(String requestUri) {
 		return requestUri.equals(SMS_SEND_PATH) ||
-			requestUri.equals(SMS_VERIFY_PATH) ||
-			(requestUri.startsWith(PRE_REGISTER_PATH) && requestUri.endsWith(PRE_REGISTER_SUFFIX));
+			requestUri.equals(SMS_VERIFY_PATH);
 	}
 
 	/**
-	 * 요청 URI에서 eventId 추출
+	 * SMS 요청에서 eventId 추출
 	 *
 	 * @param requestUri 요청 URI
-	 * @return eventId (사전등록 경로가 아니면 null)
+	 * @param request HTTP 요청
+	 * @return eventId (추출 실패 시 null)
 	 */
-	private Long extractEventId(String requestUri) {
-		// 사전등록 경로: /api/v1/events/{eventId}/pre-registers
-		if (requestUri.startsWith(PRE_REGISTER_PATH) && requestUri.endsWith(PRE_REGISTER_SUFFIX)) {
-			try {
-				String eventIdStr = requestUri
-					.substring(PRE_REGISTER_PATH.length())
-					.replace(PRE_REGISTER_SUFFIX, "");
-				return Long.parseLong(eventIdStr);
-			} catch (NumberFormatException e) {
-				log.warn("[RateLimitFilter] eventId 추출 실패 - URI: {}", requestUri);
-				return null;
+	private Long extractEventId(String requestUri, CachedBodyHttpServletRequest request) {
+		// SMS 경로: body에서 eventId 추출
+		try {
+			byte[] content = request.getCachedBody();
+			if (content.length > 0) {
+				String body = new String(content, StandardCharsets.UTF_8);
+				JsonNode jsonNode = objectMapper.readTree(body);
+
+				if (jsonNode.has("eventId")) {
+					return jsonNode.get("eventId").asLong();
+				}
 			}
+		} catch (Exception e) {
+			log.warn("[RateLimitFilter] Request body에서 eventId 추출 실패 - 오류: {}", e.getMessage());
 		}
-		// SMS 경로는 eventId 없음
 		return null;
 	}
 

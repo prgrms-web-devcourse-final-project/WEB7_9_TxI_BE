@@ -54,14 +54,10 @@ public class SecurityProperties {
 	@Setter
 	public static class RateLimit {
 		/**
-		 * 전체 API Rate Limit (초당 요청 수)
-		 */
-		private int globalPerSecond = 50;
-
-		/**
 		 * SMS/사전등록 API Rate Limit (분당 요청 수)
+		 * IP + 전화번호 조합으로 제한
 		 */
-		private int smsPerMinute = 5;
+		private int smsPerMinute = 7;
 
 		/**
 		 * Rate Limit 활성화 여부
@@ -118,6 +114,6 @@ public class SecurityProperties {
 		/**
 		 * Fingerprint 데이터 TTL (초)
 		 */
-		private long ttlSeconds = 86400; // 24시간
+		private long ttlSeconds = 300; // 24시간 (테스트일때 5분)
 	}
 }

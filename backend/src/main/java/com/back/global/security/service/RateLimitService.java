@@ -19,10 +19,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Rate Limiting 서비스
+ * Rate Limiting 서비스 (SMS 전용)
  *
  * 목적:
- * - IP별, Endpoint별 요청 횟수 제한
+ * - SMS API 비용 발생 방지
  * - 무한 요청 봇 차단
  *
  * Bucket4j 기반 Token Bucket 알고리즘 사용:
@@ -31,11 +31,10 @@ import lombok.extern.slf4j.Slf4j;
  * - 시간이 지나면 토큰 자동 리필
  *
  * Rate Limit 정책:
- * 1. 전체 API: 1초당 50회 (DDoS 방어)
- * 2. SMS/사전등록 API: 1분당 5회 (문자비/어뷰징 방어)
+ * - SMS API: IP + 전화번호 조합으로 1분당 7회 제한
  *
  * Redis 저장 구조:
- * - Key: "rate_limit:{type}:{identifier}"
+ * - Key: "rate_limit:sms:{ip}:{phoneHash}"
  * - Type: String (Bucket4j 직렬화된 상태)
  *
  * 예외 처리:
@@ -54,24 +53,7 @@ public class RateLimitService {
 	private final LettuceBasedProxyManager<String> proxyManager;
 
 	/**
-	 * 전체 API Rate Limit 확인
-	 *
-	 * @param ip 클라이언트 IP
-	 * @return 허용 여부
-	 */
-	public boolean allowGlobalRequest(String ip) {
-		if (!securityProperties.getRateLimit().isEnabled()) {
-			return true;
-		}
-
-		String key = "rate_limit:global:" + ip;
-		int limit = securityProperties.getRateLimit().getGlobalPerSecond();
-
-		return checkRateLimit(key, limit, Duration.ofSeconds(1));
-	}
-
-	/**
-	 * SMS/사전등록 API Rate Limit 확인
+	 * SMS API Rate Limit 확인
 	 *
 	 * 키 구성: IP + 전화번호 해시
 	 * - 같은 IP에서 여러 사용자가 접속해도 전화번호별로 독립적인 제한

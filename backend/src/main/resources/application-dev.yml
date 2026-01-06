@@ -17,8 +17,7 @@ security:
     # 개발 환경 - 보안 테스트용 설정
     rate-limit:
       enabled: true
-      global-per-second: 50    # 테스트용: 실제 제한 적용
-      sms-per-minute: 7        # SMS/사전등록: 1분당 7회
+      sms-per-minute: 7        # SMS/사전등록: 1분당 7회 (IP + 전화번호 조합)
     # IDC IP 차단 활성화 (테스트용)
     idc-block:
       enabled: true
