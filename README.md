@@ -174,7 +174,7 @@ KAKAO_CLIENT_SECRET=your_kakao_client_secret
 
 ## 🔗 ERD
 
-**추가 예정**
+<img width="2230" height="3388" alt="Image" src="https://github.com/user-attachments/assets/c40080c5-8ab0-4ea0-a400-4e7c99d8b288" />
 
 ---
 
