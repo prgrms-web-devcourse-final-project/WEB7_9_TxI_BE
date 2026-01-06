@@ -41,6 +41,7 @@ spring:
     baseline-version: 1
     baseline-description: "baseline existing schema"
     locations: classpath:db/migration
+    repair-on-migrate: true
 
   security:
     oauth2:
