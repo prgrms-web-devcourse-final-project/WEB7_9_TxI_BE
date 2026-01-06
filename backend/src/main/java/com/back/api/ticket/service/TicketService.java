@@ -13,7 +13,9 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.entity.TicketStatus;
+import com.back.domain.ticket.entity.TicketTransferHistory;
 import com.back.domain.ticket.repository.TicketRepository;
+import com.back.domain.ticket.repository.TicketTransferHistoryRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.CommonErrorCode;
@@ -21,6 +23,7 @@ import com.back.global.error.code.EventErrorCode;
 import com.back.global.error.code.TicketErrorCode;
 import com.back.global.error.exception.ErrorException;
 import com.back.global.observability.metrics.BusinessMetrics;
+import com.back.global.utils.MerkleUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TicketService {
 
 	private final TicketRepository ticketRepository;
+	private final TicketTransferHistoryRepository transferHistoryRepository;
 	private final UserRepository userRepository;
 	private final EventRepository eventRepository;
 	private final SeatService seatService;
@@ -220,6 +224,42 @@ public class TicketService {
 		User target = userRepository.findByNickname(targetNickname)
 			.orElseThrow(() -> new ErrorException(TicketErrorCode.TRANSFER_TARGET_NOT_FOUND));
 
+		Long fromUserId = ticket.getOwner().getId();
+
+		// 양도 처리
 		ticket.transferTo(target);
+
+		// 양도 이력 저장
+		TicketTransferHistory history = TicketTransferHistory.record(ticketId, fromUserId, target.getId());
+		transferHistoryRepository.save(history);
+
+		// Merkle Root 앵커링 (Loki로 전송됨)
+		anchorTransferHistory(ticketId, history);
+
+		log.debug("[Ticket Transfer] ticketId={}, from={}, to={}", ticketId, fromUserId, target.getId());
+	}
+
+	/**
+	 * 양도 이력 Merkle Root 앵커링
+	 * 블록체인의 핵심 원리(위변조 감지)를 차용하여
+	 * 외부 로그 시스템(Loki)에 앵커링
+	 */
+	private void anchorTransferHistory(Long ticketId, TicketTransferHistory latestHistory) {
+		List<TicketTransferHistory> histories =
+			transferHistoryRepository.findByTicketIdOrderByTransferredAtDesc(ticketId);
+
+		List<String> hashes = histories.stream()
+			.map(TicketTransferHistory::computeHash)
+			.toList();
+
+		String merkleRoot = MerkleUtil.buildRoot(hashes);
+
+		// 구조화된 로그 - Loki에서 파싱 가능 (외부 앵커)
+		log.info("[MERKLE_ANCHOR] ticketId={}, root={}, count={}, latestHash={}",
+			ticketId,
+			merkleRoot,
+			histories.size(),
+			latestHistory.computeHash()
+		);
 	}
 }
