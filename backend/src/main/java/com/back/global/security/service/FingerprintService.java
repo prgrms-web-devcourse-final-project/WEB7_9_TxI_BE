@@ -23,19 +23,21 @@ import lombok.extern.slf4j.Slf4j;
  *
  * 동작 방식:
  * 1. 프론트엔드에서 visitorId(fingerprint) 전송
- * 2. Redis에 fingerprint별 시도 횟수, 실패 횟수 저장
+ * 2. Redis에 fingerprint별, 액션별 시도 횟수, 실패 횟수 저장
  * 3. 차단 기준 검증 (2가지)
  *
  * Redis 저장 구조:
- * - Key: "fingerprint:{visitorId}"
- * - Value: JSON { totalAttempts, failedAttempts, successCount }
+ * - Key: "fingerprint:{visitorId}:{eventId}:{action}"
+ *   - eventId: 이벤트 ID (이벤트별 독립 카운트)
+ *   - action: sms_send, sms_verify, pre_register
+ * - Value: Hash { totalAttempts, failedAttempts, successCount }
  * - TTL: 24시간
  *
  * 차단 기준:
  * 1. 최대 시도 횟수 초과 (성공 폭탄 공격 방어)
- *    - 전체 시도 >= 10회
+ *    - 액션별 전체 시도 >= 10회
  * 2. 높은 실패율 (봇/어뷰징 방어)
- *    - 전체 시도 >= 5회 AND 실패율 >= 80%
+ *    - 액션별 전체 시도 >= 5회 AND 실패율 >= 80%
  *
  * 예외 처리:
  * - visitorId가 없는 요청: 1차 허용 (IP Rate Limit으로만 통제)
@@ -50,17 +52,24 @@ public class FingerprintService {
 
 	private static final String REDIS_KEY_PREFIX = "fingerprint:";
 
+	// 액션 타입
+	public static final String ACTION_SMS_SEND = "sms_send";
+	public static final String ACTION_SMS_VERIFY = "sms_verify";
+	public static final String ACTION_PRE_REGISTER = "pre_register";
+
 	private final StringRedisTemplate redisTemplate;
 	private final SecurityProperties securityProperties;
 	private final ObjectMapper objectMapper;
 
 	/**
-	 * Fingerprint 검증
+	 * Fingerprint 검증 (이벤트별, 액션별)
 	 *
 	 * @param visitorId FingerprintJS visitorId
+	 * @param eventId 이벤트 ID
+	 * @param action 액션 타입 (sms_send, sms_verify, pre_register)
 	 * @return 허용 여부
 	 */
-	public boolean validateFingerprint(String visitorId) {
+	public boolean validateFingerprint(String visitorId, Long eventId, String action) {
 		if (!securityProperties.getFingerprint().isEnabled()) {
 			return true;
 		}
@@ -70,8 +79,13 @@ public class FingerprintService {
 			return true;
 		}
 
+		// eventId가 없으면 허용 (비이벤트 API는 Fingerprint 미적용)
+		if (eventId == null) {
+			return true;
+		}
+
 		try {
-			String key = REDIS_KEY_PREFIX + visitorId;
+			String key = REDIS_KEY_PREFIX + visitorId + ":" + eventId + ":" + action;
 
 			// Redis Hash에서 데이터 읽기
 			Integer totalAttempts = getHashValueAsInt(key, "totalAttempts");
@@ -80,8 +94,8 @@ public class FingerprintService {
 			// 차단 기준 1: 최대 시도 횟수 초과 (성공 폭탄 공격 방어)
 			int maxAttempts = securityProperties.getFingerprint().getMaxAttempts();
 			if (totalAttempts >= maxAttempts) {
-				log.warn("[FingerprintService] Fingerprint 차단 (최대 시도 횟수 초과) - visitorId: {}, 시도: {}/{}, 실패: {}",
-					visitorId, totalAttempts, maxAttempts, failedAttempts);
+				log.warn("[FingerprintService] Fingerprint 차단 (최대 시도 횟수 초과) - visitorId: {}, eventId: {}, action: {}, 시도: {}/{}, 실패: {}",
+					visitorId, eventId, action, totalAttempts, maxAttempts, failedAttempts);
 				return false;
 			}
 
@@ -92,8 +106,8 @@ public class FingerprintService {
 				int thresholdPercent = (int)(securityProperties.getFingerprint().getFailureRateThreshold() * 100);
 
 				if (failureRatePercent >= thresholdPercent) {
-					log.warn("[FingerprintService] Fingerprint 차단 (높은 실패율) - visitorId: {}, 시도: {}, 실패율: {}%",
-						visitorId, totalAttempts, failureRatePercent);
+					log.warn("[FingerprintService] Fingerprint 차단 (높은 실패율) - visitorId: {}, eventId: {}, action: {}, 시도: {}, 실패율: {}%",
+						visitorId, eventId, action, totalAttempts, failureRatePercent);
 					return false;
 				}
 			}
@@ -101,8 +115,8 @@ public class FingerprintService {
 			return true;
 		} catch (Exception e) {
 			// Redis 장애 시 허용 (가용성 우선)
-			log.error("[FingerprintService] Fingerprint 검증 실패 - visitorId: {}, 오류: {} - 요청 허용",
-				visitorId, e.getMessage());
+			log.error("[FingerprintService] Fingerprint 검증 실패 - visitorId: {}, eventId: {}, action: {}, 오류: {} - 요청 허용",
+				visitorId, eventId, action, e.getMessage());
 			return true;
 		}
 	}
@@ -137,9 +151,11 @@ public class FingerprintService {
 	 * Redis Hash + HINCRBY를 사용하여 동시성 문제 해결
 	 *
 	 * @param visitorId FingerprintJS visitorId
+	 * @param eventId 이벤트 ID
+	 * @param action 액션 타입 (sms_send, sms_verify, pre_register)
 	 * @param success   성공 여부
 	 */
-	public void recordAttempt(String visitorId, boolean success) {
+	public void recordAttempt(String visitorId, Long eventId, String action, boolean success) {
 		if (!securityProperties.getFingerprint().isEnabled()) {
 			return;
 		}
@@ -148,8 +164,13 @@ public class FingerprintService {
 			return;
 		}
 
+		// eventId가 없으면 기록하지 않음 (비이벤트 API는 Fingerprint 미적용)
+		if (eventId == null) {
+			return;
+		}
+
 		try {
-			String key = REDIS_KEY_PREFIX + visitorId;
+			String key = REDIS_KEY_PREFIX + visitorId + ":" + eventId + ":" + action;
 
 			// Redis Hash 원자적 증가 (Race Condition 방지)
 			Long totalAttempts = redisTemplate.opsForHash().increment(key, "totalAttempts", 1);
@@ -163,8 +184,11 @@ public class FingerprintService {
 			// TTL 설정 (첫 시도 또는 갱신)
 			long ttl = securityProperties.getFingerprint().getTtlSeconds();
 			redisTemplate.expire(key, Duration.ofSeconds(ttl));
+
+			log.info("[FingerprintService] 시도 기록 완료 - key: {}, totalAttempts: {}, success: {}, TTL: {}초",
+				key, totalAttempts, success, ttl);
 		} catch (Exception e) {
-			log.error("[FingerprintService] 시도 기록 실패 - visitorId: {}, 오류: {}", visitorId, e.getMessage());
+			log.error("[FingerprintService] 시도 기록 실패 - visitorId: {}, eventId: {}, action: {}, 오류: {}", visitorId, eventId, action, e.getMessage());
 		}
 	}
 

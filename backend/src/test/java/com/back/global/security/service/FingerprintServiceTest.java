@@ -1,5 +1,6 @@
 package com.back.global.security.service;
 
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -70,7 +71,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("2");
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isTrue();
@@ -85,7 +86,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("2"); // 실패율 약 28.6%
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isTrue();
@@ -100,7 +101,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("4"); // 실패율 80%
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isFalse();
@@ -114,7 +115,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("totalAttempts"))).thenReturn(null);
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isTrue();
@@ -129,7 +130,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("8"); // 실패율 정확히 80%
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isFalse();
@@ -144,7 +145,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("0"); // 실패율 0%
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isFalse();
@@ -159,7 +160,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("0"); // 실패율 0%
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isTrue();
@@ -174,7 +175,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("0"); // 모두 성공
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isFalse();
@@ -190,17 +191,20 @@ class FingerprintServiceTest {
 		void recordAttempt_Success_NewUser() {
 			// given
 			String visitorId = "new-user";
-			when(hashOperations.increment(eq("fingerprint:" + visitorId), eq("totalAttempts"), eq(1L))).thenReturn(1L);
-			when(hashOperations.increment(eq("fingerprint:" + visitorId), eq("successCount"), eq(1L))).thenReturn(1L);
+			Long eventId = 1L;
+			String action = "sms_send";
+			String expectedKey = "fingerprint:" + visitorId + ":" + eventId + ":" + action;
+			when(hashOperations.increment(eq(expectedKey), eq("totalAttempts"), eq(1L))).thenReturn(1L);
+			when(hashOperations.increment(eq(expectedKey), eq("successCount"), eq(1L))).thenReturn(1L);
 
 			// when
-			fingerprintService.recordAttempt(visitorId, true);
+			fingerprintService.recordAttempt(visitorId, eventId, action, true);
 
 			// then
-			verify(hashOperations).increment(eq("fingerprint:" + visitorId), eq("totalAttempts"), eq(1L));
-			verify(hashOperations).increment(eq("fingerprint:" + visitorId), eq("successCount"), eq(1L));
-			verify(hashOperations, never()).increment(eq("fingerprint:" + visitorId), eq("failedAttempts"), anyLong());
-			verify(redisTemplate).expire(eq("fingerprint:" + visitorId), eq(Duration.ofSeconds(86400L)));
+			verify(hashOperations).increment(eq(expectedKey), eq("totalAttempts"), eq(1L));
+			verify(hashOperations).increment(eq(expectedKey), eq("successCount"), eq(1L));
+			verify(hashOperations, never()).increment(eq(expectedKey), eq("failedAttempts"), anyLong());
+			verify(redisTemplate).expire(eq(expectedKey), eq(Duration.ofSeconds(86400L)));
 		}
 
 		@Test
@@ -208,17 +212,20 @@ class FingerprintServiceTest {
 		void recordAttempt_Failure_NewUser() {
 			// given
 			String visitorId = "new-failing-user";
-			when(hashOperations.increment(eq("fingerprint:" + visitorId), eq("totalAttempts"), eq(1L))).thenReturn(1L);
-			when(hashOperations.increment(eq("fingerprint:" + visitorId), eq("failedAttempts"), eq(1L))).thenReturn(1L);
+			Long eventId = 1L;
+			String action = "sms_send";
+			String expectedKey = "fingerprint:" + visitorId + ":" + eventId + ":" + action;
+			when(hashOperations.increment(eq(expectedKey), eq("totalAttempts"), eq(1L))).thenReturn(1L);
+			when(hashOperations.increment(eq(expectedKey), eq("failedAttempts"), eq(1L))).thenReturn(1L);
 
 			// when
-			fingerprintService.recordAttempt(visitorId, false);
+			fingerprintService.recordAttempt(visitorId, eventId, action, false);
 
 			// then
-			verify(hashOperations).increment(eq("fingerprint:" + visitorId), eq("totalAttempts"), eq(1L));
-			verify(hashOperations).increment(eq("fingerprint:" + visitorId), eq("failedAttempts"), eq(1L));
-			verify(hashOperations, never()).increment(eq("fingerprint:" + visitorId), eq("successCount"), anyLong());
-			verify(redisTemplate).expire(eq("fingerprint:" + visitorId), eq(Duration.ofSeconds(86400L)));
+			verify(hashOperations).increment(eq(expectedKey), eq("totalAttempts"), eq(1L));
+			verify(hashOperations).increment(eq(expectedKey), eq("failedAttempts"), eq(1L));
+			verify(hashOperations, never()).increment(eq(expectedKey), eq("successCount"), anyLong());
+			verify(redisTemplate).expire(eq(expectedKey), eq(Duration.ofSeconds(86400L)));
 		}
 
 		@Test
@@ -226,16 +233,19 @@ class FingerprintServiceTest {
 		void recordAttempt_Success_ExistingUser() {
 			// given
 			String visitorId = "existing-user";
-			when(hashOperations.increment(eq("fingerprint:" + visitorId), eq("totalAttempts"), eq(1L))).thenReturn(6L);
-			when(hashOperations.increment(eq("fingerprint:" + visitorId), eq("successCount"), eq(1L))).thenReturn(4L);
+			Long eventId = 1L;
+			String action = "sms_send";
+			String expectedKey = "fingerprint:" + visitorId + ":" + eventId + ":" + action;
+			when(hashOperations.increment(eq(expectedKey), eq("totalAttempts"), eq(1L))).thenReturn(6L);
+			when(hashOperations.increment(eq(expectedKey), eq("successCount"), eq(1L))).thenReturn(4L);
 
 			// when
-			fingerprintService.recordAttempt(visitorId, true);
+			fingerprintService.recordAttempt(visitorId, eventId, action, true);
 
 			// then
-			verify(hashOperations).increment(eq("fingerprint:" + visitorId), eq("totalAttempts"), eq(1L));
-			verify(hashOperations).increment(eq("fingerprint:" + visitorId), eq("successCount"), eq(1L));
-			verify(hashOperations, never()).increment(eq("fingerprint:" + visitorId), eq("failedAttempts"), anyLong());
+			verify(hashOperations).increment(eq(expectedKey), eq("totalAttempts"), eq(1L));
+			verify(hashOperations).increment(eq(expectedKey), eq("successCount"), eq(1L));
+			verify(hashOperations, never()).increment(eq(expectedKey), eq("failedAttempts"), anyLong());
 		}
 
 		@Test
@@ -243,16 +253,19 @@ class FingerprintServiceTest {
 		void recordAttempt_Failure_ExistingUser() {
 			// given
 			String visitorId = "existing-failing-user";
-			when(hashOperations.increment(eq("fingerprint:" + visitorId), eq("totalAttempts"), eq(1L))).thenReturn(6L);
-			when(hashOperations.increment(eq("fingerprint:" + visitorId), eq("failedAttempts"), eq(1L))).thenReturn(3L);
+			Long eventId = 1L;
+			String action = "sms_send";
+			String expectedKey = "fingerprint:" + visitorId + ":" + eventId + ":" + action;
+			when(hashOperations.increment(eq(expectedKey), eq("totalAttempts"), eq(1L))).thenReturn(6L);
+			when(hashOperations.increment(eq(expectedKey), eq("failedAttempts"), eq(1L))).thenReturn(3L);
 
 			// when
-			fingerprintService.recordAttempt(visitorId, false);
+			fingerprintService.recordAttempt(visitorId, eventId, action, false);
 
 			// then
-			verify(hashOperations).increment(eq("fingerprint:" + visitorId), eq("totalAttempts"), eq(1L));
-			verify(hashOperations).increment(eq("fingerprint:" + visitorId), eq("failedAttempts"), eq(1L));
-			verify(hashOperations, never()).increment(eq("fingerprint:" + visitorId), eq("successCount"), anyLong());
+			verify(hashOperations).increment(eq(expectedKey), eq("totalAttempts"), eq(1L));
+			verify(hashOperations).increment(eq(expectedKey), eq("failedAttempts"), eq(1L));
+			verify(hashOperations, never()).increment(eq(expectedKey), eq("successCount"), anyLong());
 		}
 
 		@Test
@@ -260,13 +273,16 @@ class FingerprintServiceTest {
 		void recordAttempt_SetsTTL() {
 			// given
 			String visitorId = "ttl-test-user";
+			Long eventId = 1L;
+			String action = "sms_send";
+			String expectedKey = "fingerprint:" + visitorId + ":" + eventId + ":" + action;
 			when(hashOperations.increment(anyString(), anyString(), anyLong())).thenReturn(1L);
 
 			// when
-			fingerprintService.recordAttempt(visitorId, true);
+			fingerprintService.recordAttempt(visitorId, eventId, action, true);
 
 			// then
-			verify(redisTemplate).expire(eq("fingerprint:" + visitorId), eq(Duration.ofSeconds(86400L)));
+			verify(redisTemplate).expire(eq(expectedKey), eq(Duration.ofSeconds(86400L)));
 		}
 	}
 
@@ -278,7 +294,7 @@ class FingerprintServiceTest {
 		@DisplayName("visitorId가 null이면 검증 실패하지 않음")
 		void validateFingerprint_NullVisitorId() {
 			// when & then - NPE가 발생하지 않아야 함
-			assertThatCode(() -> fingerprintService.validateFingerprint(null))
+			assertThatCode(() -> fingerprintService.validateFingerprint(null, 1L, "sms_send"))
 				.doesNotThrowAnyException();
 		}
 
@@ -286,7 +302,7 @@ class FingerprintServiceTest {
 		@DisplayName("visitorId가 빈 문자열이면 검증 실패하지 않음")
 		void validateFingerprint_EmptyVisitorId() {
 			// when & then
-			assertThatCode(() -> fingerprintService.validateFingerprint(""))
+			assertThatCode(() -> fingerprintService.validateFingerprint("", 1L, "sms_send"))
 				.doesNotThrowAnyException();
 		}
 
@@ -299,7 +315,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("10"); // 실패율 100%
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isFalse();
@@ -314,7 +330,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn("0"); // 실패율 0%
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isTrue();
@@ -328,7 +344,7 @@ class FingerprintServiceTest {
 			FingerprintService disabledService = new FingerprintService(redisTemplate, securityProperties, objectMapper);
 
 			// when
-			boolean allowed = disabledService.validateFingerprint("any-visitor");
+			boolean allowed = disabledService.validateFingerprint("any-visitor", 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isTrue();
@@ -343,7 +359,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn(2);
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isTrue();
@@ -358,7 +374,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn(8L);
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then
 			assertThat(allowed).isFalse();
@@ -373,7 +389,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), eq("failedAttempts"))).thenReturn(new Object());
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then: 시도 횟수가 0이므로 허용
 			assertThat(allowed).isTrue();
@@ -387,7 +403,7 @@ class FingerprintServiceTest {
 			when(hashOperations.get(anyString(), anyString())).thenThrow(new RuntimeException("Redis connection error"));
 
 			// when
-			boolean allowed = fingerprintService.validateFingerprint(visitorId);
+			boolean allowed = fingerprintService.validateFingerprint(visitorId, 1L, "sms_send");
 
 			// then: 예외 발생해도 요청 허용
 			assertThat(allowed).isTrue();
@@ -406,7 +422,7 @@ class FingerprintServiceTest {
 			FingerprintService disabledService = new FingerprintService(redisTemplate, securityProperties, objectMapper);
 
 			// when
-			disabledService.recordAttempt("any-visitor", true);
+			disabledService.recordAttempt("any-visitor", 1L, "sms_send", true);
 
 			// then: Redis 호출 없음
 			verify(hashOperations, never()).increment(anyString(), anyString(), anyLong());
@@ -416,7 +432,7 @@ class FingerprintServiceTest {
 		@DisplayName("null visitorId는 기록하지 않음")
 		void recordAttempt_NullVisitorId() {
 			// when
-			fingerprintService.recordAttempt(null, true);
+			fingerprintService.recordAttempt(null, 1L, "sms_send", true);
 
 			// then: Redis 호출 없음
 			verify(hashOperations, never()).increment(anyString(), anyString(), anyLong());
@@ -426,7 +442,7 @@ class FingerprintServiceTest {
 		@DisplayName("빈 문자열 visitorId는 기록하지 않음")
 		void recordAttempt_EmptyVisitorId() {
 			// when
-			fingerprintService.recordAttempt("", true);
+			fingerprintService.recordAttempt("", 1L, "sms_send", true);
 
 			// then: Redis 호출 없음
 			verify(hashOperations, never()).increment(anyString(), anyString(), anyLong());
@@ -441,7 +457,7 @@ class FingerprintServiceTest {
 				.thenThrow(new RuntimeException("Redis error"));
 
 			// when & then: 예외 발생하지 않음
-			assertThatCode(() -> fingerprintService.recordAttempt(visitorId, true))
+			assertThatCode(() -> fingerprintService.recordAttempt(visitorId, 1L, "sms_send", true))
 				.doesNotThrowAnyException();
 		}
 	}

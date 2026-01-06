@@ -1,6 +1,7 @@
 package com.back.global.security.filter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -12,6 +13,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.back.global.security.service.FingerprintService;
+import com.back.global.security.util.CachedBodyHttpServletRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -53,6 +57,7 @@ public class FingerprintRecordFilter extends OncePerRequestFilter {
 	private static final String HEADER_DEVICE_ID = "X-Device-Id";
 
 	private final FingerprintService fingerprintService;
+	private final ObjectMapper objectMapper;
 
 	// SMS 관련 경로
 	private static final String SMS_SEND_PATH = "/api/v1/sms/send";
@@ -70,15 +75,43 @@ public class FingerprintRecordFilter extends OncePerRequestFilter {
 		String requestUri = request.getRequestURI();
 		String visitorId = request.getHeader(HEADER_DEVICE_ID);
 
-		// SMS API 경로가 아니거나 visitorId가 없으면 기록하지 않음
+		// SMS API 또는 사전등록 경로가 아니거나 visitorId가 없으면 기록하지 않음
 		if (!isSmsOrPreRegisterPath(requestUri) || visitorId == null || visitorId.isEmpty()) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
+		// SMS 경로는 body에서 eventId를 추출해야 하므로 CachedBodyHttpServletRequest로 wrapping
+		// (단, RateLimitFilter에서 이미 wrapping된 경우 재사용)
+		HttpServletRequest processedRequest = request;
+		if (isSmsPath(requestUri)) {
+			if (request instanceof CachedBodyHttpServletRequest) {
+				// 이미 wrapping된 경우 재사용
+				processedRequest = request;
+			} else {
+				// wrapping 필요
+				try {
+					processedRequest = new CachedBodyHttpServletRequest(request);
+				} catch (IOException e) {
+					log.error("[FingerprintRecordFilter] Request body 캐싱 실패 - URI: {}, 오류: {}", requestUri, e.getMessage());
+					filterChain.doFilter(request, response);
+					return;
+				}
+			}
+		}
+
+		// eventId 추출 (사전등록: URI에서, SMS: body에서)
+		Long eventId = extractEventId(requestUri, processedRequest);
+
+		// 액션 타입 결정
+		String action = getActionType(requestUri);
+
+		log.info("[FingerprintRecordFilter] 요청 처리 - URI: {}, visitorId: {}, eventId: {}, action: {}",
+			requestUri, visitorId, eventId, action);
+
 		try {
 			// 요청 처리
-			filterChain.doFilter(request, response);
+			filterChain.doFilter(processedRequest, response);
 		} finally {
 			// 응답 상태 코드로 성공/실패 판단 (finally 블록에서 항상 실행)
 			int status = response.getStatus();
@@ -90,8 +123,11 @@ public class FingerprintRecordFilter extends OncePerRequestFilter {
 
 			boolean success = (status >= 200 && status < 300);
 
-			// Fingerprint 기록
-			fingerprintService.recordAttempt(visitorId, success);
+			log.info("[FingerprintRecordFilter] Fingerprint 기록 - visitorId: {}, eventId: {}, action: {}, status: {}, success: {}",
+				visitorId, eventId, action, status, success);
+
+			// Fingerprint 기록 (이벤트별, 액션별)
+			fingerprintService.recordAttempt(visitorId, eventId, action, success);
 		}
 	}
 
@@ -102,9 +138,87 @@ public class FingerprintRecordFilter extends OncePerRequestFilter {
 	 * @return SMS/사전등록 경로 여부
 	 */
 	private boolean isSmsOrPreRegisterPath(String requestUri) {
-		return requestUri.equals(SMS_SEND_PATH) ||
-			requestUri.equals(SMS_VERIFY_PATH) ||
+		return isSmsPath(requestUri) ||
 			(requestUri.startsWith(PRE_REGISTER_PATH) && requestUri.endsWith(PRE_REGISTER_SUFFIX));
+	}
+
+	/**
+	 * SMS 경로인지 확인
+	 *
+	 * @param requestUri 요청 URI
+	 * @return SMS 경로 여부
+	 */
+	private boolean isSmsPath(String requestUri) {
+		return requestUri.equals(SMS_SEND_PATH) || requestUri.equals(SMS_VERIFY_PATH);
+	}
+
+	/**
+	 * 요청에서 eventId 추출
+	 *
+	 * @param requestUri 요청 URI
+	 * @param request HTTP 요청
+	 * @return eventId (추출 실패 시 null)
+	 */
+	private Long extractEventId(String requestUri, HttpServletRequest request) {
+		// 사전등록 경로: /api/v1/events/{eventId}/pre-registers (URI에서 추출)
+		if (requestUri.startsWith(PRE_REGISTER_PATH) && requestUri.endsWith(PRE_REGISTER_SUFFIX)) {
+			try {
+				String eventIdStr = requestUri
+					.substring(PRE_REGISTER_PATH.length())
+					.replace(PRE_REGISTER_SUFFIX, "");
+				return Long.parseLong(eventIdStr);
+			} catch (NumberFormatException e) {
+				log.warn("[FingerprintRecordFilter] eventId 추출 실패 - URI: {}", requestUri);
+				return null;
+			}
+		}
+
+		// SMS 경로: body에서 eventId 추출
+		if (isSmsPath(requestUri) && request instanceof CachedBodyHttpServletRequest) {
+			CachedBodyHttpServletRequest cachedRequest = (CachedBodyHttpServletRequest) request;
+			return extractEventIdFromBody(cachedRequest);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Request Body에서 eventId 추출
+	 *
+	 * @param request CachedBodyHttpServletRequest
+	 * @return eventId (추출 실패 시 null)
+	 */
+	private Long extractEventIdFromBody(CachedBodyHttpServletRequest request) {
+		try {
+			byte[] content = request.getCachedBody();
+			if (content.length > 0) {
+				String body = new String(content, StandardCharsets.UTF_8);
+				JsonNode jsonNode = objectMapper.readTree(body);
+
+				if (jsonNode.has("eventId")) {
+					return jsonNode.get("eventId").asLong();
+				}
+			}
+		} catch (Exception e) {
+			log.warn("[FingerprintRecordFilter] Request body에서 eventId 추출 실패 - 오류: {}", e.getMessage());
+		}
+		return null;
+	}
+
+	/**
+	 * 요청 URI에서 액션 타입 추출
+	 *
+	 * @param requestUri 요청 URI
+	 * @return 액션 타입 (sms_send, sms_verify, pre_register)
+	 */
+	private String getActionType(String requestUri) {
+		if (requestUri.equals(SMS_SEND_PATH)) {
+			return FingerprintService.ACTION_SMS_SEND;
+		} else if (requestUri.equals(SMS_VERIFY_PATH)) {
+			return FingerprintService.ACTION_SMS_VERIFY;
+		} else {
+			return FingerprintService.ACTION_PRE_REGISTER;
+		}
 	}
 
 	/**

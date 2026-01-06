@@ -29,7 +29,7 @@ public class SmsController implements SmsApi {
 		@Valid @RequestBody SmsSendRequest request,
 		@RequestHeader(value = "X-Device-Id", required = false) String visitorId
 	) {
-		Long expiresInSeconds = smsService.sendVerificationCode(request.phoneNumber());
+		Long expiresInSeconds = smsService.sendVerificationCode(request.phoneNumber(), request.eventId(), visitorId);
 		return ApiResponse.ok("인증번호가 발송되었습니다.", SmsSendResponse.of(expiresInSeconds));
 	}
 
@@ -39,7 +39,7 @@ public class SmsController implements SmsApi {
 		@Valid @RequestBody SmsVerifyRequest request,
 		@RequestHeader(value = "X-Device-Id", required = false) String visitorId
 	) {
-		smsService.verifyCode(request.phoneNumber(), request.verificationCode());
+		smsService.verifyCode(request.phoneNumber(), request.verificationCode(), request.eventId(), visitorId);
 		return ApiResponse.ok("인증에 성공하였습니다.", SmsVerifyResponse.of(true));
 	}
 }

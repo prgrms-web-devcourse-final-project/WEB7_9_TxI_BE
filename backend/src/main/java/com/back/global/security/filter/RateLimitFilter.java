@@ -124,10 +124,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
 				log.warn("[RateLimitFilter] SMS Rate Limit 초과 - IP: {}, Phone: {}, URI: {}",
 					clientIp, maskPhoneNumber(phoneNumber), requestUri);
 
-				// Fingerprint 실패 기록 (Rate Limit 차단도 실패로 간주)
+				// Fingerprint 실패 기록 (Rate Limit 차단도 실패로 간주) - 이벤트별, 액션별
 				String visitorId = request.getHeader(HEADER_DEVICE_ID);
 				if (fingerprintService != null && visitorId != null) {
-					fingerprintService.recordAttempt(visitorId, false);
+					Long eventId = extractEventId(requestUri);
+					String action = getActionTypeFromUri(requestUri);
+					fingerprintService.recordAttempt(visitorId, eventId, action, false);
 				}
 
 				sendTooManyRequestsResponse(response, SecurityErrorCode.TOO_MANY_SMS_REQUESTS);
@@ -143,11 +145,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
 			if (!allowed) {
 				log.warn("[RateLimitFilter] Global Rate Limit 초과 - IP: {}, URI: {}", clientIp, requestUri);
 
-				// Fingerprint 실패 기록 (Rate Limit 차단도 실패로 간주)
-				String visitorId = request.getHeader(HEADER_DEVICE_ID);
-				if (fingerprintService != null && visitorId != null) {
-					fingerprintService.recordAttempt(visitorId, false);
-				}
+				// Fingerprint 실패 기록은 SMS/사전등록 경로에만 적용
+				// (전체 API Rate Limit은 Fingerprint와 무관)
 
 				sendTooManyRequestsResponse(response, SecurityErrorCode.TOO_MANY_REQUESTS);
 				return;
@@ -185,6 +184,45 @@ public class RateLimitFilter extends OncePerRequestFilter {
 		return requestUri.equals(SMS_SEND_PATH) ||
 			requestUri.equals(SMS_VERIFY_PATH) ||
 			(requestUri.startsWith(PRE_REGISTER_PATH) && requestUri.endsWith(PRE_REGISTER_SUFFIX));
+	}
+
+	/**
+	 * 요청 URI에서 eventId 추출
+	 *
+	 * @param requestUri 요청 URI
+	 * @return eventId (사전등록 경로가 아니면 null)
+	 */
+	private Long extractEventId(String requestUri) {
+		// 사전등록 경로: /api/v1/events/{eventId}/pre-registers
+		if (requestUri.startsWith(PRE_REGISTER_PATH) && requestUri.endsWith(PRE_REGISTER_SUFFIX)) {
+			try {
+				String eventIdStr = requestUri
+					.substring(PRE_REGISTER_PATH.length())
+					.replace(PRE_REGISTER_SUFFIX, "");
+				return Long.parseLong(eventIdStr);
+			} catch (NumberFormatException e) {
+				log.warn("[RateLimitFilter] eventId 추출 실패 - URI: {}", requestUri);
+				return null;
+			}
+		}
+		// SMS 경로는 eventId 없음
+		return null;
+	}
+
+	/**
+	 * 요청 URI에서 액션 타입 추출
+	 *
+	 * @param requestUri 요청 URI
+	 * @return 액션 타입 (sms_send, sms_verify, pre_register)
+	 */
+	private String getActionTypeFromUri(String requestUri) {
+		if (requestUri.equals(SMS_SEND_PATH)) {
+			return FingerprintService.ACTION_SMS_SEND;
+		} else if (requestUri.equals(SMS_VERIFY_PATH)) {
+			return FingerprintService.ACTION_SMS_VERIFY;
+		} else {
+			return FingerprintService.ACTION_PRE_REGISTER;
+		}
 	}
 
 	/**

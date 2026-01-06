@@ -199,7 +199,7 @@ security:
       min-attempts: 5          # 최소 시도 횟수
       max-attempts: 10         # 최대 시도 횟수 (성공 폭탄 공격 방어)
       failure-rate-threshold: 0.8  # 실패율 임계값 (80%)
-      ttl-seconds: 86400       # TTL: 24시간
+      ttl-seconds: 300 # (테스트 5분)
 
 # coolSMS
 coolsms:

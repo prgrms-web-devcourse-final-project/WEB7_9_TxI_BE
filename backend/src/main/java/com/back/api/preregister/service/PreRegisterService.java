@@ -99,9 +99,9 @@ public class PreRegisterService {
 				// 모든 검증 통과 후 SMS 인증 플래그 삭제
 				deleteSmsVerificationFlag(request.phoneNumber());
 
-				// Fingerprint 성공 기록
+				// Fingerprint 성공 기록 (이벤트별, 사전등록 액션)
 				if (fingerprintService != null && visitorId != null) {
-					fingerprintService.recordAttempt(visitorId, true);
+					fingerprintService.recordAttempt(visitorId, eventId, FingerprintService.ACTION_PRE_REGISTER, true);
 				}
 
 				return PreRegisterResponse.from(preRegister);
@@ -128,22 +128,22 @@ public class PreRegisterService {
 				)
 			);
 
-			// Fingerprint 성공 기록
+			// Fingerprint 성공 기록 (이벤트별, 사전등록 액션)
 			if (fingerprintService != null && visitorId != null) {
-				fingerprintService.recordAttempt(visitorId, true);
+				fingerprintService.recordAttempt(visitorId, eventId, FingerprintService.ACTION_PRE_REGISTER, true);
 			}
 
 			return PreRegisterResponse.from(savedPreRegister);
 		} catch (ErrorException e) {
-			// Fingerprint 실패 기록 (검증 실패)
+			// Fingerprint 실패 기록 (검증 실패) - 이벤트별, 사전등록 액션
 			if (fingerprintService != null && visitorId != null) {
-				fingerprintService.recordAttempt(visitorId, false);
+				fingerprintService.recordAttempt(visitorId, eventId, FingerprintService.ACTION_PRE_REGISTER, false);
 			}
 			throw e;
 		} catch (Exception e) {
-			// Fingerprint 실패 기록 (시스템 에러)
+			// Fingerprint 실패 기록 (시스템 에러) - 이벤트별, 사전등록 액션
 			if (fingerprintService != null && visitorId != null) {
-				fingerprintService.recordAttempt(visitorId, false);
+				fingerprintService.recordAttempt(visitorId, eventId, FingerprintService.ACTION_PRE_REGISTER, false);
 			}
 			throw e;
 		}
