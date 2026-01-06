@@ -44,8 +44,8 @@ WaitFair는 이러한 환경적 편차를 제거하고, **누구나 동일한 �
 
 - 사전 등록 + 대기열 랜덤 셔플로 공정한 티켓팅 환경 제공
 - 배치 단위 입장으로 트래픽 분산
-- reCAPTCHA & IP Rate Limiting & IDC IP 차단 & Device Fingerprintin으로 봇/매크로 차단
-- Dynamic QR, 디바이스 중복 차단으로 암표 문제 방지
+- reCAPTCHA & ****IP Rate Limiting & IDC IP 차단 & Device Fingerprinting 기반 봇/매크로 차단
+- Dynamic QR, 디바이스 중복 차단, Merkle Tree 기반 양도 시스템으로 암표 문제 해결
 
 ---
 
@@ -58,8 +58,9 @@ WaitFair는 이러한 환경적 편차를 제거하고, **누구나 동일한 �
 5. Toss Payments 기반 결제
 6. Dynamic QR 티켓
 7. WebSocket 기반 실시간 알림
-8. 관리자 대시보드
-9. Grafana Alloy 기반 서버 관측 파이프라인
+8. Merkle Tree 기반 양도 시스템
+9. 관리자 대시보드
+10. Grafana Alloy 기반 서버 관측 파이프라인
 
 ---
 
