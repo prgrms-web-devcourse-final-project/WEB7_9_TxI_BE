@@ -16,6 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -31,7 +32,12 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Order extends BaseEntity {
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "orders_seq")
+	@SequenceGenerator(
+		name = "orders_seq",
+		sequenceName = "orders_seq",
+		allocationSize = 100
+	)
 	private Long id;
 
 	@OneToOne(fetch = FetchType.LAZY)
