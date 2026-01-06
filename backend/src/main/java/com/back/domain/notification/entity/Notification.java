@@ -3,7 +3,8 @@ package com.back.domain.notification.entity;
 import java.time.LocalDateTime;
 
 import com.back.domain.notification.enums.DomainName;
-import com.back.domain.notification.enums.NotificationVar;
+import com.back.domain.notification.enums.NotificationTypeDetails;
+import com.back.domain.notification.enums.NotificationTypes;
 import com.back.domain.user.entity.User;
 import com.back.global.entity.BaseEntity;
 
@@ -24,6 +25,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+//TODO: User 엔티티쪽에 Cascade 설정 해줘야 함
 @Entity
 @Builder
 @Getter
@@ -37,13 +39,17 @@ public class Notification extends BaseEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private NotificationVar type;
+	private NotificationTypes type;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private NotificationTypeDetails typeDetail;
 
 	@Column(nullable = false)
 	private String title;
 
 	@Column(nullable = false)
-	private String content;
+	private String message;
 
 	@Column(nullable = false)
 	private boolean isRead = false;
@@ -55,6 +61,9 @@ public class Notification extends BaseEntity {
 	@Column(nullable = false)
 	private DomainName domainName;
 
+	@Column(nullable = true)
+	private Long domainId;
+
 	//연관 필드
 	@ManyToOne(fetch = FetchType.LAZY) // -> 리팩토링 고민요소
 	@JoinColumn(name = "user_id", nullable = false)
@@ -64,5 +73,4 @@ public class Notification extends BaseEntity {
 		this.isRead = true;
 		this.readAt = LocalDateTime.now();
 	}
-
 }

@@ -34,7 +34,6 @@ import com.back.domain.user.entity.UserRole;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.error.code.QueueEntryErrorCode;
 import com.back.global.error.exception.ErrorException;
-import com.back.global.event.EventPublisher;
 import com.back.support.factory.EventFactory;
 import com.back.support.factory.StoreFactory;
 import com.back.support.factory.UserFactory;
@@ -58,9 +57,6 @@ class QueueShuffleServiceTest {
 	@Mock
 	private EventService eventService;
 
-	@Mock
-	private EventPublisher eventPublisher;
-
 	private Event testEvent;
 	private List<User> testUsers;
 	private List<Long> testUserIds;
@@ -78,8 +74,7 @@ class QueueShuffleServiceTest {
 			queueEntryRepository,
 			queueEntryRedisRepository,
 			userRepository,
-			eventService,
-			eventPublisher
+			eventService
 		);
 
 		testEvent = EventFactory.fakeEvent(store, "Test Event");

@@ -20,7 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.back.api.notification.dto.NotificationResponseDto;
 import com.back.domain.notification.entity.Notification;
 import com.back.domain.notification.enums.DomainName;
-import com.back.domain.notification.enums.NotificationVar;
+import com.back.domain.notification.enums.NotificationTypeDetails;
+import com.back.domain.notification.enums.NotificationTypes;
 import com.back.domain.notification.repository.NotificationRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.entity.UserActiveStatus;
@@ -95,13 +96,15 @@ class NotificationServiceTest {
 	/**
 	 * 알림 생성 헬퍼 메서드
 	 */
-	private Notification createNotification(Long id, String title, String content, boolean isRead) {
+	private Notification createNotification(Long id, String title, String message, boolean isRead) {
 		Notification notification = Notification.builder()
 			.user(testUser)
-			.type(NotificationVar.PAYMENT_SUCCESS)
+			.type(NotificationTypes.PAYMENT)
+			.typeDetail(NotificationTypeDetails.PAYMENT_SUCCESS)
 			.domainName(DomainName.ORDERS)
+			.domainId(1L)
 			.title(title)
-			.content(content)
+			.message(message)
 			.isRead(isRead)
 			.build();
 
@@ -178,8 +181,9 @@ class NotificationServiceTest {
 			NotificationResponseDto dto = result.get(0);
 			assertThat(dto.id()).isEqualTo(notification.getId());
 			assertThat(dto.title()).isEqualTo(notification.getTitle());
-			assertThat(dto.content()).isEqualTo(notification.getContent());
-			assertThat(dto.type()).isEqualTo(notification.getType().getFrontType().name());
+			assertThat(dto.message()).isEqualTo(notification.getMessage());
+			assertThat(dto.type()).isEqualTo(notification.getType().name());
+			assertThat(dto.typeDetail()).isEqualTo(notification.getTypeDetail().name());
 			assertThat(dto.isRead()).isEqualTo(notification.isRead());
 		}
 	}

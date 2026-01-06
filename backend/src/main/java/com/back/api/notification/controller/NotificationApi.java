@@ -47,5 +47,4 @@ public interface NotificationApi {
 	})
 	ApiResponse<Void> markAllAsRead(
 	);
-
 }

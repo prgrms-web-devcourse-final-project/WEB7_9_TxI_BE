@@ -80,7 +80,7 @@ public class PerfBootstrapRunner implements ApplicationRunner {
 		notificationInit.init();
 
 		log.info("""
-			
+
 			=====================================
 			✅ 부하테스트 데이터 초기화 완료
 			=====================================

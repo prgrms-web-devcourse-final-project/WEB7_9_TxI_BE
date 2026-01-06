@@ -13,9 +13,14 @@ import org.springframework.stereotype.Component;
 import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.notification.entity.Notification;
-import com.back.domain.notification.enums.NotificationVar;
+import com.back.domain.notification.enums.DomainName;
 import com.back.domain.notification.repository.NotificationRepository;
 import com.back.domain.notification.systemMessage.NotificationMessage;
+import com.back.domain.notification.systemMessage.OrderFailedMessage;
+import com.back.domain.notification.systemMessage.OrderSuccessMessage;
+import com.back.domain.notification.systemMessage.PreRegisterDoneMessage;
+import com.back.domain.notification.systemMessage.QueueEntriesMessage;
+import com.back.domain.notification.systemMessage.TicketGetMessage;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 
@@ -59,83 +64,114 @@ public class NotificationDataInit implements ApplicationRunner {
 		}
 
 		User user1 = user1Opt.get();
-		User user2 = user2Opt.get();
 		Event event = eventOpt.get();
-		String eventTitle = event.getTitle();
+		String eventName = event.getTitle();
 
 		List<Notification> notifications = new ArrayList<>();
 
-		// ===== 유저 1번 알림 =====
-		// 회원가입 알림
-		notifications.add(createNotification(
-			user1,
-			NotificationMessage.signUp(user1.getId(), user1.getNickname()),
-			false
-		));
+		// ===== 유저 1번 알림 (총 5개) =====
+		// 안읽은 알림 3개
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderSuccessMessage(user1.getId(), 1L, 99000L, eventName), false));
 
-		// 사전등록 완료
-		notifications.add(createNotification(
-			user1,
-			NotificationMessage.preRegisterDone(user1.getId(), eventTitle),
-			false
-		));
+		notifications.add(createNotificationFromMessage(user1,
+			new QueueEntriesMessage(user1.getId(), 101L, eventName), false));
 
-		// 대기열 대기중
-		notifications.add(createNotification(
-			user1,
-			NotificationMessage.queueWaiting(user1.getId(), eventTitle, 42L),
-			false
-		));
+		notifications.add(createNotificationFromMessage(user1,
+			new PreRegisterDoneMessage(user1.getId(), 201L, eventName), false));
 
-		// 대기열 입장
-		notifications.add(createNotification(
-			user1,
-			NotificationMessage.queueEntered(user1.getId(), eventTitle),
-			true
-		));
+		// 읽은 알림 2개
+		notifications.add(createNotificationFromMessage(user1,
+			new TicketGetMessage(user1.getId(), DomainName.ORDERS, 301L, eventName), true));
 
-		// 결제 성공
-		notifications.add(createNotification(
-			user1,
-			NotificationMessage.paymentSuccess(user1.getId(), eventTitle, 99000L),
-			true
-		));
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderFailedMessage(user1.getId(), 154000L, 51L, eventName), true));
 
-		// ===== 유저 2번 알림 =====
-		// 회원가입 알림
-		notifications.add(createNotification(
-			user2,
-			NotificationMessage.signUp(user2.getId(), user2.getNickname()),
-			false
-		));
+		// ===== 유저 1번 알림 (총 5개) =====
+		// 안읽은 알림 3개
+		notifications.add(createNotificationFromMessage(user1,
+			new PreRegisterDoneMessage(user1.getId(), 202L, eventName), false));
 
-		// 사전등록 완료
-		notifications.add(createNotification(
-			user2,
-			NotificationMessage.preRegisterDone(user2.getId(), eventTitle),
-			false
-		));
+		notifications.add(createNotificationFromMessage(user1,
+			new QueueEntriesMessage(user1.getId(), 102L, eventName), false));
 
-		// 대기열 대기중
-		notifications.add(createNotification(
-			user2,
-			NotificationMessage.queueWaiting(user2.getId(), eventTitle, 128L),
-			false
-		));
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderSuccessMessage(user1.getId(), 2L, 154000L, eventName), false));
 
-		// 대기열 만료
-		notifications.add(createNotification(
-			user2,
-			NotificationMessage.queueExpired(user2.getId(), eventTitle),
-			false
-		));
+		// 읽은 알림 2개
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderFailedMessage(user1.getId(), 99000L, 52L, eventName), true));
 
-		// 결제 성공
-		notifications.add(createNotification(
-			user2,
-			NotificationMessage.paymentSuccess(user2.getId(), eventTitle, 154000L),
-			true
-		));
+		notifications.add(createNotificationFromMessage(user1,
+			new TicketGetMessage(user1.getId(), DomainName.ORDERS, 302L, eventName), true));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderSuccessMessage(user1.getId(), 1L, 99000L, eventName), false));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new QueueEntriesMessage(user1.getId(), 101L, eventName), false));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new PreRegisterDoneMessage(user1.getId(), 201L, eventName), false));
+
+		// 읽은 알림 2개
+		notifications.add(createNotificationFromMessage(user1,
+			new TicketGetMessage(user1.getId(), DomainName.ORDERS, 301L, eventName), true));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderFailedMessage(user1.getId(), 154000L, 51L, eventName), true));
+
+		// ===== 유저 1번 알림 (총 5개) =====
+		// 안읽은 알림 3개
+		notifications.add(createNotificationFromMessage(user1,
+			new PreRegisterDoneMessage(user1.getId(), 202L, eventName), false));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new QueueEntriesMessage(user1.getId(), 102L, eventName), false));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderSuccessMessage(user1.getId(), 2L, 154000L, eventName), false));
+
+		// 읽은 알림 2개
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderFailedMessage(user1.getId(), 99000L, 52L, eventName), true));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new TicketGetMessage(user1.getId(), DomainName.ORDERS, 302L, eventName), true));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderSuccessMessage(user1.getId(), 1L, 99000L, eventName), false));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new QueueEntriesMessage(user1.getId(), 101L, eventName), false));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new PreRegisterDoneMessage(user1.getId(), 201L, eventName), false));
+
+		// 읽은 알림 2개
+		notifications.add(createNotificationFromMessage(user1,
+			new TicketGetMessage(user1.getId(), DomainName.ORDERS, 301L, eventName), true));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderFailedMessage(user1.getId(), 154000L, 51L, eventName), true));
+
+		// ===== 유저 1번 알림 (총 5개) =====
+		// 안읽은 알림 3개
+		notifications.add(createNotificationFromMessage(user1,
+			new PreRegisterDoneMessage(user1.getId(), 202L, eventName), false));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new QueueEntriesMessage(user1.getId(), 102L, eventName), false));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderSuccessMessage(user1.getId(), 2L, 154000L, eventName), false));
+
+		// 읽은 알림 2개
+		notifications.add(createNotificationFromMessage(user1,
+			new OrderFailedMessage(user1.getId(), 99000L, 52L, eventName), true));
+
+		notifications.add(createNotificationFromMessage(user1,
+			new TicketGetMessage(user1.getId(), DomainName.ORDERS, 302L, eventName), true));
 
 		notificationRepository.saveAll(notifications);
 
@@ -143,25 +179,21 @@ public class NotificationDataInit implements ApplicationRunner {
 	}
 
 	/**
-	 * V2_NotificationMessage로부터 V2_Notification 엔티티 생성
+	 * NotificationMessage로부터 Notification 엔티티 생성
 	 *
 	 * @param user 대상 유저
 	 * @param message 알림 메시지
 	 * @param isRead 읽음 여부
 	 */
-	private Notification createNotification(
-		User user,
-		NotificationMessage message,
-		boolean isRead
-	) {
-		NotificationVar notificationVar = message.getNotificationVar();
-
+	private Notification createNotificationFromMessage(User user, NotificationMessage message, boolean isRead) {
 		Notification notification = Notification.builder()
 			.user(user)
-			.type(notificationVar)
-			.title(notificationVar.getTitle())
-			.content(notificationVar.formatMessage(message.getContext()))
+			.type(message.getNotificationType())
+			.typeDetail(message.getTypeDetail())
 			.domainName(message.getDomainName())
+			.domainId(message.getDomainId())
+			.title(message.getTitle())
+			.message(message.getMessage())
 			.isRead(false)
 			.build();
 

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.back.api.payment.order.service.OrderService;
 import com.back.api.payment.payment.client.PaymentClient;
+import com.back.domain.payment.order.entity.V2_Order;
 import com.back.api.payment.payment.dto.request.PaymentConfirmCommand;
 import com.back.api.payment.payment.dto.request.V2_PaymentConfirmRequest;
 import com.back.api.payment.payment.dto.response.PaymentConfirmResult;
@@ -16,9 +17,8 @@ import com.back.api.payment.payment.dto.response.TossPaymentResponse;
 import com.back.api.payment.payment.dto.response.V2_PaymentConfirmResponse;
 import com.back.api.queue.service.QueueEntryProcessService;
 import com.back.api.ticket.service.TicketService;
-import com.back.domain.notification.systemMessage.NotificationMessage;
+import com.back.domain.notification.systemMessage.OrderSuccessMessage;
 import com.back.domain.payment.order.entity.Order;
-import com.back.domain.payment.order.entity.V2_Order;
 import com.back.domain.payment.payment.entity.ApproveStatus;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.global.error.code.PaymentErrorCode;
@@ -96,10 +96,11 @@ public class PaymentService {
 
 		// 알림 메시지 발행
 		eventPublisher.publishEvent(
-			NotificationMessage.paymentSuccess(
+			new OrderSuccessMessage(
 				userId,
-				eventTitle,
-				order.getAmount()
+				orderId,
+				order.getAmount(),
+				eventTitle
 			)
 		);
 

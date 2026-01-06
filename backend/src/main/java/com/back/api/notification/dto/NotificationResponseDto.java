@@ -4,24 +4,28 @@ import java.time.LocalDateTime;
 
 import com.back.domain.notification.entity.Notification;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "알림 조회 응답용 DTO")
 public record NotificationResponseDto(
 	Long id,
-	String type,
+	String type,          // enum name
+	String typeDetail,
 	String title,
-	String content,
+	String message,
+	boolean isRead,
 	LocalDateTime createdAt,
-	Boolean isRead,
 	LocalDateTime readAt
 ) {
 	public static NotificationResponseDto from(Notification notification) {
-
 		return new NotificationResponseDto(
 			notification.getId(),
-			notification.getType().getFrontType().name(),
+			notification.getType().name(),
+			notification.getTypeDetail().name(),
 			notification.getTitle(),
-			notification.getContent(),
-			notification.getCreateAt(),
+			notification.getMessage(),
 			notification.isRead(),
+			notification.getCreateAt(),
 			notification.getReadAt()
 		);
 	}

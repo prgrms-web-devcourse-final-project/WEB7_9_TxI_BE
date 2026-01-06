@@ -18,14 +18,14 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/v1/notifications")
 public class NotificationController implements NotificationApi {
 
 	private final NotificationService notificationService;
 	private final HttpRequestContext httpRequestContext;
 
 	@Override
-	@GetMapping("/v2/notifications")
+	@GetMapping
 	public ApiResponse<List<NotificationResponseDto>> getNotifications(
 	) {
 		Long userId = httpRequestContext.getUserId();
@@ -39,7 +39,8 @@ public class NotificationController implements NotificationApi {
 	/**
 	 * 읽지 않은 알림 개수 조회
 	 */
-	@GetMapping("/v2/notifications/unread-count")
+	@Override
+	@GetMapping("/unread-count")
 	public ApiResponse<UnreadCountResponseDto> getUnreadCount(
 	) {
 		Long userId = httpRequestContext.getUserId();
@@ -50,7 +51,8 @@ public class NotificationController implements NotificationApi {
 	/**
 	 * 개별 알림 읽음 처리
 	 */
-	@PatchMapping("/v2/notifications/{notificationId}/read")
+	@Override
+	@PatchMapping("/{notificationId}/read")
 	public ApiResponse<Void> markAsRead(
 		@PathVariable Long notificationId
 	) {
@@ -63,7 +65,8 @@ public class NotificationController implements NotificationApi {
 	/**
 	 * 전체 알림 읽음 처리
 	 */
-	@PatchMapping("/v2/notifications/read-all")
+	@Override
+	@PatchMapping("/read-all")
 	public ApiResponse<Void> markAllAsRead() {
 		Long userId = httpRequestContext.getUserId();
 		notificationService.markAllAsRead(userId);

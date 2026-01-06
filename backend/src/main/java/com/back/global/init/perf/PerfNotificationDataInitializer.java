@@ -12,7 +12,8 @@ import com.back.domain.event.entity.Event;
 import com.back.domain.event.repository.EventRepository;
 import com.back.domain.notification.entity.Notification;
 import com.back.domain.notification.enums.DomainName;
-import com.back.domain.notification.enums.NotificationVar;
+import com.back.domain.notification.enums.NotificationTypeDetails;
+import com.back.domain.notification.enums.NotificationTypes;
 import com.back.domain.notification.repository.NotificationRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
@@ -92,100 +93,118 @@ public class PerfNotificationDataInitializer {
 		boolean isRead = random.nextDouble() < 0.7;
 		LocalDateTime readAt = isRead ? LocalDateTime.now().minusDays(random.nextInt(30)) : null;
 
-		Notification notification = Notification.builder()
+		Notification.NotificationBuilder builder = Notification.builder()
 			.user(user)
-			.type(selectedType.notificationVar)
+			.type(selectedType.notificationType)
+			.typeDetail(selectedType.typeDetail)
 			.domainName(selectedType.domainName)
+			.domainId(event.getId())
 			.title(selectedType.getTitle())
-			.content(selectedType.getContent(event.getTitle()))
+			.message(selectedType.getMessage(event.getTitle()))
 			.isRead(isRead)
-			.readAt(readAt)
-			.build();
+			.readAt(readAt);
 
-		return notification;
+		return builder.build();
 	}
 
 	/**
-	 * 알림 타입 정의 (V2 기반)
+	 * 알림 타입 정의
 	 */
 	private enum NotificationType {
-		SIGN_UP(
-			NotificationVar.SIGN_UP,
-			DomainName.USERS
+		TICKET_GET(
+			NotificationTypes.TICKET,
+			NotificationTypeDetails.TICKET_GET,
+			DomainName.ORDERS,
+			"티켓 수령 완료"
 		) {
 			@Override
-			String getContent(String eventName) {
-				return "waitFair에 오신것을 환영합니다.";
-			}
-		},
-
-		PRE_REGISTER_DONE(
-			NotificationVar.PRE_REGISTER_DONE,
-			DomainName.PRE_REGISTER
-		) {
-			@Override
-			String getContent(String eventName) {
-				return String.format("[%s]\n사전등록이 완료되었습니다.\n티켓팅 시작일에 알림을 보내드리겠습니다.", eventName);
-			}
-		},
-
-		QUEUE_WAITING(
-			NotificationVar.QUEUE_WAITING,
-			DomainName.QUEUE_ENTRIES
-		) {
-			@Override
-			String getContent(String eventName) {
-				int waitingNum = new Random().nextInt(500) + 1; // 1~500번
-				return String.format("[%s]\n%d번째 순서에 배치되었습니다.", eventName, waitingNum);
-			}
-		},
-
-		QUEUE_ENTERED(
-			NotificationVar.QUEUE_ENTERED,
-			DomainName.QUEUE_ENTRIES
-		) {
-			@Override
-			String getContent(String eventName) {
-				return String.format("[%s]\n입장되었습니다.\n이제 티켓을 구매하실 수 있습니다.", eventName);
-			}
-		},
-
-		QUEUE_EXPIRED(
-			NotificationVar.QUEUE_EXPIRED,
-			DomainName.QUEUE_ENTRIES
-		) {
-			@Override
-			String getContent(String eventName) {
-				return String.format("[%s]\n아쉽게도 티켓팅 가능 시간이 초과되었습니다.\n다음 기회를 노려주세요..", eventName);
+			String getMessage(String eventName) {
+				return String.format("[%s]\n티켓 1매가 발급되었습니다", eventName);
 			}
 		},
 
 		PAYMENT_SUCCESS(
-			NotificationVar.PAYMENT_SUCCESS,
-			DomainName.ORDERS
+			NotificationTypes.PAYMENT,
+			NotificationTypeDetails.PAYMENT_SUCCESS,
+			DomainName.ORDERS,
+			"주문 및 결제 완료"
 		) {
 			@Override
-			String getContent(String eventName) {
+			String getMessage(String eventName) {
 				long amount = 50000 + new Random().nextInt(150000); // 50,000 ~ 200,000
-				return String.format("[%s]\n티켓 1매가 결제되었습니다\n결제금액: %,d원", eventName, amount);
+				return String.format("[%s] 티켓 1매가 결제되었습니다\n결제금액: %,d원", eventName, amount);
+			}
+		},
+
+		PAYMENT_FAILED(
+			NotificationTypes.PAYMENT,
+			NotificationTypeDetails.PAYMENT_FAILED,
+			DomainName.ORDERS,
+			"결제 실패"
+		) {
+			@Override
+			String getMessage(String eventName) {
+				return String.format("[%s] 결제에 실패했습니다\n다시 시도해주세요", eventName);
+			}
+		},
+
+		PRE_REGISTER_DONE(
+			NotificationTypes.PRE_REGISTER,
+			NotificationTypeDetails.PRE_REGISTER_DONE,
+			DomainName.PRE_REGISTER,
+			"사전등록 완료"
+		) {
+			@Override
+			String getMessage(String eventName) {
+				return String.format("[%s]\n사전등록이 완료되었습니다.\n티켓팅 시작일에 알림을 보내드리겠습니다.", eventName);
+			}
+		},
+
+		TICKETING_POSSIBLE(
+			NotificationTypes.QUEUE_ENTRIES,
+			NotificationTypeDetails.TICKETING_POSSIBLE,
+			DomainName.QUEUE_ENTRIES,
+			"티켓팅 시작"
+		) {
+			@Override
+			String getMessage(String eventName) {
+				return String.format("[%s]\n입장 준비가 완료되었습니다.\n이제 티켓을 구매하실 수 있습니다.", eventName);
+			}
+		},
+
+		TICKETING_EXPIRED(
+			NotificationTypes.QUEUE_ENTRIES,
+			NotificationTypeDetails.TICKETING_EXPIRED,
+			DomainName.QUEUE_ENTRIES,
+			"티켓팅 만료"
+		) {
+			@Override
+			String getMessage(String eventName) {
+				return String.format("[%s]\n입장 시간이 만료되었습니다.", eventName);
 			}
 		};
 
-		final NotificationVar notificationVar;
+		final NotificationTypes notificationType;
+		final NotificationTypeDetails typeDetail;
 		final DomainName domainName;
+		final String title;
 
 		NotificationType(
-			NotificationVar notificationVar,
-			DomainName domainName
+			NotificationTypes notificationType,
+			NotificationTypeDetails typeDetail,
+			DomainName domainName,
+			String title
 		) {
-			this.notificationVar = notificationVar;
+			this.notificationType = notificationType;
+			this.typeDetail = typeDetail;
 			this.domainName = domainName;
+			this.title = title;
 		}
 
 		String getTitle() {
-			return notificationVar.getTitle();
+			return title;
 		}
 
-		abstract String getContent(String eventName);
+		abstract String getMessage(String eventName);
 	}
 }
