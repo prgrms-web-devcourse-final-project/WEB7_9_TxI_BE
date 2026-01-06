@@ -37,7 +37,7 @@ public class TestSmsService extends SmsService {
 	 * 고정 인증번호 발송 (테스트용)
 	 */
 	@Override
-	public Long sendVerificationCode(String phoneNum) {
+	public Long sendVerificationCode(String phoneNum, Long eventId, String visitorId) {
 		// 고정 인증번호 사용
 		String verificationCodeStr = fixedCode;
 

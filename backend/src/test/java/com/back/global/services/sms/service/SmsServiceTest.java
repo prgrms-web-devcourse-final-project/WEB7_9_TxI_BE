@@ -74,7 +74,7 @@ class SmsServiceTest {
 			willDoNothing().given(smsUtil).sendOne(anyString(), anyString());
 
 			// when
-			Long expiresInSeconds = smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			Long expiresInSeconds = smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 
 			// then
 			assertThat(expiresInSeconds).isEqualTo(180L); // TTL 반환 확인
@@ -102,10 +102,10 @@ class SmsServiceTest {
 			willDoNothing().given(smsUtil).sendOne(anyString(), anyString());
 
 			// when
-			smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 			String firstCode = redisTemplate.opsForValue().get(REDIS_KEY_PREFIX + TEST_PHONE_NUMBER);
 
-			smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 			String secondCode = redisTemplate.opsForValue().get(REDIS_KEY_PREFIX + TEST_PHONE_NUMBER);
 
 			// then
@@ -123,7 +123,7 @@ class SmsServiceTest {
 				.given(smsUtil).sendOne(anyString(), anyString());
 
 			// when & then
-			assertThatThrownBy(() -> smsService.sendVerificationCode(TEST_PHONE_NUMBER))
+			assertThatThrownBy(() -> smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null))
 				.isInstanceOf(ErrorException.class);
 
 			// SMS 발송 실패 시 Redis에 저장되지 않아야 함
@@ -145,11 +145,11 @@ class SmsServiceTest {
 		@DisplayName("인증 성공 - 올바른 인증번호 입력")
 		void verifyCode_Success() {
 			// given
-			smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 			String storedCode = redisTemplate.opsForValue().get(REDIS_KEY_PREFIX + TEST_PHONE_NUMBER);
 
 			// when
-			boolean result = smsService.verifyCode(TEST_PHONE_NUMBER, storedCode);
+			boolean result = smsService.verifyCode(TEST_PHONE_NUMBER, storedCode, null, null);
 
 			// then
 			assertThat(result).isTrue();
@@ -170,10 +170,10 @@ class SmsServiceTest {
 		@DisplayName("인증 실패 - 잘못된 인증번호 입력")
 		void verifyCode_Fail_WrongCode() {
 			// given
-			smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 
 			// when & then
-			assertThatThrownBy(() -> smsService.verifyCode(TEST_PHONE_NUMBER, "999999"))
+			assertThatThrownBy(() -> smsService.verifyCode(TEST_PHONE_NUMBER, "999999", null, null))
 				.isInstanceOf(ErrorException.class);
 
 			// 인증 실패 시 인증 코드는 유지되어야 함
@@ -191,7 +191,7 @@ class SmsServiceTest {
 			// given - Redis에 인증번호가 없는 상태
 
 			// when & then
-			assertThatThrownBy(() -> smsService.verifyCode(TEST_PHONE_NUMBER, "123456"))
+			assertThatThrownBy(() -> smsService.verifyCode(TEST_PHONE_NUMBER, "123456", null, null))
 				.isInstanceOf(ErrorException.class);
 		}
 
@@ -199,17 +199,17 @@ class SmsServiceTest {
 		@DisplayName("인증 성공 후 재검증 시 실패 (재사용 방지)")
 		void verifyCode_Fail_AlreadyUsed() {
 			// given
-			smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 			String storedCode = redisTemplate.opsForValue().get(REDIS_KEY_PREFIX + TEST_PHONE_NUMBER);
 
 			// when
-			boolean firstResult = smsService.verifyCode(TEST_PHONE_NUMBER, storedCode);
+			boolean firstResult = smsService.verifyCode(TEST_PHONE_NUMBER, storedCode, null, null);
 
 			// then
 			assertThat(firstResult).isTrue();
 
 			// 재검증 시 예외 발생 (이미 사용된 코드)
-			assertThatThrownBy(() -> smsService.verifyCode(TEST_PHONE_NUMBER, storedCode))
+			assertThatThrownBy(() -> smsService.verifyCode(TEST_PHONE_NUMBER, storedCode, null, null))
 				.isInstanceOf(ErrorException.class);
 		}
 	}
@@ -223,7 +223,7 @@ class SmsServiceTest {
 		void hasVerificationCode_True() {
 			// given
 			willDoNothing().given(smsUtil).sendOne(anyString(), anyString());
-			smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 
 			// when
 			boolean result = smsService.hasVerificationCode(TEST_PHONE_NUMBER);
@@ -249,9 +249,9 @@ class SmsServiceTest {
 		void hasVerificationCode_AfterVerify() {
 			// given
 			willDoNothing().given(smsUtil).sendOne(anyString(), anyString());
-			smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 			String storedCode = redisTemplate.opsForValue().get(REDIS_KEY_PREFIX + TEST_PHONE_NUMBER);
-			smsService.verifyCode(TEST_PHONE_NUMBER, storedCode);
+			smsService.verifyCode(TEST_PHONE_NUMBER, storedCode, null, null);
 
 			// when
 			boolean result = smsService.hasVerificationCode(TEST_PHONE_NUMBER);
@@ -273,7 +273,7 @@ class SmsServiceTest {
 				.given(smsUtil).sendOne(anyString(), anyString());
 
 			// when & then
-			assertThatThrownBy(() -> smsService.sendVerificationCode(TEST_PHONE_NUMBER))
+			assertThatThrownBy(() -> smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null))
 				.isInstanceOf(ErrorException.class);
 
 			// 로그에 마스킹된 전화번호가 출력됨 (010****5678 형태)
@@ -286,7 +286,7 @@ class SmsServiceTest {
 			// given - Redis에 인증번호가 없는 상태
 
 			// when & then
-			assertThatThrownBy(() -> smsService.verifyCode(TEST_PHONE_NUMBER, "123456"))
+			assertThatThrownBy(() -> smsService.verifyCode(TEST_PHONE_NUMBER, "123456", null, null))
 				.isInstanceOf(ErrorException.class);
 
 			// 로그에 마스킹된 전화번호가 출력됨
@@ -297,10 +297,10 @@ class SmsServiceTest {
 		void verifyCode_MaskPhoneNumber_OnMismatch() {
 			// given
 			willDoNothing().given(smsUtil).sendOne(anyString(), anyString());
-			smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 
 			// when & then
-			assertThatThrownBy(() -> smsService.verifyCode(TEST_PHONE_NUMBER, "999999"))
+			assertThatThrownBy(() -> smsService.verifyCode(TEST_PHONE_NUMBER, "999999", null, null))
 				.isInstanceOf(ErrorException.class);
 
 			// 로그에 마스킹된 전화번호가 출력됨
@@ -315,7 +315,7 @@ class SmsServiceTest {
 				.given(smsUtil).sendOne(anyString(), anyString());
 
 			// when & then
-			assertThatThrownBy(() -> smsService.sendVerificationCode(shortPhoneNumber))
+			assertThatThrownBy(() -> smsService.sendVerificationCode(shortPhoneNumber, null, null))
 				.isInstanceOf(ErrorException.class);
 
 			// maskPhoneNumber 메서드의 early return 분기 커버
@@ -328,7 +328,7 @@ class SmsServiceTest {
 			String nullPhoneNumber = null;
 
 			// when & then
-			assertThatThrownBy(() -> smsService.verifyCode(nullPhoneNumber, "123456"))
+			assertThatThrownBy(() -> smsService.verifyCode(nullPhoneNumber, "123456", null, null))
 				.isInstanceOf(ErrorException.class);
 
 			// maskPhoneNumber 메서드의 null 체크 분기 커버
@@ -343,7 +343,7 @@ class SmsServiceTest {
 				.given(smsUtil).sendOne(anyString(), anyString());
 
 			// when & then
-			assertThatThrownBy(() -> smsService.sendVerificationCode(emptyPhoneNumber))
+			assertThatThrownBy(() -> smsService.sendVerificationCode(emptyPhoneNumber, null, null))
 				.isInstanceOf(ErrorException.class);
 
 			// maskPhoneNumber 메서드의 length < 8 분기 커버
@@ -362,7 +362,7 @@ class SmsServiceTest {
 
 			// when
 			try {
-				smsService.sendVerificationCode(longPhoneNumber);
+				smsService.sendVerificationCode(longPhoneNumber, null, null);
 			} catch (Exception e) {
 				// Redis 저장은 성공할 수 있음
 			}
@@ -383,7 +383,7 @@ class SmsServiceTest {
 			willDoNothing().given(smsUtil).sendOne(anyString(), anyString());
 
 			// when
-			Long result = smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			Long result = smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 
 			// then
 			assertThat(result).isEqualTo(180L);
@@ -414,7 +414,7 @@ class SmsServiceTest {
 			SmsService smsServiceWithMockRedis = new SmsService(mockSmsUtil, mockRedisTemplate);
 
 			// when & then
-			assertThatThrownBy(() -> smsServiceWithMockRedis.sendVerificationCode(TEST_PHONE_NUMBER))
+			assertThatThrownBy(() -> smsServiceWithMockRedis.sendVerificationCode(TEST_PHONE_NUMBER, null, null))
 				.isInstanceOf(ErrorException.class);
 
 			// SMS 발송은 호출되었어야 함
@@ -434,7 +434,7 @@ class SmsServiceTest {
 				.given(smsUtil).sendOne(anyString(), anyString());
 
 			// when & then
-			assertThatThrownBy(() -> smsService.sendVerificationCode(TEST_PHONE_NUMBER))
+			assertThatThrownBy(() -> smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null))
 				.isInstanceOf(ErrorException.class);
 
 			// Redis에 저장되지 않아야 함
@@ -449,7 +449,7 @@ class SmsServiceTest {
 			willDoNothing().given(smsUtil).sendOne(anyString(), anyString());
 
 			// when
-			Long expiresInSeconds = smsService.sendVerificationCode(TEST_PHONE_NUMBER);
+			Long expiresInSeconds = smsService.sendVerificationCode(TEST_PHONE_NUMBER, null, null);
 			String storedCode = redisTemplate.opsForValue().get(REDIS_KEY_PREFIX + TEST_PHONE_NUMBER);
 
 			// then
@@ -458,7 +458,7 @@ class SmsServiceTest {
 			assertThat(storedCode).hasSize(6);
 
 			// 저장된 코드로 인증 시도
-			boolean result = smsService.verifyCode(TEST_PHONE_NUMBER, storedCode);
+			boolean result = smsService.verifyCode(TEST_PHONE_NUMBER, storedCode, null, null);
 			assertThat(result).isTrue();
 		}
 	}

@@ -3,10 +3,12 @@ package com.back.global.services.sms.service;
 import java.time.Duration;
 import java.util.Random;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import com.back.global.error.code.SmsErrorCode;
 import com.back.global.error.exception.ErrorException;
+import com.back.global.security.service.FingerprintService;
 import com.back.global.services.sms.util.SmsUtilInterface;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,12 @@ public class SmsService {
 
 	private final SmsUtilInterface smsUtil;
 	private final StringRedisTemplate redisTemplate;
+	private FingerprintService fingerprintService;
+
+	@Autowired(required = false)
+	public void setFingerprintService(FingerprintService fingerprintService) {
+		this.fingerprintService = fingerprintService;
+	}
 
 	private static final long VERIFICATION_CODE_TTL = 180L; // 3분
 	private static final long VERIFIED_FLAG_TTL = 600L; // 10분 - 인증 완료 후 사전등록까지 유효 시간
@@ -45,9 +53,11 @@ public class SmsService {
 	/**
 	 * 인증번호 발송
 	 * @param phoneNum 수신 전화번호 (하이픈 제거된 형태)
+	 * @param eventId 이벤트 ID (Fingerprint 추적용)
+	 * @param visitorId Device Fingerprint ID
 	 * @return 인증번호 유효 시간(초)
 	 */
-	public Long sendVerificationCode(String phoneNum) {
+	public Long sendVerificationCode(String phoneNum, Long eventId, String visitorId) {
 		// 6자리 랜덤 인증번호 생성
 		Random random = new Random();
 		int verificationCode = random.nextInt(900000) + 100000;
@@ -77,9 +87,11 @@ public class SmsService {
 	 * 인증번호 검증
 	 * @param phoneNum 전화번호
 	 * @param verificationCode 사용자가 입력한 인증번호
+	 * @param eventId 이벤트 ID (Fingerprint 추적용)
+	 * @param visitorId Device Fingerprint ID
 	 * @return 인증 성공 여부
 	 */
-	public boolean verifyCode(String phoneNum, String verificationCode) {
+	public boolean verifyCode(String phoneNum, String verificationCode, Long eventId, String visitorId) {
 		String redisKey = REDIS_KEY_PREFIX + phoneNum;
 		String storedCode = redisTemplate.opsForValue().get(redisKey);
 

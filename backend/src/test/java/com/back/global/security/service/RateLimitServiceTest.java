@@ -91,20 +91,6 @@ class RateLimitServiceTest {
 	class RateLimitKeyGeneration {
 
 		@Test
-		@DisplayName("전역 Rate Limit 키 형식: rate_limit:global:{ip}")
-		void globalRateLimitKey() {
-			// given
-			String ip = "192.168.1.100";
-
-			// when
-			String key = "rate_limit:global:" + ip;
-
-			// then
-			assertThat(key).isEqualTo("rate_limit:global:192.168.1.100");
-			assertThat(key).startsWith("rate_limit:global:");
-		}
-
-		@Test
 		@DisplayName("SMS Rate Limit 키 형식: rate_limit:sms:{ip}:{phoneHash}")
 		void smsRateLimitKey() {
 			// given
@@ -163,14 +149,12 @@ class RateLimitServiceTest {
 			securityProperties = new SecurityProperties();
 			SecurityProperties.RateLimit rateLimitProps = new SecurityProperties.RateLimit();
 			rateLimitProps.setEnabled(true);
-			rateLimitProps.setGlobalPerSecond(50);
-			rateLimitProps.setSmsPerMinute(5);
+			rateLimitProps.setSmsPerMinute(7);
 			securityProperties.setRateLimit(rateLimitProps);
 
 			// then
 			assertThat(securityProperties.getRateLimit().isEnabled()).isTrue();
-			assertThat(securityProperties.getRateLimit().getGlobalPerSecond()).isEqualTo(50);
-			assertThat(securityProperties.getRateLimit().getSmsPerMinute()).isEqualTo(5);
+			assertThat(securityProperties.getRateLimit().getSmsPerMinute()).isEqualTo(7);
 		}
 
 		@Test
@@ -193,12 +177,10 @@ class RateLimitServiceTest {
 			securityProperties = new SecurityProperties();
 			SecurityProperties.RateLimit rateLimitProps = new SecurityProperties.RateLimit();
 			rateLimitProps.setEnabled(true);
-			rateLimitProps.setGlobalPerSecond(100);
 			rateLimitProps.setSmsPerMinute(10);
 			securityProperties.setRateLimit(rateLimitProps);
 
 			// then
-			assertThat(securityProperties.getRateLimit().getGlobalPerSecond()).isEqualTo(100);
 			assertThat(securityProperties.getRateLimit().getSmsPerMinute()).isEqualTo(10);
 		}
 	}

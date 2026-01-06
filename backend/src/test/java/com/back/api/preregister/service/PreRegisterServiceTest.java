@@ -1285,7 +1285,7 @@ class PreRegisterServiceTest {
 			);
 
 			// then: Fingerprint 성공 기록 호출 검증
-			verify(fingerprintService).recordAttempt(visitorId, true);
+			verify(fingerprintService).recordAttempt(eq(visitorId), any(Long.class), eq("pre_register"), eq(true));
 		}
 
 		@Test
@@ -1316,7 +1316,7 @@ class PreRegisterServiceTest {
 			);
 
 			// then: Fingerprint 성공 기록 호출 검증
-			verify(fingerprintService).recordAttempt(visitorId, true);
+			verify(fingerprintService).recordAttempt(eq(visitorId), any(Long.class), eq("pre_register"), eq(true));
 		}
 
 		@Test
@@ -1340,7 +1340,7 @@ class PreRegisterServiceTest {
 				.hasMessage(PreRegisterErrorCode.INVALID_USER_INFO.getMessage());
 
 			// then: Fingerprint 실패 기록 호출 검증
-			verify(fingerprintService).recordAttempt(visitorId, false);
+			verify(fingerprintService).recordAttempt(eq(visitorId), any(Long.class), eq("pre_register"), eq(false));
 		}
 
 		@Test
@@ -1364,7 +1364,7 @@ class PreRegisterServiceTest {
 				.hasMessage(PreRegisterErrorCode.TERMS_NOT_AGREED.getMessage());
 
 			// then: Fingerprint 실패 기록 호출 검증
-			verify(fingerprintService).recordAttempt(visitorId, false);
+			verify(fingerprintService).recordAttempt(eq(visitorId), any(Long.class), eq("pre_register"), eq(false));
 		}
 
 		// Note: Lines 143, 146, 148 (일반 Exception catch 블록)은 통합 테스트로 커버하기 어려움
@@ -1389,7 +1389,7 @@ class PreRegisterServiceTest {
 			);
 
 			// then: Fingerprint 기록 호출되지 않음
-			verify(fingerprintService, never()).recordAttempt(any(), anyBoolean());
+			verify(fingerprintService, never()).recordAttempt(any(), any(), any(), anyBoolean());
 		}
 	}
 

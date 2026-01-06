@@ -17,8 +17,7 @@ security:
     # 개발 환경 - 보안 테스트용 설정
     rate-limit:
       enabled: true
-      global-per-second: 50    # 테스트용: 실제 제한 적용
-      sms-per-minute: 3        # 테스트용: 3회로 제한 (4번째부터 차단)
+      sms-per-minute: 7        # SMS/사전등록: 1분당 7회 (IP + 전화번호 조합)
     # IDC IP 차단 활성화 (테스트용)
     idc-block:
       enabled: true
@@ -30,7 +29,7 @@ security:
       min-attempts: 5        # 최소 5번 시도
       max-attempts: 10
       failure-rate-threshold: 0.8  # 실패율 80% 이상
-      ttl-seconds: 86400    # 24시간
+      ttl-seconds: 300 # (테스트 5분)
     # 화이트리스트: 로컬 IP는 제외 (헬스체크 테스트용)
     whitelist-ips: [ ]
 
