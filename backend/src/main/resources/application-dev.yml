@@ -18,7 +18,7 @@ security:
     rate-limit:
       enabled: true
       global-per-second: 50    # 테스트용: 실제 제한 적용
-      sms-per-minute: 5        # SMS/사전등록: 1분당 5회
+      sms-per-minute: 7        # SMS/사전등록: 1분당 7회
     # IDC IP 차단 활성화 (테스트용)
     idc-block:
       enabled: true
