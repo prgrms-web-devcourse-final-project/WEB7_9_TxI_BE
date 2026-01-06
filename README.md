@@ -180,7 +180,7 @@ KAKAO_CLIENT_SECRET=your_kakao_client_secret
 
 ## 🖼️ 시스템 아키텍처
 
-**추가 예정**
+<img width="3208" height="2301" alt="Image" src="https://github.com/user-attachments/assets/75630aff-5a0f-4f22-8a81-66c8ac3b77f2" />
 
 ---
 
