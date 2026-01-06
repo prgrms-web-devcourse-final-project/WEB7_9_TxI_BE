@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"perf"})
+@Profile({"perf", "prod"})
 public class QueueShuffleScheduler {
 
 	@Qualifier("dynamicScheduler")
