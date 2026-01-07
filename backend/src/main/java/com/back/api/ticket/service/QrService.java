@@ -146,7 +146,6 @@ public class QrService {
 			Long userId = getLongValue(payload, CLAIM_USER_ID);
 			Long issuedAt = getLongValue(payload, CLAIM_IAT);
 
-			// TODO -> 2중 체크 로직 제거 고려
 			// 토큰 기간 확인 -> 60초 이상이면 만료
 			long now = Instant.now().getEpochSecond();
 			if(now - issuedAt > QR_TOKEN_VALIDATE_SECEONDS) {

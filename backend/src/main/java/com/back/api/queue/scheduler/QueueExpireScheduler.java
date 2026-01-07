@@ -19,11 +19,13 @@ import com.back.global.observability.metrics.SchedulerMetrics;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+/*
+ * 테스트 환경을 위해 임시로 prod 환경에서 비활성화
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"perf", "prod"})
+@Profile({"perf"})
 public class QueueExpireScheduler {
 
 	private static final String JOB_NAME = "QueueExpire";

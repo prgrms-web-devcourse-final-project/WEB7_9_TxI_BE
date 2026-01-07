@@ -33,7 +33,6 @@ public class QrController implements QrApi {
 		return ApiResponse.ok("QR 토큰 발급 성공", response);
 	}
 
-	//TODO 관리자 전용 API로 변경 고려
 	@Override
 	@PostMapping("/entry/verify")
 	public ApiResponse<QrValidationResponse> validateQrCode(

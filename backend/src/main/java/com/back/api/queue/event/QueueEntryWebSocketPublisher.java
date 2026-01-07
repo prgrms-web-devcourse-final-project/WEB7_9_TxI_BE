@@ -24,6 +24,7 @@ public class QueueEntryWebSocketPublisher {
 
 	}
 
+	//TODO 프로젝트 종료 후 상위 인원에게만 broadcast하는 방식으로 수정 고려. 아직은 테스트 인원이 적기 때문에 보류
 	//broadcast - 대기 상태
 	public void publishBatchUpdate(WaitingQueueBatchEventResponse event) {
 

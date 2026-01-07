@@ -30,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 /*
  * 대기열 조회 로직
  * Redis 우선 조회 -> DB 조회
- * TODO 시간 계산 로직 수정
  */
 @Service
 @RequiredArgsConstructor
