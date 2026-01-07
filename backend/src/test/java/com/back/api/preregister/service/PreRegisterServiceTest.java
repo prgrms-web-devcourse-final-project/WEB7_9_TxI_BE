@@ -1267,7 +1267,7 @@ class PreRegisterServiceTest {
 	class FingerprintRecording {
 
 		@Test
-		@DisplayName("신규 등록 성공 시 visitorId로 성공 기록 (line 133)")
+		@DisplayName("신규 등록 성공 시 Service에서 Fingerprint 기록하지 않음 (FingerprintRecordFilter에서 처리)")
 		void register_Success_RecordFingerprintSuccess() {
 			// given
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
@@ -1284,12 +1284,12 @@ class PreRegisterServiceTest {
 				visitorId
 			);
 
-			// then: Fingerprint 성공 기록 호출 검증
-			verify(fingerprintService).recordAttempt(eq(visitorId), any(Long.class), eq("pre_register"), eq(true));
+			// then: Service에서는 Fingerprint 기록하지 않음 (중복 방지 - FingerprintRecordFilter에서 자동 처리)
+			verify(fingerprintService, never()).recordAttempt(any(), any(), any(), anyBoolean());
 		}
 
 		@Test
-		@DisplayName("재등록 성공 시 visitorId로 성공 기록 (line 104)")
+		@DisplayName("재등록 성공 시 Service에서 Fingerprint 기록하지 않음 (FingerprintRecordFilter에서 처리)")
 		void register_ReRegister_RecordFingerprintSuccess() {
 			// given: CANCELED 상태의 사전등록
 			PreRegister canceledPreRegister = PreRegister.builder()
@@ -1315,12 +1315,12 @@ class PreRegisterServiceTest {
 				visitorId
 			);
 
-			// then: Fingerprint 성공 기록 호출 검증
-			verify(fingerprintService).recordAttempt(eq(visitorId), any(Long.class), eq("pre_register"), eq(true));
+			// then: Service에서는 Fingerprint 기록하지 않음 (중복 방지 - FingerprintRecordFilter에서 자동 처리)
+			verify(fingerprintService, never()).recordAttempt(any(), any(), any(), anyBoolean());
 		}
 
 		@Test
-		@DisplayName("ErrorException 발생 시 visitorId로 실패 기록 (lines 140, 142)")
+		@DisplayName("ErrorException 발생 시 Service에서 Fingerprint 기록하지 않음 (FingerprintRecordFilter에서 처리)")
 		void register_ErrorException_RecordFingerprintFailure() {
 			// given: 잘못된 생년월일로 ErrorException 유발
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequest(
@@ -1339,12 +1339,12 @@ class PreRegisterServiceTest {
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.INVALID_USER_INFO.getMessage());
 
-			// then: Fingerprint 실패 기록 호출 검증
-			verify(fingerprintService).recordAttempt(eq(visitorId), any(Long.class), eq("pre_register"), eq(false));
+			// then: Service에서는 Fingerprint 기록하지 않음 (중복 방지 - FingerprintRecordFilter에서 자동 처리)
+			verify(fingerprintService, never()).recordAttempt(any(), any(), any(), anyBoolean());
 		}
 
 		@Test
-		@DisplayName("ErrorException 발생 시 visitorId로 실패 기록 - 약관 미동의 (lines 140, 142)")
+		@DisplayName("약관 미동의 시 Service에서 Fingerprint 기록하지 않음 (FingerprintRecordFilter에서 처리)")
 		void register_TermsNotAgreed_RecordFingerprintFailure() {
 			// given: 약관 미동의로 ErrorException 유발
 			PreRegisterCreateRequest request = PreRegisterRequestFactory.fakePreRegisterRequestWithoutTerms(
@@ -1363,8 +1363,8 @@ class PreRegisterServiceTest {
 				.isInstanceOf(ErrorException.class)
 				.hasMessage(PreRegisterErrorCode.TERMS_NOT_AGREED.getMessage());
 
-			// then: Fingerprint 실패 기록 호출 검증
-			verify(fingerprintService).recordAttempt(eq(visitorId), any(Long.class), eq("pre_register"), eq(false));
+			// then: Service에서는 Fingerprint 기록하지 않음 (중복 방지 - FingerprintRecordFilter에서 자동 처리)
+			verify(fingerprintService, never()).recordAttempt(any(), any(), any(), anyBoolean());
 		}
 
 		// Note: Lines 143, 146, 148 (일반 Exception catch 블록)은 통합 테스트로 커버하기 어려움
