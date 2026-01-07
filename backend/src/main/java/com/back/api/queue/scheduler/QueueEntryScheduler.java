@@ -23,11 +23,12 @@ import lombok.extern.slf4j.Slf4j;
  * 대기열 입장 처리 스케줄러
  * WAITING -> ENTERED
  * WAITING 상태 사용자에게 실시간 순위 업데이트 (WebSocket)
+ * 해당 스케줄러는 10초마다 동작하기 때문에 서버 부담을 줄이기 위해 임시로 prod 환경에서 비활성화
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"perf", "prod"})
+@Profile({"perf"})
 public class QueueEntryScheduler {
 
 	private static final String JOB_NAME = "QueueEntry";
