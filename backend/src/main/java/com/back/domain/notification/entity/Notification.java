@@ -25,7 +25,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-//TODO: User 엔티티쪽에 Cascade 설정 해줘야 함
 @Entity
 @Builder
 @Getter

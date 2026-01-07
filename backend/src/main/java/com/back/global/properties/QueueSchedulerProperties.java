@@ -13,7 +13,6 @@ import lombok.Setter;
 public class QueueSchedulerProperties {
 
 	private Entry entry = new Entry();
-	private Shuffle shuffle = new Shuffle();
 
 	@Getter
 	@Setter
@@ -21,13 +20,6 @@ public class QueueSchedulerProperties {
 		private String cron;
 		private int batchSize;
 		private int maxEnteredLimit;
-	}
-
-	@Getter
-	@Setter
-	public static class Shuffle {
-		private String cron;
-		private int timeRangeMinutes;
 	}
 
 }

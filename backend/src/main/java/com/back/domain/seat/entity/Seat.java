@@ -48,7 +48,7 @@ public class Seat extends BaseEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "event_id", nullable = false)
-	private Event event;    // TODO: 실제 Event 엔티티로 변경 필요
+	private Event event;
 
 	@Column(nullable = false, name = "seat_code")
 	private String seatCode;  // 예시) "A1", "B2"
