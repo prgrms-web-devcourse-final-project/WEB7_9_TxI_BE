@@ -76,7 +76,7 @@ management:
 cookie:
   secure: true
   same-site: None
-  domain: ".waitfair.shop"
+  domain: ""
 
 # coolSMS
 sms:
