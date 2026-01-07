@@ -44,11 +44,11 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		"/api/v1/auth/login",
 		"/api/v1/auth/signup",
 		"/api/v1/tickets/entry/verify",
-		"/api/v1/auth/oauth/exchange"
+		"/api/v1/auth/oauth/exchange",
+		"/api/v1/auth/logout"
 	);
 
 	private static final Set<String> AUTH_PREFIX_WHITELIST = Set.of(
-		"/api/v1/auth/",
 		"/oauth2/",
 		"/login/oauth2/"
 	);
