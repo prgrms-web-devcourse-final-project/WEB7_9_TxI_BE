@@ -25,7 +25,7 @@ public class SocialAuthService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 
-	public User join(String providerId, String nickname, String password, ProviderType providerType) {
+	public User join(String providerId, String nickname, String password, String email, ProviderType providerType) {
 		if (userRepository.existsByNickname(nickname)) {
 			throw new ErrorException(AuthErrorCode.ALREADY_EXIST_NICKNAME);
 		}
@@ -34,7 +34,7 @@ public class SocialAuthService {
 		String encodedPassword = passwordEncoder.encode(raw);
 
 		User user = User.builder()
-			.email(null)
+			.email(email)
 			.nickname(nickname)
 			.fullName(nickname)
 			.password(encodedPassword)
@@ -47,11 +47,12 @@ public class SocialAuthService {
 		return userRepository.save(user);
 	}
 
-	public User modifyOrJoin(String providerId, String nickname, String password, ProviderType providerType) {
+	public User modifyOrJoin(String providerId, String nickname, String password, String email,
+		ProviderType providerType) {
 		User user = userRepository.findByProviderId(providerId).orElse(null);
 
 		if (user == null) {
-			return join(providerId, nickname, password, providerType);
+			return join(providerId, nickname, password, email, providerType);
 		}
 
 		user.update(nickname, nickname, null);

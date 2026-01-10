@@ -37,26 +37,20 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
 		log.debug("Kakao attributes={}", attributes);
 
-		// 1) properties.nickname (구버전/일반)
-		String nickname = null;
-		Object propsObj = attributes.get("properties");
-		if (propsObj instanceof Map<?, ?> props) {
-			Object nn = props.get("nickname");
-			if (nn != null)
-				nickname = nn.toString();
-		}
+		String nickname = "";
+		String email = "";
 
-		// 2) kakao_account.profile.nickname (신규/권장 구조)
-		if (nickname == null) {
-			Object accObj = attributes.get("kakao_account");
-			if (accObj instanceof Map<?, ?> acc) {
-				Object profileObj = acc.get("profile");
-				if (profileObj instanceof Map<?, ?> profile) {
-					Object nicknameObj = profile.get("nickname");
-					if (nicknameObj != null)
-						nickname = nicknameObj.toString();
-				}
+		Object accObj = attributes.get("kakao_account");
+		if (accObj instanceof Map<?, ?> acc) {
+			Object profileObj = acc.get("profile");
+			if (profileObj instanceof Map<?, ?> profile) {
+				Object nicknameObj = profile.get("nickname");
+				if (nicknameObj != null)
+					nickname = nicknameObj.toString();
 			}
+
+			Object emailObj = acc.get("email");
+			email = emailObj.toString();
 		}
 
 		if (nickname == null || nickname.isBlank()) {
@@ -66,7 +60,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
 		String kakaoId = oAuth2User.getName();
 
-		User user = socialAuthService.modifyOrJoin(kakaoId, nickname, "", ProviderType.KAKAO);
+		User user = socialAuthService.modifyOrJoin(kakaoId, nickname, "", email, ProviderType.KAKAO);
 
 		Collection<GrantedAuthority> authorities =
 			List.of(new SimpleGrantedAuthority("ROLE_NORMAL"));
