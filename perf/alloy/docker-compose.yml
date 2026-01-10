@@ -7,11 +7,16 @@ services:
     volumes:
       - ./config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
     environment:
       - LOKI_PUSH_URL=${LOKI_PUSH_URL}
-      - GRAFANA_USER_ID=${GRAFANA_USER_ID}
-      - GRAFANA_API_TOKEN=${GRAFANA_API_TOKEN}
+      - LOKI_USER_ID=${LOKI_USER_ID}
+      - LOKI_API_TOKEN=${LOKI_API_TOKEN}
+
       - PROMETHEUS_REMOTE_WRITE_URL=${PROMETHEUS_REMOTE_WRITE_URL}
+      - PROM_USER_ID=${PROM_USER_ID}
+      - PROM_API_TOKEN=${PROM_API_TOKEN}
+
       - SPRING_BOOT_HOST=${SPRING_BOOT_HOST}
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -22,3 +27,8 @@ services:
     ports:
       - "12345:12345"
     restart: unless-stopped
+    networks:
+      - common
+networks:
+  common:
+    external: true

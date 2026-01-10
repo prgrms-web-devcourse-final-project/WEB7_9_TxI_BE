@@ -9,8 +9,8 @@ loki.write "grafana_cloud" {
     url = env("LOKI_PUSH_URL")
 
     basic_auth {
-      username = env("GRAFANA_USER_ID")
-      password = env("GRAFANA_API_TOKEN")
+      username = env("LOKI_USER_ID")
+      password = env("LOKI_API_TOKEN")
     }
   }
 }
@@ -60,24 +60,22 @@ loki.relabel "add_labels" {
   }
 }
 
-// ============================
-// Prometheus Metrics → Grafana Cloud
-// ============================
+// Prometheus Metrics -> grafana cloud
 
 prometheus.remote_write "grafana_cloud" {
   endpoint {
     url = env("PROMETHEUS_REMOTE_WRITE_URL")
 
     basic_auth {
-      username = env("GRAFANA_USER_ID")
-      password = env("GRAFANA_API_TOKEN")
+      username = env("PROM_USER_ID")
+      password = env("PROM_API_TOKEN")
     }
   }
 }
 
 prometheus.scrape "waitfair_backend" {
   targets = [{
-    __address__ = env("SPRING_BOOT_HOST"),
+    __address__ = "haproxy:80",
   }]
 
   metrics_path = "/actuator/prometheus"
