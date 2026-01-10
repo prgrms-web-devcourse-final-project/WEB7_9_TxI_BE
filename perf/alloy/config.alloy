@@ -75,7 +75,7 @@ prometheus.remote_write "grafana_cloud" {
 
 prometheus.scrape "waitfair_backend" {
   targets = [{
-    __address__ = env("SPRING_BOOT_HOST"),
+    __address__ = "haproxy:80",
   }]
 
   metrics_path = "/actuator/prometheus"
