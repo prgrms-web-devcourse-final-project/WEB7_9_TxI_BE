@@ -40,6 +40,7 @@ loki.relabel "add_labels" {
   // Set container name as label
   rule {
     source_labels = ["__meta_docker_container_name"]
+    regex         = "(app1|app2|haproxy|alloy)"
     target_label  = "container"
   }
 
@@ -59,8 +60,9 @@ loki.relabel "add_labels" {
     replacement  = "waitfair"
   }
 }
-
+//====================================
 // Prometheus Metrics -> grafana cloud
+//====================================
 
 prometheus.remote_write "grafana_cloud" {
   endpoint {
