@@ -321,6 +321,7 @@ backend app_backend
     balance roundrobin
     option httpchk GET /actuator/health
     http-check expect status 200
+    default-server init-addr last,libc,none
     server app1 app1:8080 check inter 2s rise 2 fall 3 weight 100
     server app2 app2:8080 check inter 2s rise 2 fall 3 weight 0
 HAPROXY

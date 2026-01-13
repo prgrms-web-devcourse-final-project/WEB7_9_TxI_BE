@@ -153,12 +153,12 @@ jobs:
             done
             
             # HAProxy 설정 변경 (weight 전환)
-            if [ "$STANDBY" = "app1" ]; then
-              sed -i 's/server app1 app1:8080 check.*weight 0/server app1 app1:8080 check inter 2s rise 2 fall 3 weight 100/' /dockerProjects/haproxy/haproxy.cfg
-              sed -i 's/server app2 app2:8080 check.*weight 100/server app2 app2:8080 check inter 2s rise 2 fall 3 weight 0/' /dockerProjects/haproxy/haproxy.cfg
+             if [ "$STANDBY" = "app1" ]; then
+              sed -i '/server app1/s/weight [0-9]*/weight 100/' /dockerProjects/haproxy/haproxy.cfg
+              sed -i '/server app2/s/weight [0-9]*/weight 0/' /dockerProjects/haproxy/haproxy.cfg
             else
-              sed -i 's/server app2 app2:8080 check.*weight 0/server app2 app2:8080 check inter 2s rise 2 fall 3 weight 100/' /dockerProjects/haproxy/haproxy.cfg
-              sed -i 's/server app1 app1:8080 check.*weight 100/server app1 app1:8080 check inter 2s rise 2 fall 3 weight 0/' /dockerProjects/haproxy/haproxy.cfg
+              sed -i '/server app2/s/weight [0-9]*/weight 100/' /dockerProjects/haproxy/haproxy.cfg
+              sed -i '/server app1/s/weight [0-9]*/weight 0/' /dockerProjects/haproxy/haproxy.cfg
             fi
             
             # HAProxy graceful reload
