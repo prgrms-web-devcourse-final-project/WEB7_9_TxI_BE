@@ -21,16 +21,17 @@ RUN ./gradlew bootJar --no-daemon -x test
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-# Doppler CLI 설치
-RUN apt-get update && apt-get install -y apt-transport-https ca-certificates curl gnupg && \
+# Doppler CLI 설치 & 캐시 정리
+RUN apt-get update && \
+    apt-get install -y apt-transport-https ca-certificates curl gnupg && \
     curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" | tee /etc/apt/sources.list.d/doppler-cli.list && \
     apt-get update && \
-    apt-get -y install doppler
+    apt-get -y install doppler && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Build argument로 Doppler 토큰 받기
-ARG DOPPLER_TOKEN
-ENV DOPPLER_TOKEN=$DOPPLER_TOKEN
+# Build argument로 프로젝트 환경 설정
 ENV DOPPLER_PROJECT=waitfair
 ENV DOPPLER_CONFIG=prd
 
@@ -39,4 +40,4 @@ COPY --from=builder /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["/bin/sh", "-c", "doppler secrets download --project waitfair --config prd --format env --no-file > /tmp/.env && set -a && . /tmp/.env && exec java -Duser.timezone=Asia/Seoul -jar -Dspring.profiles.active=prod app.jar"]
+ENTRYPOINT ["doppler", "run", "--", "java", "-Duser.timezone=Asia/Seoul", "-jar", "app.jar", "--spring.profiles.active=prod"]
